@@ -1,0 +1,8 @@
+{
+  "name": "knight_of_gold",
+  "front_image": "knight_of_gold.png",
+  "arcana": "minor",
+  "suit": "gold",
+  "value": "knight",
+  "numeric_value": 12
+}

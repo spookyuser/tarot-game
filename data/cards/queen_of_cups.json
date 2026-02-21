@@ -1,0 +1,8 @@
+{
+  "name": "queen_of_cups",
+  "front_image": "queen_of_cups.png",
+  "arcana": "minor",
+  "suit": "cups",
+  "value": "queen",
+  "numeric_value": 13
+}

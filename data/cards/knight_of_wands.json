@@ -1,0 +1,8 @@
+{
+  "name": "knight_of_wands",
+  "front_image": "knight_of_wands.png",
+  "arcana": "minor",
+  "suit": "wands",
+  "value": "knight",
+  "numeric_value": 12
+}

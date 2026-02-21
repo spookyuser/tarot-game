@@ -1,0 +1,8 @@
+{
+  "name": "knight_of_cups",
+  "front_image": "knight_of_cups.png",
+  "arcana": "minor",
+  "suit": "cups",
+  "value": "knight",
+  "numeric_value": 12
+}

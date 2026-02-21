@@ -1,0 +1,8 @@
+{
+  "name": "five_of_cups",
+  "front_image": "five_of_cups.png",
+  "arcana": "minor",
+  "suit": "cups",
+  "value": "five",
+  "numeric_value": 5
+}

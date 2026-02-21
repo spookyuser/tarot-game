@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://8n36yadkvxai" path="res://addons/card-framework/json_card_factory.gd" id="factory_script"]
+[ext_resource type="PackedScene" uid="uid://brjlo8xing83p" path="res://addons/card-framework/card.tscn" id="card_scene"]
+
+[node name="CardFactory" type="Node"]
+script = ExtResource("factory_script")
+default_card_scene = ExtResource("card_scene")
+card_asset_dir = "res://assets/cards"
+card_info_dir = "res://data/cards"

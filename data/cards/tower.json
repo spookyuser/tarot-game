@@ -1,0 +1,8 @@
+{
+  "name": "tower",
+  "front_image": "tower.png",
+  "arcana": "major",
+  "suit": "major",
+  "value": "tower",
+  "numeric_value": 16
+}

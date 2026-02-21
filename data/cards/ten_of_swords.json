@@ -1,0 +1,8 @@
+{
+  "name": "ten_of_swords",
+  "front_image": "ten_of_swords.png",
+  "arcana": "minor",
+  "suit": "swords",
+  "value": "ten",
+  "numeric_value": 10
+}

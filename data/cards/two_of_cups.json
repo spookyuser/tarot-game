@@ -1,0 +1,8 @@
+{
+  "name": "two_of_cups",
+  "front_image": "two_of_cups.png",
+  "arcana": "minor",
+  "suit": "cups",
+  "value": "two",
+  "numeric_value": 2
+}

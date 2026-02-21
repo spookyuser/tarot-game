@@ -1,0 +1,8 @@
+{
+  "name": "the_wheel_of_fortune",
+  "front_image": "the_wheel_of_fortune.png",
+  "arcana": "major",
+  "suit": "major",
+  "value": "wheel_of_fortune",
+  "numeric_value": 10
+}
