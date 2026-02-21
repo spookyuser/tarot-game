@@ -1,5 +1,4 @@
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
 import { NextRequest, NextResponse } from "next/server";
 import { GameState } from "@/lib/data";
 
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
   let generated: string;
   try {
     const result = await generateText({
-      model: anthropic("claude-haiku-4-5"),
+      model:'anthropic/claude-haiku-4.5', 
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: JSON.stringify(body, null, 2) }],
       maxOutputTokens: 150,
