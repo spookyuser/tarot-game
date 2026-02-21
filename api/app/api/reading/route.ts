@@ -2,12 +2,12 @@ import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { GameState, Slot } from "@/lib/data";
 
-const POSITION_ORDER: Array<Slot["position"]> = ["past", "present", "future"];
+const SLOT_COUNT = 3;
 
 const SYSTEM_PROMPT = `You are the narrator of fates. People sit before you for a tarot reading. Whatever you write becomes real — these are not predictions, they are events that will happen.
 
 You will receive a JSON object with:
-- "reading": the current client and the three reading slots (past, present, future).
+- "reading": the current client and three reading slots (slot 0, 1, 2) filled in order.
 - "context": full encounter/game-state context that may help narrative continuity.
 
 Exactly one slot in reading.slots will have a card but no text. Write text for that slot only.
@@ -65,19 +65,12 @@ function normalizeCardName(cardName: string): string {
 
 function normalizeSlot(input: unknown, index: number): Slot {
   const slotRecord = isRecord(input) ? input : {};
-  const defaultPosition = POSITION_ORDER[index] ?? "future";
-
-  const rawPosition = asString(slotRecord.position);
-  const position: Slot["position"] =
-    rawPosition === "past" || rawPosition === "present" || rawPosition === "future"
-      ? rawPosition
-      : defaultPosition;
 
   const rawCard = asNonEmptyString(slotRecord.card);
   const rawText = asNonEmptyString(slotRecord.text);
 
   return {
-    position,
+    index,
     card: rawCard ? normalizeCardName(rawCard) : null,
     text: rawText ?? null,
   };
@@ -101,7 +94,7 @@ function normalizeFromDirectPayload(raw: JsonRecord): NormalizedReadingRequest |
     client.age = clientRecord.age;
   }
 
-  const slots = POSITION_ORDER.map((_, index) => normalizeSlot(slotInputs[index], index));
+  const slots = Array.from({ length: SLOT_COUNT }, (_, i) => normalizeSlot(slotInputs[i], i));
   return { client, slots };
 }
 
@@ -144,7 +137,7 @@ function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | n
   const runtimeTexts = asArray(runtimeState.slot_texts);
   const encounterSlots = asArray(encounter.slots);
 
-  const slots = POSITION_ORDER.map((position, index) => {
+  const slots = Array.from({ length: SLOT_COUNT }, (_, index) => {
     const hasRuntimeCard = runtimeCards[index] !== undefined;
     const hasRuntimeText = runtimeTexts[index] !== undefined;
 
@@ -152,7 +145,7 @@ function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | n
       const runtimeCardName = asNonEmptyString(runtimeCards[index]);
       const runtimeText = asNonEmptyString(runtimeTexts[index]);
       return {
-        position,
+        index,
         card: runtimeCardName ? normalizeCardName(runtimeCardName) : null,
         text: runtimeText ?? null,
       };
@@ -160,7 +153,7 @@ function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | n
 
     const normalized = normalizeSlot(encounterSlots[index], index);
     return {
-      position,
+      index,
       card: normalized.card ?? null,
       text: normalized.text ?? null,
     };
@@ -309,7 +302,7 @@ export async function POST(request: NextRequest) {
     client: normalized.client,
     slots: updatedSlots,
     generated,
-    filled_position: normalized.slots[targetIndex].position,
+    filled_slot: targetIndex,
     game_state: updatedGameState,
     active_encounter_index: normalized.activeEncounterIndex ?? null,
   });

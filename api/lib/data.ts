@@ -21,12 +21,9 @@ export interface ClientDef {
 }
 
 export interface Slot {
-  position: "past" | "present" | "future";
+  index: number;
   card?: string | null;
   text?: string | null;
-  sentiment?: string | null;
-  keywords?: string[] | null;
-  description?: string | null;
 }
 
 export interface GameState {

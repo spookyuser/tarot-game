@@ -289,17 +289,13 @@ func _load_clients() -> void:
 
 
 func _shuffle_deck() -> void:
-	deck = all_card_names.duplicate()
-	deck.shuffle()
+	var pool := all_card_names.duplicate()
+	pool.shuffle()
+	deck = pool.slice(0, 10) as Array[String]
 	discard.clear()
 
 
 func _draw_cards(count: int) -> Array[String]:
-	if deck.size() < count:
-		deck.append_array(discard)
-		discard.clear()
-		deck.shuffle()
-
 	var drawn: Array[String] = []
 	for i in range(mini(count, deck.size())):
 		drawn.append(deck.pop_back())
@@ -400,7 +396,7 @@ func _update_sidebar() -> void:
 
 
 func _update_deck_count() -> void:
-	deck_count_label.text = "%d remaining" % deck.size()
+	deck_count_label.text = "%d remaining" % player_hand.get_card_count()
 
 
 func _update_progress_icons() -> void:
@@ -412,9 +408,9 @@ func _update_progress_icons() -> void:
 
 
 func _deal_hand() -> void:
-	var needed = 10 - player_hand.get_card_count()
-	if needed <= 0: return
-	var drawn = _draw_cards(needed)
+	var available = deck.size()
+	if available <= 0: return
+	var drawn = _draw_cards(available)
 	for card_name in drawn:
 		card_manager.card_factory.create_card(card_name, player_hand)
 	_update_deck_count()

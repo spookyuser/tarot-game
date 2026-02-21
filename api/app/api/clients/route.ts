@@ -2,26 +2,26 @@ import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const SYSTEM_PROMPT = `You are the master weaver of fates. A new person approaches your tarot table for a reading. 
+const SYSTEM_PROMPT = `You are the master weaver of fates. A new person approaches your tarot table for a reading.
 Invent a unique, evocative character and their brief story.
 
 You must output a JSON object representing this person:
 - "name": A short descriptive name (e.g., "Elara the Betrayed", "The Lost Merchant", "Anya").
 - "context": A one-sentence explanation of why they are seeking a reading (this is what they say to you).
-- "story": A short 1-2 paragraph narrative of their situation. Crucially, the story MUST contain EXACTLY THREE placeholders: "{0}", "{1}", and "{2}". These placeholders represent the past, present, and future readings that will be dynamically inserted later.
+- "story": A short 1-2 paragraph narrative of their situation. Crucially, the story MUST contain EXACTLY THREE placeholders: "{0}", "{1}", and "{2}". These placeholders represent three tarot card readings that will be dynamically inserted later, one after another.
 
-The placeholders should be woven naturally into the text. You should leave a blank line before and after the placeholders or make them separate sentences.
+The placeholders should be woven naturally into the text. You should leave a blank line before and after the placeholders or make them separate sentences. Do NOT frame them as past/present/future — they are simply three successive readings that build on each other.
 
 Example story format:
 "You arrive out of the storm, seeking answers about your lost child.
 
 {0}
 
-But the present offers a different perspective.
+The cards shift, revealing more.
 
 {1}
 
-And as for what comes next...
+One final truth remains.
 
 {2}"
 

@@ -1,6 +1,6 @@
 ## Game Loop
 
-A client arrives with a story — a short narrative with three blanks where tarot readings will go. The player draws three cards into their hand and drags them one at a time into the three slots. Only one slot is active at a time (left to right). While hovering a held card over the active slot, a preview reading appears both under the slot and inline in the story text. Dropping the card locks the reading permanently and opens the next slot. Once all three slots are filled, a resolution overlay shows the complete story with all readings woven in. The player clicks "Next Client" to discard everything, deal fresh cards, and meet someone new. When the deck runs low it reshuffles the discard pile back in.
+A client arrives with a story — a short narrative with three blanks where tarot readings will go. The player starts with 10 random cards drawn from the 78-card tarot deck — that's all they get, no reshuffling. Cards are dealt into the hand and dragged one at a time into three slots (left to right). While hovering a held card over the active slot, a preview reading appears both under the slot and inline in the story text. Dropping the card locks the reading permanently and opens the next slot. Once all three slots are filled, a resolution overlay shows the complete story with all readings woven in. The player clicks "Next Client" to discard everything and deal remaining cards for the next encounter.
 
 
 ## Current State

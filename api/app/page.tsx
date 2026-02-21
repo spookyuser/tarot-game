@@ -11,17 +11,17 @@ export default function Home() {
   },
   "slots": [
     {
-      "position": "past",
+      "index": 0,
       "card": "the_moon",
       "text": "You found the second ledger in March, hidden in the office behind the wine inventory. You closed it and put it back."
     },
     {
-      "position": "present",
+      "index": 1,
       "card": "justice",
       "text": null
     },
     {
-      "position": "future",
+      "index": 2,
       "text": null
     }
   ]
@@ -83,7 +83,7 @@ export default function Home() {
   },
   "slots": [
     {
-      "position": "past" | "present" | "future",
+      "index": number,        // 0, 1, or 2
       "card": string | null,  // card name from /api/cards (e.g. "the_moon")
       "text": string | null   // null = not yet generated
     }
@@ -97,7 +97,7 @@ export default function Home() {
   "client": { ... },           // same as input
   "slots": [ ... ],            // same as input with target slot's text filled
   "generated": string,         // the text that was generated
-  "filled_position": string    // which position was filled ("past"|"present"|"future")
+  "filled_slot": number        // which slot index was filled (0, 1, or 2)
 }`}</pre>
           </section>
         </div>

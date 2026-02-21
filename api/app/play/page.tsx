@@ -16,7 +16,7 @@ interface ClientDef {
 }
 
 interface Slot {
-  position: "past" | "present" | "future";
+  index: number;
   card?: string | null;
   text?: string | null;
 }
@@ -26,9 +26,9 @@ interface GameState {
   slots: Slot[];
 }
 
-const POSITIONS: Array<"past" | "present" | "future"> = ["past", "present", "future"];
+const SLOT_LABELS = ["Slot 1", "Slot 2", "Slot 3"];
 
-const EMPTY_SLOTS: Slot[] = POSITIONS.map((p) => ({ position: p, card: null, text: null }));
+const EMPTY_SLOTS: Slot[] = [0, 1, 2].map((i) => ({ index: i, card: null, text: null }));
 
 function cardDisplayName(name: string): string {
   return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -239,7 +239,7 @@ export default function PlayPage() {
                   const isFilled = !!slot.text;
 
                   return (
-                    <div key={slot.position} className={`rounded border p-3 ${
+                    <div key={i} className={`rounded border p-3 ${
                       isFilled
                         ? "border-emerald-800 bg-emerald-950/30"
                         : isTarget
@@ -250,7 +250,7 @@ export default function PlayPage() {
                     }`}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          {slot.position}
+                          {SLOT_LABELS[i]}
                         </span>
                         {isFilled && (
                           <span className="text-xs text-emerald-500">✓</span>
@@ -333,7 +333,7 @@ export default function PlayPage() {
                 </button>
               ) : nextEmptySlotIndex !== -1 ? (
                 <p className="text-xs text-zinc-500 text-center py-2">
-                  Pick a card for {POSITIONS[nextEmptySlotIndex]} to continue.
+                  Pick a card for {SLOT_LABELS[nextEmptySlotIndex]} to continue.
                 </p>
               ) : null}
             </div>
