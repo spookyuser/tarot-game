@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "five",
-  "numeric_value": 5
+  "numeric_value": 5,
+  "description": "Brings material hardship. Resources dry up and struggle becomes the reality.",
+  "tags": [
+    "loss",
+    "fortune"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

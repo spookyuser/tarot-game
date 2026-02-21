@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "two",
-  "numeric_value": 2
+  "numeric_value": 2,
+  "description": "Forces a juggling act between competing demands. Balance is hard to maintain.",
+  "tags": [
+    "fortune",
+    "conflict"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

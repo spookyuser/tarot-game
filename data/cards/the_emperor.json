@@ -4,5 +4,11 @@
   "arcana": "major",
   "suit": "major",
   "value": "emperor",
-  "numeric_value": 4
+  "numeric_value": 4,
+  "description": "Imposes order and control. Structure and authority stabilize the situation.",
+  "tags": [
+    "power"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "ace",
-  "numeric_value": 1
+  "numeric_value": 1,
+  "description": "Opens the door to new emotional bonds. Warmth and compassion enter the picture.",
+  "tags": [
+    "love"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

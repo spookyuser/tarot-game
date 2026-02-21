@@ -4,5 +4,11 @@
   "arcana": "major",
   "suit": "major",
   "value": "temperance",
-  "numeric_value": 14
+  "numeric_value": 14,
+  "description": "Brings balance and healing. Opposing forces blend together into something that works.",
+  "tags": [
+    "growth"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

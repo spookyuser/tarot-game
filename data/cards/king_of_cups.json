@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "king",
-  "numeric_value": 14
+  "numeric_value": 14,
+  "description": "Provides compassionate authority. Emotional control and wisdom steer things calmly.",
+  "tags": [
+    "love",
+    "power"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

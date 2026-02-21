@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "seven",
-  "numeric_value": 7
+  "numeric_value": 7,
+  "description": "Demands patience for a distant payoff. The work is done but results are not visible yet.",
+  "tags": [
+    "fortune",
+    "growth"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

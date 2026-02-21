@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "knight",
-  "numeric_value": 12
+  "numeric_value": 12,
+  "description": "Advances things slowly but reliably. Steady persistence over dramatic action.",
+  "tags": [
+    "fortune"
+  ],
+  "rarity": "uncommon",
+  "outcome": "mixed"
 }

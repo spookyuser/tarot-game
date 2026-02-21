@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "two",
-  "numeric_value": 2
+  "numeric_value": 2,
+  "description": "Stalls on a difficult decision. Avoidance creates tension but nothing resolves.",
+  "tags": [
+    "conflict",
+    "mystery"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

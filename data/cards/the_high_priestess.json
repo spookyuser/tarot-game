@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "high_priestess",
-  "numeric_value": 2
+  "numeric_value": 2,
+  "description": "Brings hidden knowledge to light. Secrets and intuitions surface that change the picture.",
+  "tags": [
+    "mystery",
+    "truth"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

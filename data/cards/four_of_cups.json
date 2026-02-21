@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "four",
-  "numeric_value": 4
+  "numeric_value": 4,
+  "description": "Creates restlessness and dissatisfaction. What is already there goes unappreciated.",
+  "tags": [
+    "conflict"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

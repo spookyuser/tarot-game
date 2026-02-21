@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "ten",
-  "numeric_value": 10
+  "numeric_value": 10,
+  "description": "Delivers a devastating blow. The worst has happened \u2014 but it is finally over.",
+  "tags": [
+    "loss",
+    "change"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

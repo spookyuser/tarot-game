@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "moon",
-  "numeric_value": 18
+  "numeric_value": 18,
+  "description": "Fills the situation with confusion and fear. Nothing is what it seems.",
+  "tags": [
+    "mystery",
+    "conflict"
+  ],
+  "rarity": "rare",
+  "outcome": "dark"
 }

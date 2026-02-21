@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "seven",
-  "numeric_value": 7
+  "numeric_value": 7,
+  "description": "Introduces deception or cunning. Someone operates in shadows for their own gain.",
+  "tags": [
+    "conflict",
+    "mystery"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

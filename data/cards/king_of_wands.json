@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "king",
-  "numeric_value": 14
+  "numeric_value": 14,
+  "description": "Commands through vision and charisma. Bold ambition shapes the world around them.",
+  "tags": [
+    "power"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

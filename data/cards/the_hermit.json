@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "hermit",
-  "numeric_value": 9
+  "numeric_value": 9,
+  "description": "Forces solitude and reflection. Answers come, but only after withdrawing from everything else.",
+  "tags": [
+    "truth",
+    "mystery"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

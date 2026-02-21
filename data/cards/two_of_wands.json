@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "two",
-  "numeric_value": 2
+  "numeric_value": 2,
+  "description": "Opens up bold new possibilities. Plans form for ventures beyond the familiar.",
+  "tags": [
+    "power",
+    "change"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

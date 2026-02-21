@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "seven",
-  "numeric_value": 7
+  "numeric_value": 7,
+  "description": "Forces a defensive stand against challengers. Resolve is tested from every direction.",
+  "tags": [
+    "conflict",
+    "power"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "ten",
-  "numeric_value": 10
+  "numeric_value": 10,
+  "description": "Piles on overwhelming responsibility. The burden threatens to crush whoever carries it.",
+  "tags": [
+    "loss",
+    "power"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

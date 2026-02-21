@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "strength",
-  "numeric_value": 8
+  "numeric_value": 8,
+  "description": "Overcomes difficulty through patience. Inner courage wins where force would fail.",
+  "tags": [
+    "growth",
+    "love"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

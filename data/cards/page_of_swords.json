@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "page",
-  "numeric_value": 11
+  "numeric_value": 11,
+  "description": "Sends a sharp-eyed observer to dig into hidden things. Questions demand answers.",
+  "tags": [
+    "truth",
+    "mystery"
+  ],
+  "rarity": "uncommon",
+  "outcome": "mixed"
 }

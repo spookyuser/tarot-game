@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "knight",
-  "numeric_value": 12
+  "numeric_value": 12,
+  "description": "Sends someone chasing a romantic or creative passion. Idealism leads the way.",
+  "tags": [
+    "love",
+    "change"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

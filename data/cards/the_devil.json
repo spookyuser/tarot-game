@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "devil",
-  "numeric_value": 15
+  "numeric_value": 15,
+  "description": "Traps the person in a bad pattern. Desires or habits take control and will not let go.",
+  "tags": [
+    "conflict",
+    "power"
+  ],
+  "rarity": "rare",
+  "outcome": "dark"
 }

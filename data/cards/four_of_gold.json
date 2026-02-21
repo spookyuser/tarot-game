@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "four",
-  "numeric_value": 4
+  "numeric_value": 4,
+  "description": "Creates hoarding and possessiveness. Security comes at the cost of generosity.",
+  "tags": [
+    "fortune",
+    "conflict"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

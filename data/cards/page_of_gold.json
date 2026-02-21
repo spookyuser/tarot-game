@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "page",
-  "numeric_value": 11
+  "numeric_value": 11,
+  "description": "Presents a practical opportunity to learn. Curiosity meets the material world.",
+  "tags": [
+    "fortune",
+    "growth"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

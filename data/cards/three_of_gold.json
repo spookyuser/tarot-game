@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "three",
-  "numeric_value": 3
+  "numeric_value": 3,
+  "description": "Rewards skilled work with recognition. Collaboration produces something lasting.",
+  "tags": [
+    "fortune",
+    "growth"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "knight",
-  "numeric_value": 12
+  "numeric_value": 12,
+  "description": "Charges forward with decisive speed. Cuts through hesitation but may cut too deep.",
+  "tags": [
+    "conflict",
+    "power"
+  ],
+  "rarity": "uncommon",
+  "outcome": "mixed"
 }

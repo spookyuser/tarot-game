@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "nine",
-  "numeric_value": 9
+  "numeric_value": 9,
+  "description": "Fills the mind with anxiety and dread. Fears spiral out of proportion.",
+  "tags": [
+    "loss",
+    "conflict"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

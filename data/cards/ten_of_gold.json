@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "ten",
-  "numeric_value": 10
+  "numeric_value": 10,
+  "description": "Builds a lasting legacy. Shared wealth and security extend to those who matter.",
+  "tags": [
+    "fortune",
+    "love"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

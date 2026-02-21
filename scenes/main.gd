@@ -18,6 +18,9 @@ extends Control
 @onready var progress_icons: Array[TextureRect] = [
 	$ProgressIcon0, $ProgressIcon1, $ProgressIcon2
 ]
+@onready var card_hover_info_panel: NinePatchRect = $CardHoverInfoPanel
+@onready var card_hover_info_title: Label = $CardHoverInfoPanel/CardHoverInfoTitle
+@onready var card_hover_info_body: Label = $CardHoverInfoPanel/CardHoverInfoBody
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
@@ -64,6 +67,9 @@ var _hover_preview_text: String = ""
 var _pending_requests: Dictionary = {}
 var _loading_slots: Dictionary = {}
 var _time_passed: float = 0.0
+var _hover_info_showing: bool = false
+var _hover_info_tween: Tween = null
+var _last_hovered_card_pos: Vector2 = Vector2.ZERO
 
 var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
@@ -98,6 +104,11 @@ const HOVER_COLORS := [
 	"#7888a0", # Slot 2 hover
 ]
 
+const HOVER_INFO_PANEL_MARGIN := 8.0
+const HOVER_INFO_PANEL_X_OFFSET := 14.0
+const HOVER_INFO_PANEL_Y_OFFSET := -8.0
+const HOVER_TAG_SEPARATOR := " · "
+
 func _ready() -> void:
 	back_texture = load("res://assets/card_back.png")
 
@@ -113,6 +124,7 @@ func _ready() -> void:
 
 	next_button.pressed.connect(_on_next_button_pressed)
 	resolution_panel.visible = false
+	card_hover_info_panel.z_index = 4096
 
 	claude_api.request_completed.connect(_on_claude_request_completed)
 	claude_api.request_failed.connect(_on_claude_request_failed)
@@ -223,6 +235,11 @@ func _next_client() -> void:
 	_hover_preview_text = ""
 	_pending_requests.clear()
 	_loading_slots.clear()
+	_hover_info_showing = false
+	if _hover_info_tween != null and _hover_info_tween.is_running():
+		_hover_info_tween.kill()
+	card_hover_info_panel.visible = false
+	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
 
 	_update_sidebar()
 	story_title_label.text = current_encounter["client"]["name"]
@@ -282,6 +299,143 @@ func _find_held_card() -> Card:
 			return card
 	return null
 
+
+func _find_hovered_hand_card() -> Card:
+	for card in player_hand._held_cards:
+		if card.current_state == DraggableObject.DraggableState.HOVERING:
+			return card
+	return null
+
+
+func _update_card_hover_info_panel() -> void:
+	var hovered_card := _find_hovered_hand_card()
+
+	if hovered_card != null:
+		card_hover_info_title.text = _humanize_token(hovered_card.card_name)
+		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info)
+		_last_hovered_card_pos = hovered_card.global_position
+
+		if not _hover_info_showing:
+			_hover_info_showing = true
+			_slide_hover_info_in(hovered_card)
+		else:
+			if _hover_info_tween == null or not _hover_info_tween.is_running():
+				_position_hover_info_panel(hovered_card)
+	else:
+		if _hover_info_showing:
+			_hover_info_showing = false
+			_slide_hover_info_out()
+
+
+func _position_hover_info_panel(card: Card) -> void:
+	var card_rect: Rect2 = card.get_global_rect()
+	var panel_size: Vector2 = card_hover_info_panel.size
+	var viewport_size: Vector2 = get_viewport_rect().size
+
+	# Default: extend out from the left side of the card
+	var target_x := card_rect.position.x - panel_size.x - HOVER_INFO_PANEL_X_OFFSET
+
+	# Fall back to right side if no room on the left
+	if target_x < HOVER_INFO_PANEL_MARGIN:
+		target_x = card_rect.position.x + card_rect.size.x + HOVER_INFO_PANEL_X_OFFSET
+
+	var target_y := card_rect.position.y + HOVER_INFO_PANEL_Y_OFFSET
+
+	target_x = clampf(
+		target_x,
+		HOVER_INFO_PANEL_MARGIN,
+		viewport_size.x - panel_size.x - HOVER_INFO_PANEL_MARGIN
+	)
+	target_y = clampf(
+		target_y,
+		HOVER_INFO_PANEL_MARGIN,
+		viewport_size.y - panel_size.y - HOVER_INFO_PANEL_MARGIN
+	)
+
+	card_hover_info_panel.global_position = Vector2(target_x, target_y)
+
+
+func _slide_hover_info_in(card: Card) -> void:
+	if _hover_info_tween != null and _hover_info_tween.is_running():
+		_hover_info_tween.kill()
+
+	card_hover_info_panel.visible = true
+
+	# Set final position first, then read it back
+	_position_hover_info_panel(card)
+	var final_pos := card_hover_info_panel.global_position
+
+	# Start behind the card edge
+	var card_rect := card.get_global_rect()
+	var start_pos := Vector2(card_rect.position.x, final_pos.y)
+
+	card_hover_info_panel.global_position = start_pos
+	card_hover_info_panel.modulate = Color(1, 1, 1, 0)
+
+	_hover_info_tween = create_tween()
+	_hover_info_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	_hover_info_tween.set_parallel(true)
+	_hover_info_tween.tween_property(card_hover_info_panel, "global_position", final_pos, 0.15)
+	_hover_info_tween.tween_property(card_hover_info_panel, "modulate", Color(1, 1, 1, 1), 0.15)
+
+
+func _slide_hover_info_out() -> void:
+	if _hover_info_tween != null and _hover_info_tween.is_running():
+		_hover_info_tween.kill()
+
+	var current_pos := card_hover_info_panel.global_position
+	var target_pos := Vector2(_last_hovered_card_pos.x, current_pos.y)
+
+	_hover_info_tween = create_tween()
+	_hover_info_tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	_hover_info_tween.set_parallel(true)
+	_hover_info_tween.tween_property(card_hover_info_panel, "global_position", target_pos, 0.1)
+	_hover_info_tween.tween_property(card_hover_info_panel, "modulate", Color(1, 1, 1, 0), 0.1)
+	_hover_info_tween.set_parallel(false)
+	_hover_info_tween.tween_callback(func(): card_hover_info_panel.visible = false)
+
+
+func _build_hover_body_text(card_info: Dictionary) -> String:
+	var rarity: String = card_info.get("rarity", "")
+	var outcome: String = card_info.get("outcome", "")
+	var description: String = card_info.get("description", "")
+	var tags: Array = card_info.get("tags", [])
+
+	if description.is_empty():
+		return "No information available."
+
+	var parts: Array[String] = []
+
+	# Rarity + outcome header line
+	var header_parts: Array[String] = []
+	if not rarity.is_empty():
+		header_parts.append(rarity.capitalize())
+	if not outcome.is_empty():
+		header_parts.append(outcome.capitalize())
+	if not header_parts.is_empty():
+		parts.append(HOVER_TAG_SEPARATOR.join(header_parts))
+
+	parts.append(description)
+
+	if not tags.is_empty():
+		var tag_strings: Array[String] = []
+		for tag in tags:
+			tag_strings.append(String(tag))
+		parts.append(HOVER_TAG_SEPARATOR.join(tag_strings))
+
+	return "\n".join(parts)
+
+
+func _humanize_token(value: String) -> String:
+	if value.is_empty():
+		return value
+
+	var words: Array[String] = []
+	for part in value.split("_"):
+		if part.is_empty():
+			continue
+		words.append(part.capitalize())
+	return " ".join(words)
 
 
 
@@ -377,6 +531,12 @@ func _render_story() -> void:
 
 func _process(delta: float) -> void:
 	if resolution_panel.visible:
+		if _hover_info_showing:
+			_hover_info_showing = false
+			if _hover_info_tween != null and _hover_info_tween.is_running():
+				_hover_info_tween.kill()
+		card_hover_info_panel.visible = false
+		card_hover_info_panel.modulate = Color(1, 1, 1, 1)
 		return
 
 	_time_passed += delta * 3.0
@@ -389,6 +549,7 @@ func _process(delta: float) -> void:
 		else:
 			slot_bgs[i].modulate = Color(1.0, 1.0, 1.0, 0.4)
 
+	_update_card_hover_info_panel()
 	_update_hover_previews()
 	_detect_drops()
 
@@ -599,6 +760,11 @@ func _destroy_all_card_nodes() -> void:
 	_current_hover_slot = -1
 	_current_hover_card_name = ""
 	_hover_preview_text = ""
+	_hover_info_showing = false
+	if _hover_info_tween != null and _hover_info_tween.is_running():
+		_hover_info_tween.kill()
+	card_hover_info_panel.visible = false
+	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
 
 	player_hand.clear_cards()
 	for pile in slot_piles:

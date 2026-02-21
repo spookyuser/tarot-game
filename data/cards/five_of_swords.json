@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "five",
-  "numeric_value": 5
+  "numeric_value": 5,
+  "description": "Creates a victory that costs too much. Someone wins but everyone loses something.",
+  "tags": [
+    "conflict",
+    "loss"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "nine",
-  "numeric_value": 9
+  "numeric_value": 9,
+  "description": "Grants a wish. Deep satisfaction and contentment settle in.",
+  "tags": [
+    "fortune"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

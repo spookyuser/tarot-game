@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "queen",
-  "numeric_value": 13
+  "numeric_value": 13,
+  "description": "Draws others in with radiant confidence. Creative leadership inspires action.",
+  "tags": [
+    "power",
+    "love"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

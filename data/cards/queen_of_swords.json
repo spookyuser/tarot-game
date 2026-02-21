@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "queen",
-  "numeric_value": 13
+  "numeric_value": 13,
+  "description": "Sees through every pretense with painful honesty. Judgment is clear but not gentle.",
+  "tags": [
+    "truth",
+    "power"
+  ],
+  "rarity": "uncommon",
+  "outcome": "mixed"
 }

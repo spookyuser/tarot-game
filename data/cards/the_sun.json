@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "sun",
-  "numeric_value": 19
+  "numeric_value": 19,
+  "description": "Fills everything with joy and warmth. Clarity and success arrive all at once.",
+  "tags": [
+    "love",
+    "fortune"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

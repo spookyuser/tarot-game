@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "page",
-  "numeric_value": 11
+  "numeric_value": 11,
+  "description": "Sparks enthusiasm for a new adventure. Bold energy seeks somewhere to go.",
+  "tags": [
+    "growth",
+    "change"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }
