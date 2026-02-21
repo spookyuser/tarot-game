@@ -27,8 +27,7 @@ func is_available() -> bool:
 
 func generate_reading(
 	request_id: String,
-	card_name: String,
-	card_meaning: String,
+	card_name: String
 ) -> void:
 	if not is_available():
 		request_failed.emit(request_id, "API key not configured")
@@ -40,7 +39,7 @@ func generate_reading(
 		+ "No quotes, no markdown. Just the sentence."
 	)
 
-	var user_prompt := "Card: %s\nMeaning: %s" % [card_name.replace("_", " "), card_meaning]
+	var user_prompt := "Card: %s" % [card_name.replace("_", " ")]
 
 	var body := {
 		"model": MODEL,

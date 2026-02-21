@@ -1,6 +1,11 @@
-# CLAUDE.md
+## Game Loop
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+A client arrives with a story — a short narrative with three blanks where tarot readings will go. The player draws three cards into their hand and drags them one at a time into the three slots. Only one slot is active at a time (left to right). While hovering a held card over the active slot, a preview reading appears both under the slot and inline in the story text. Dropping the card locks the reading permanently and opens the next slot. Once all three slots are filled, a resolution overlay shows the complete story with all readings woven in. The player clicks "Next Client" to discard everything, deal fresh cards, and meet someone new. When the deck runs low it reshuffles the discard pile back in.
+
+
+## Current State
+
+Three-column UI redesign just implemented (not yet tested in Godot). Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings via Claude API are optional (template fallback works). Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
 
 ## Project Overview
 
@@ -9,6 +14,15 @@ Godot 4.6 tarot card reading game built on a reusable card framework addon. Play
 ## Running the Project
 
 Open in Godot Engine 4.6. Main scene: `res://scenes/main.tscn`. Viewport: 1280x720, GL Compatibility renderer. No external build tools, package managers, or test frameworks.
+
+### API Key (Optional)
+
+For AI-generated readings, create `config/api_key.cfg`:
+```ini
+[anthropic]
+api_key=sk-ant-...
+```
+Without this file, readings will show an error message. The API uses `claude-haiku-4-5` via `scenes/claude_api.gd`.
 
 ## Card Framework Architecture
 
@@ -52,6 +66,40 @@ CardManager must appear **before** all CardContainer nodes in the scene tree. Co
 4. Destroyed via `container.clear_cards()` (calls `queue_free()` on each card)
 5. After `clear_cards()`, manually reset `Card.holding_card_count = 0` and `Card.hovering_card_count = 0` since `queue_free()` skips state machine cleanup
 
+## UI Layout (Three-Column)
+
+```
+1280x720 viewport
+ Col 1 (0-280)       Col 2 (280-830)         Col 3 (830-1280)
+ Gold Sidebar         Card Spread             Story Page
+┌────────────────┬──────────────────────┬──────────────────┐
+│ [Portrait]     │ [Slot0] [Slot1] [Sl2]│ ╔══════════════╗ │
+│ Client Name    │ [read]  [read] [read]│ ║ Client Name  ║ │
+│ Client #N      │                      │ ║              ║ │
+│ ────────       │                      │ ║ Story text   ║ │
+│ [deck] 72 left │                      │ ║ with inline  ║ │
+│ ────────       │                      │ ║ readings...  ║ │
+│ ★ ★ ☆ progress │   [ Player Hand ]    │ ╚══════════════╝ │
+└────────────────┴──────────────────────┴──────────────────┘
+```
+
+- **Column 1**: `NinePatchRect` (gold_panel.png) with dark overlay. Contains portrait (AtlasTexture from MinifolksVillagers sprite sheet), client name/counter, deck thumbnail + count, 3 progress star icons.
+- **Column 2**: 3 card slots (SlotPile0/1/2) with background rects and reading labels, PlayerHand centered at x=555.
+- **Column 3**: `NinePatchRect` (wood_panel.png) with dark overlay. Story title + RichTextLabel with bbcode for inline readings (blanks as `___________`, hover previews in italic, filled in highlight color).
+
+### UI Constraints
+
+- **SlotPile0/1/2 and PlayerHand must remain direct children of Main** — Pile positioning constraint (see above). Never nest inside layout containers.
+- **All decorative nodes** (panels, labels, icons, dividers) are also direct children of Main with absolute positioning via `offset_*` properties.
+- **Decorative nodes must set `mouse_filter = 2`** (IGNORE) to avoid intercepting card drag-and-drop events.
+- **ResolutionPanel** uses gold_panel NinePatchRect frame with dark inner fill. NextButton styled with gold_button textures via StyleBoxTexture theme overrides.
+
+### Portrait System
+
+`CLIENT_PORTRAITS` dict in `main.gd` maps client names → MinifolksVillagers sprite sheet paths. `_load_portrait_textures()` extracts the first 32x32 frame from each sheet via `AtlasTexture`. Unknown clients get a deterministic fallback from `PORTRAIT_FALLBACKS` using name hash.
+
+To add a new client portrait: add entry to `CLIENT_PORTRAITS` dict with path to a sprite sheet in `art/MinifolksVillagers/Outline/`.
+
 ## Game Data
 
 ### Card JSON Format (`data/cards/*.json`)
@@ -66,14 +114,9 @@ Major arcana use `"arcana": "major"`, `"suit": "major"`. 78 cards total (22 majo
 
 Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2}` placeholders for inline card readings). Each placeholder marks where a generated sentence will be inserted into the prose.
 
-### Card Assets
+### Art Assets
 
-PNGs in `assets/cards/`, shared back face at `assets/card_back.png`. Card size in game: 110x159 (smaller than framework default 150x210).
+- `assets/cards/` — Card face PNGs, back face at `assets/card_back.png`. Card size: 110x159.
+- `art/fantasy_pixelart_ui/` — Pixel art UI kit: `panels/` (gold/wood/silver NinePatchRect sources), `buttons/`, `icons/` (stars, arrows), `scroll/`, `sliders/`.
+- `art/MinifolksVillagers/Outline/` — Character sprite sheets (32x32 frames). Used for client portraits via AtlasTexture.
 
-## Game Flow (scenes/main.gd)
-
-Deck shuffled → client appears with story (blanks shown as `___________`) → draw 3 cards into hand → drag cards to slots (hover shows preview reading inline in story, drop locks permanently) → all 3 filled triggers resolution overlay after 1.2s → "Next Client" button discards and deals fresh. Deck reshuffles discards when running low.
-
-Story uses Mad Libs format: `current_client["story"]` contains `{0}`, `{1}`, `{2}` placeholders replaced inline with card readings. `_render_story()` substitutes filled readings, hover previews, or blank markers into the template.
-
-Reading text is template-based (fallback when no API key): major arcana map to hardcoded meanings, minor arcana combine `VALUE_INTENSITIES[value] + SUIT_THEMES[suit]`, wrapped in `READING_TEMPLATES` sentence frames designed to read as natural inline prose. With API key, Claude generates one sentence per blank that flows with surrounding text.

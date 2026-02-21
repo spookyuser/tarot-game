@@ -65,63 +65,7 @@ const PORTRAIT_FALLBACKS := [
 
 const PORTRAIT_FRAME_SIZE := 32
 
-const MAJOR_MEANINGS := {
-	"the_fool": "a leap of faith into the unknown",
-	"the_magician": "the power to shape reality through will alone",
-	"the_high_priestess": "hidden knowledge waiting to surface",
-	"empress": "abundant creation overflowing its bounds",
-	"the_emperor": "order imposed by an unyielding hand",
-	"the_hierophant": "wisdom passed down through sacred tradition",
-	"lovers": "a choice that reveals the heart's true desire",
-	"the_chariot": "relentless momentum that cannot be stopped",
-	"the_strength": "quiet courage that tames what force cannot",
-	"the_hermit": "solitary truth found only in withdrawal",
-	"the_wheel_of_fortune": "the turning of fate beyond mortal control",
-	"the_justice": "a reckoning that weighs every deed",
-	"the_hanged_man": "surrender that reveals what struggle hid",
-	"the_death": "an ending that clears the way for what must come next",
-	"the_temperance": "patience blending opposites into harmony",
-	"the_devil": "chains worn willingly in the name of desire",
-	"tower": "a sudden collapse of everything once trusted",
-	"the_stars": "fragile hope glimmering after devastation",
-	"the_moon": "illusions and fears rising from deep waters",
-	"the_sun": "radiant joy that burns away all shadow",
-	"the_judgement": "a final call to account for who you have become",
-	"the_world": "completion of a cycle and the threshold of a new one",
-}
 
-const SUIT_THEMES := {
-	"cups": "the heart's longing",
-	"gold": "earthly fortune",
-	"swords": "cutting truth",
-	"wands": "burning ambition",
-}
-
-const VALUE_INTENSITIES := {
-	"ace": "the pure seed of",
-	"two": "a delicate balance of",
-	"three": "the first fruits of",
-	"four": "a settled foundation of",
-	"five": "the upheaval of",
-	"six": "the harmony of",
-	"seven": "the mystery of",
-	"eight": "the momentum of",
-	"nine": "the culmination of",
-	"ten": "the overwhelming weight of",
-	"page": "a youthful messenger of",
-	"knight": "a fierce pursuit of",
-	"queen": "the deep mastery of",
-	"king": "the commanding authority of",
-}
-
-const READING_TEMPLATES := [
-	"What stirs here is %s, quiet but unmistakable.",
-	"Something shifts — %s, threading through everything.",
-	"%s settles over the moment like dust.",
-	"Here, %s makes itself known without a sound.",
-	"There is %s beneath the surface, patient and sure.",
-	"%s passes through like a breath held too long.",
-]
 
 
 func _ready() -> void:
@@ -320,31 +264,8 @@ func _find_held_card() -> Card:
 	return null
 
 
-func _get_card_meaning(card_info: Dictionary) -> String:
-	var card_name: String = card_info.get("name", "")
-	var arcana: String = card_info.get("arcana", "minor")
-
-	if arcana == "major":
-		return MAJOR_MEANINGS.get(card_name, "something beyond understanding")
-
-	var suit: String = card_info.get("suit", "cups")
-	var value: String = card_info.get("value", "ace")
-	var intensity: String = VALUE_INTENSITIES.get(value, "the essence of")
-	var theme: String = SUIT_THEMES.get(suit, "hidden forces")
-	return "%s %s" % [intensity, theme]
 
 
-func _generate_reading_template(card_info: Dictionary, slot_index: int) -> String:
-	var key = "%s:%d" % [card_info.get("name", ""), slot_index]
-	if _reading_cache.has(key):
-		return _reading_cache[key]
-
-	var meaning = _get_card_meaning(card_info)
-	var template: String = READING_TEMPLATES[randi() % READING_TEMPLATES.size()]
-	var reading = template % meaning
-
-	_reading_cache[key] = reading
-	return reading
 
 
 func _update_slot_labels() -> void:
@@ -431,35 +352,23 @@ func _update_hover_previews() -> void:
 		_render_story()
 		return
 
-	if claude_api.is_available():
-		var loading_text := "The cards are speaking..."
-		reading_labels[new_hover_slot].text = "[color=#6a5a80][i]%s[/i][/color]" % loading_text
-		_hover_preview_text = loading_text
-		_render_story()
-		_loading_slots[new_hover_slot] = true
+	var loading_text := "The cards are speaking..."
+	reading_labels[new_hover_slot].text = "[color=#6a5a80][i]%s[/i][/color]" % loading_text
+	_hover_preview_text = loading_text
+	_render_story()
+	_loading_slots[new_hover_slot] = true
 
-		var held_card = _find_held_card()
-		if held_card == null:
-			return
+	var held_card = _find_held_card()
+	if held_card == null:
+		return
 
-		var card_meaning := _get_card_meaning(held_card.card_info)
+	var request_id := cache_key
+	_pending_requests[request_id] = new_hover_slot
 
-		var request_id := cache_key
-		_pending_requests[request_id] = new_hover_slot
-
-		claude_api.generate_reading(
-			request_id,
-			new_hover_card_name,
-			card_meaning,
-		)
-	else:
-		var held_card = _find_held_card()
-		if held_card == null:
-			return
-		var reading = _generate_reading_template(held_card.card_info, new_hover_slot)
-		reading_labels[new_hover_slot].text = "[color=#8878a0][i]%s[/i][/color]" % reading
-		_hover_preview_text = reading
-		_render_story()
+	claude_api.generate_reading(
+		request_id,
+		new_hover_card_name
+	)
 
 
 func _on_claude_request_completed(request_id: String, text: String) -> void:
@@ -471,11 +380,15 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 	_pending_requests.erase(request_id)
 	_loading_slots.erase(slot_index)
 
-	if slot_filled[slot_index]:
-		return
-
 	var card_name: String = request_id.get_slice(":", 0)
-	if _current_hover_slot == slot_index and _current_hover_card_name == card_name:
+
+	if slot_filled[slot_index]:
+		slot_readings[slot_index] = text
+		reading_labels[slot_index].text = text
+		_render_story()
+		if resolution_panel.visible:
+			_show_resolution()
+	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
 		reading_labels[slot_index].text = "[color=#8878a0][i]%s[/i][/color]" % text
 		_hover_preview_text = text
 		_render_story()
@@ -488,15 +401,21 @@ func _on_claude_request_failed(request_id: String, _error_message: String) -> vo
 	_pending_requests.erase(request_id)
 	_loading_slots.erase(slot_index)
 
+	var error_text := "The cards are silent..."
+	_reading_cache[request_id] = error_text
+
 	var card_name: String = request_id.get_slice(":", 0)
-	var held_card = _find_held_card()
-	if held_card != null and held_card.card_name == card_name:
-		var fallback := _generate_reading_template(held_card.card_info, slot_index)
-		_reading_cache[request_id] = fallback
-		if _current_hover_slot == slot_index:
-			reading_labels[slot_index].text = "[color=#8878a0][i]%s[/i][/color]" % fallback
-			_hover_preview_text = fallback
-			_render_story()
+
+	if slot_filled[slot_index]:
+		slot_readings[slot_index] = error_text
+		reading_labels[slot_index].text = error_text
+		_render_story()
+		if resolution_panel.visible:
+			_show_resolution()
+	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
+		reading_labels[slot_index].text = "[color=#a05a5a][i]%s[/i][/color]" % error_text
+		_hover_preview_text = error_text
+		_render_story()
 
 
 func _detect_drops() -> void:
@@ -523,8 +442,7 @@ func _lock_slot(slot_index: int) -> void:
 		if _reading_cache.has(cache_key):
 			reading = _reading_cache[cache_key]
 		else:
-			reading = _generate_reading_template(card.card_info, slot_index)
-			_reading_cache[cache_key] = reading
+			reading = "The cards are speaking..."
 
 		slot_readings[slot_index] = reading
 		reading_labels[slot_index].text = reading
