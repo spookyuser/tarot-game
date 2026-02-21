@@ -443,10 +443,22 @@ offset_bottom = 63.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.3)
 
-[node name="StoryRichText" type="RichTextLabel" parent="."]
+[node name="ClientContextText" type="RichTextLabel" parent="."]
 layout_mode = 1
 offset_left = 854.0
 offset_top = 74.0
+offset_right = 1260.0
+offset_bottom = 260.0
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 14
+bbcode_enabled = true
+scroll_active = true
+
+[node name="StoryRichText" type="RichTextLabel" parent="."]
+layout_mode = 1
+offset_left = 854.0
+offset_top = 280.0
 offset_right = 1260.0
 offset_bottom = 700.0
 mouse_filter = 2

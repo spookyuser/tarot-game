@@ -28,9 +28,36 @@ var all_card_names: Array[String] = []
 var deck: Array[String] = []
 var discard: Array[String] = []
 
-var clients: Array = []
-var current_client: Dictionary = {}
-var previous_client_index: int = -1
+@onready var client_context_text: RichTextLabel = $ClientContextText
+
+var slot_piles: Array[Pile] = []
+var slot_labels: Array[Label] = []
+var reading_labels: Array[RichTextLabel] = []
+var slot_bgs: Array[NinePatchRect] = []
+
+var all_card_names: Array[String] = []
+var deck: Array[String] = []
+var discard: Array[String] = []
+
+var game_state: Dictionary = {
+	"encounters": [
+		{
+			"client": {
+				"name": "Maria the Widow",
+				"context": "Maria lost her husband to the winter sea. She runs his vineyard alone now, but creditors close in. The vines hang heavy in the autumn air, waiting for hands that may never come.\n\nA letter from the creditors sits unopened on the table, its seal like a wound. She traces the wax with her thumbnail, feeling it crack beneath the pressure.\n\nWhat choice has Maria made?"
+			},
+			"story": "{0}\n\n{1}\n\n{2}",
+			"slots": [
+				{"card": "", "text": ""},
+				{"card": "", "text": ""},
+				{"card": "", "text": ""}
+			]
+		}
+	]
+}
+var current_encounter_index: int = 0
+var current_encounter: Dictionary = {}
+
 var client_count: int = 0
 
 var slot_filled: Array[bool] = [false, false, false]
@@ -164,24 +191,8 @@ func _build_card_name_list() -> void:
 
 
 func _load_clients() -> void:
-	var file = FileAccess.open("res://data/clients.json", FileAccess.READ)
-	var fallback = [{
-		"name": "The Stranger",
-		"story": "A figure in a dark cloak sits before you. They say nothing, only wait. {0} The silence deepens between you like a well with no bottom.\n\nSomething stirs in the dark behind their eyes. {1} You feel it watching, measuring, considering.\n\nThe stranger rises, pulls their cloak tight. {2} They vanish into the night."
-	}]
-
-	if file:
-		var json_text = file.get_as_text()
-		file.close()
-		var parsed = JSON.parse_string(json_text)
-		if parsed is Array and not parsed.is_empty():
-			clients = parsed
-		else:
-			push_error("clients.json failed to parse or is not an array")
-			clients = fallback
-	else:
-		push_error("Failed to load clients.json")
-		clients = fallback
+	# `clients.json` logic removed. Game state is now initialized at the script level.
+	pass
 
 
 func _shuffle_deck() -> void:
@@ -203,11 +214,14 @@ func _draw_cards(count: int) -> Array[String]:
 
 
 func _next_client() -> void:
-	var index = randi() % clients.size()
-	while clients.size() > 1 and index == previous_client_index:
-		index = randi() % clients.size()
-	previous_client_index = index
-	current_client = clients[index]
+	if game_state["encounters"].size() > 0:
+		if current_encounter_index >= game_state["encounters"].size():
+			current_encounter_index = 0 # loop for now
+		current_encounter = game_state["encounters"][current_encounter_index]
+		current_encounter_index += 1
+	else:
+		return
+
 	client_count += 1
 
 	slot_filled = [false, false, false]
@@ -222,7 +236,8 @@ func _next_client() -> void:
 	_loading_slots.clear()
 
 	_update_sidebar()
-	story_title_label.text = current_client["name"]
+	story_title_label.text = current_encounter["client"]["name"]
+	client_context_text.text = current_encounter["client"]["context"]
 
 	for i in range(3):
 		reading_labels[i].text = ""
@@ -240,10 +255,10 @@ func _next_client() -> void:
 
 
 func _update_sidebar() -> void:
-	client_name_left.text = current_client["name"]
+	client_name_left.text = current_encounter["client"]["name"]
 	client_counter_left.text = "Client #%d" % client_count
 
-	var portrait := _get_portrait_for_client(current_client["name"])
+	var portrait := _get_portrait_for_client(current_encounter["client"]["name"])
 	if portrait != null:
 		portrait_frame.texture = portrait
 	else:
@@ -314,7 +329,7 @@ func _update_slot_labels() -> void:
 
 
 func _render_story() -> void:
-	var text: String = current_client["story"]
+	var text: String = current_encounter["story"]
 
 	for i in range(3):
 		var placeholder := "{%d}" % i
@@ -325,7 +340,7 @@ func _render_story() -> void:
 			var preview := "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[i], _hover_preview_text]
 			text = text.replace(placeholder, preview)
 		else:
-			text = text.replace(placeholder, "[color=#4a3a60]___________[/color]")
+			text = text.replace(placeholder, "[color=#4a3a60]__________________________________________[/color]")
 
 	story_rich_text.text = text
 
@@ -415,8 +430,8 @@ func _update_hover_previews() -> void:
 
 	claude_api.generate_reading(
 		request_id,
-		current_client["name"],
-		current_client["story"],
+		current_encounter["client"]["name"],
+		current_encounter["client"]["context"],
 		slot_cards,
 		slot_texts,
 		new_hover_slot
@@ -535,9 +550,9 @@ func _invalidate_unfilled_caches() -> void:
 
 func _show_resolution() -> void:
 	resolution_panel.visible = true
-	resolution_title.text = "Reading for %s" % current_client["name"]
+	resolution_title.text = "Reading for %s" % current_encounter["client"]["name"]
 
-	var text: String = current_client["story"]
+	var text: String = current_encounter["story"]
 	for i in range(3):
 		text = text.replace("{%d}" % i, "[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
 
