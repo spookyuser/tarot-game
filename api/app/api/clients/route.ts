@@ -2,14 +2,14 @@ import { generateObject } from "ai";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const SYSTEM_PROMPT = `You invent people who walk into a tarot reader's tent in a small port town called Brindlemarsh. Each person is real — they have a job, a home, people they care about, a specific problem they can't solve alone.
+const SYSTEM_PROMPT = `You invent people who walk into a tarot reader's tent in a small port town. Each person is real — they have a job, a home, people they care about, a specific problem they can't solve alone.
 
 Output a JSON object:
 - "name": First name and a descriptor rooted in who they are — their trade, a habit, a reputation.
 - "context": [MAX 1 sentence] A short direct sentence in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers. 
 
 Guidelines:
-- They should have problems that are human and very specific — not "I want to find love" but "I can't stop arguing with my partner, and I don't know if we can fix it." Not "I'm stressed about money" but "I lost my job and I have rent due in three days." The more specific, the better. The cards will be more specific in response.
+- They should have problems that are human and that we all understand — not "I want to find love" but "I can't stop arguing with my partner, and I don't know if we can fix it." Not "I'm stressed about money" but "I lost my job and I have rent due in three days." The more specific, the better. The cards will be more specific in response.
 `;
 
 const clientSchema = z.object({
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await generateObject({
       model: "anthropic/claude-sonnet-4.6",
+      temperature: 0.2,
       system: SYSTEM_PROMPT,
       maxOutputTokens: 150,
       prompt,
