@@ -215,6 +215,11 @@ func _ready() -> void:
 
 	claude_api.request_completed.connect(_on_claude_request_completed)
 	claude_api.request_failed.connect(_on_claude_request_failed)
+	claude_api.client_request_completed.connect(_on_client_request_completed)
+	claude_api.client_request_failed.connect(_on_client_request_failed)
+
+	player_hand.max_hand_size = 10
+	player_hand.max_hand_spread = 520 # Fit within the middle column
 
 	_load_portrait_textures()
 
@@ -302,14 +307,47 @@ func _draw_cards(count: int) -> Array[String]:
 
 
 func _next_client() -> void:
-	if game_state["encounters"].size() > 0:
-		if current_encounter_index >= game_state["encounters"].size():
-			current_encounter_index = 0 # loop for now
-		current_encounter = game_state["encounters"][current_encounter_index]
-		current_encounter_index += 1
-	else:
+	if current_encounter_index >= game_state["encounters"].size():
+		_show_client_loading()
+		claude_api.generate_client("client_req", game_state)
 		return
 
+	current_encounter = game_state["encounters"][current_encounter_index]
+	current_encounter_index += 1
+
+	_setup_current_client_ui()
+
+func _show_client_loading() -> void:
+	story_title_label.text = "Waiting..."
+	client_context_text.text = "The cards are shuffling..."
+	story_rich_text.text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]A new presence approaches the table...[/wave][/i][/color]"
+	for i in range(3):
+		reading_labels[i].text = ""
+		slot_labels[i].text = ""
+		slot_piles[i].enable_drop_zone = false
+	resolution_panel.visible = false
+	card_hover_info_panel.visible = false
+
+func _on_client_request_completed(_request_id: String, client_data: Dictionary) -> void:
+	var new_encounter := {
+		"client": {
+			"name": client_data.get("name", "Unknown"),
+			"context": client_data.get("context", "")
+		},
+		"story": client_data.get("story", "{0}\n\n{1}\n\n{2}"),
+		"slots": [
+			{"card": "", "text": ""},
+			{"card": "", "text": ""},
+			{"card": "", "text": ""}
+		]
+	}
+	game_state["encounters"].append(new_encounter)
+	_next_client()
+
+func _on_client_request_failed(_request_id: String, error_message: String) -> void:
+	story_rich_text.text = "[color=#a05a5a]No one came to the table. (%s)[/color]" % error_message
+
+func _setup_current_client_ui() -> void:
 	client_count += 1
 
 	slot_filled = [false, false, false]
@@ -374,7 +412,9 @@ func _update_progress_icons() -> void:
 
 
 func _deal_hand() -> void:
-	var drawn = _draw_cards(3)
+	var needed = 10 - player_hand.get_card_count()
+	if needed <= 0: return
+	var drawn = _draw_cards(needed)
 	for card_name in drawn:
 		card_manager.card_factory.create_card(card_name, player_hand)
 	_update_deck_count()
