@@ -25,7 +25,7 @@ func is_available() -> bool:
 func generate_reading(
 	request_id: String,
 	client_name: String,
-	client_story: String,
+	client_context: String,
 	slot_cards: Array,
 	slot_texts: Array[String],
 	target_slot: int
@@ -60,7 +60,7 @@ func generate_reading(
 	var body := {
 		"client": {
 			"name": client_name,
-			"situation": client_story,
+			"situation": client_context,
 		},
 		"slots": slots,
 	}
