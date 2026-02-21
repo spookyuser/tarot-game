@@ -5,13 +5,11 @@ import { z } from "zod";
 const SYSTEM_PROMPT = `You invent people who walk into a tarot reader's tent in a small port town called Brindlemarsh. Each person is real — they have a job, a home, people they care about, a specific problem they can't solve alone.
 
 Output a JSON object:
-- "name": First name and a descriptor rooted in who they are — their trade, a habit, a reputation. (e.g., "Soren the Dockhand", "Mira Who Waits", "Old Fen", "Dalla Bright-Hands"). Not poetic titles.
-- "context": A short direct sentence in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers. (Important that this is succint)
+- "name": First name and a descriptor rooted in who they are — their trade, a habit, a reputation.
+- "context": [MAX 1 sentence] A short direct sentence in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers. 
 
 Guidelines:
-- Ground them in daily life: they work somewhere, they live somewhere, they know specific people by name
-- Their problem should have UNANSWERED QUESTIONS — things they don't know and can't figure out. Something missing, something unexplained, something that doesn't add up
-- Leave gaps. The less the client understands about their own situation, the more the cards can reveal
+- They should have problems that are human and very specific — not "I want to find love" but "I can't stop arguing with my partner, and I don't know if we can fix it." Not "I'm stressed about money" but "I lost my job and I have rent due in three days." The more specific, the better. The cards will be more specific in response.
 `;
 
 const clientSchema = z.object({

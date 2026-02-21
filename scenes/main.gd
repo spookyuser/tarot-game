@@ -19,9 +19,8 @@ extends Control
 	$ProgressIcon0, $ProgressIcon1, $ProgressIcon2
 ]
 @onready var card_hover_info_panel: NinePatchRect = $CardHoverInfoPanel
-@onready var card_hover_info_inner: ColorRect = $CardHoverInfoPanel/CardHoverInfoInner
-@onready var card_hover_info_title: Label = $CardHoverInfoPanel/CardHoverInfoTitle
 @onready var card_hover_info_body: RichTextLabel = $CardHoverInfoPanel/CardHoverInfoBody
+@onready var card_hover_reversed_label: Label = $CardHoverInfoPanel/ReversedLabel
 @onready var reading_vignette: ColorRect = $ReadingVignetteOverlay
 @onready var loading_panel: Control = $LoadingPanel
 @onready var intro_panel: Control = $IntroPanel
@@ -123,93 +122,7 @@ const HOVER_COLORS := [
 const HOVER_INFO_PANEL_MARGIN := 8.0
 const HOVER_INFO_PANEL_X_OFFSET := 10.0
 const HOVER_INFO_PANEL_Y_OFFSET := 0.0
-const HOVER_DESCRIPTION_COLOR := "#f2e6c9"
-const HOVER_RULE_COLOR := "#9c8455"
-const HOVER_TAG_COLOR := "#93abd1"
-const HOVER_PANEL_BASE_COLOR := Color(0.09, 0.06, 0.04, 0.93)
-const HOVER_DEFAULT_ICON := "res://art/fantasy_pixelart_ui/icons/silver_right.png"
-
-const ARCANA_VISUALS := {
-	"major": {
-		"abbr": "MJR",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_flag.png",
-		"color": "#ddb76d",
-	},
-	"minor": {
-		"abbr": "MNR",
-		"icon": "res://art/fantasy_pixelart_ui/icons/silver_flag.png",
-		"color": "#97b5d5",
-	},
-}
-
-const SUIT_VISUALS := {
-	"cups": {
-		"abbr": "CUP",
-		"icon": "res://art/fantasy_pixelart_ui/icons/silver_down.png",
-		"color": "#7bc2d4",
-	},
-	"gold": {
-		"abbr": "GLD",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_star.png",
-		"color": "#e0bc6a",
-	},
-	"swords": {
-		"abbr": "SWD",
-		"icon": "res://art/fantasy_pixelart_ui/icons/silver_sword.png",
-		"color": "#c8d7ee",
-	},
-	"wands": {
-		"abbr": "WND",
-		"icon": "res://art/fantasy_pixelart_ui/icons/wood_up.png",
-		"color": "#d9a270",
-	},
-	"major": {
-		"abbr": "ARC",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_flag.png",
-		"color": "#d6af67",
-	},
-}
-
-const RARITY_VISUALS := {
-	"common": {
-		"abbr": "C",
-		"icon": "res://art/fantasy_pixelart_ui/icons/silver_tick.png",
-		"color": "#bbc0cb",
-	},
-	"rare": {
-		"abbr": "R",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_tick.png",
-		"color": "#e3c173",
-	},
-	"epic": {
-		"abbr": "E",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_star.png",
-		"color": "#cd8fe6",
-	},
-	"legendary": {
-		"abbr": "L",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_castle.png",
-		"color": "#f0cb6f",
-	},
-}
-
-const OUTCOME_VISUALS := {
-	"bright": {
-		"abbr": "+",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_up.png",
-		"color": "#92d5a8",
-	},
-	"dark": {
-		"abbr": "-",
-		"icon": "res://art/fantasy_pixelart_ui/icons/gold_down.png",
-		"color": "#dd8f8f",
-	},
-	"mixed": {
-		"abbr": "=",
-		"icon": "res://art/fantasy_pixelart_ui/icons/silver_right.png",
-		"color": "#d8bf89",
-	},
-}
+const HOVER_TEXT_COLOR := "#e8dcc4"
 
 func _ready() -> void:
 	back_texture = load("res://assets/card_back.png")
@@ -486,12 +399,8 @@ func _update_card_hover_info_panel() -> void:
 	var hovered_card := _find_hovered_hand_card()
 
 	if hovered_card != null:
-		var title_text := _humanize_token(hovered_card.card_name)
-		if hovered_card.is_reversed:
-			title_text += " (Reversed)"
-		card_hover_info_title.text = title_text
-		_apply_hover_panel_visuals(hovered_card.card_info)
-		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info, hovered_card.is_reversed)
+		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info)
+		card_hover_reversed_label.visible = hovered_card.is_reversed
 		_last_hovered_card_pos = hovered_card.global_position
 
 		if not _hover_info_showing:
@@ -574,129 +483,11 @@ func _slide_hover_info_out() -> void:
 	_hover_info_tween.tween_callback(func(): card_hover_info_panel.visible = false)
 
 
-func _build_hover_body_text(card_info: Dictionary, reversed: bool = false) -> String:
-	var arcana: String = String(card_info.get("arcana", "")).to_lower()
-	var suit: String = String(card_info.get("suit", "")).to_lower()
-	var value: String = String(card_info.get("value", ""))
-	var numeric_value: int = int(card_info.get("numeric_value", -1))
-	var rarity: String = String(card_info.get("rarity", "")).to_lower()
-	var outcome: String = String(card_info.get("outcome", "")).to_lower()
-	var description: String = _compact_hover_description(String(card_info.get("description", "")))
-	var tags: Array = card_info.get("tags", [])
-	var arcana_visual := _lookup_visual(ARCANA_VISUALS, arcana)
-	var suit_visual := _lookup_visual(SUIT_VISUALS, suit)
-	var rarity_visual := _lookup_visual(RARITY_VISUALS, rarity)
-	var outcome_visual := _lookup_visual(OUTCOME_VISUALS, outcome)
-	var parts: Array[String] = []
-
-	var arcana_text := String(arcana_visual.get("abbr", "UNK"))
-	var suit_text := "%s %s" % [
-		String(suit_visual.get("abbr", "UNK")),
-		_compact_value_token(value, numeric_value),
-	]
-	var rarity_text := String(rarity_visual.get("abbr", "?"))
-	var outcome_text := String(outcome_visual.get("abbr", "?"))
-
-	# MTG-style body: rules text first, compact stat line footer.
-	parts.append("[color=%s][i]%s[/i][/color]" % [HOVER_DESCRIPTION_COLOR, _escape_bbcode(description)])
-	parts.append("")
-	parts.append("[color=%s]------------[/color]" % HOVER_RULE_COLOR)
-	parts.append(_build_compact_row(arcana_visual, arcana_text, suit_visual, suit_text))
-	parts.append(_build_compact_row(rarity_visual, rarity_text, outcome_visual, outcome_text))
-
-	if reversed:
-		parts.append("[color=#dd8f8f][b]REVERSED[/b][/color]")
-
-	var tag_line := _compact_tag_line(tags)
-	if not tag_line.is_empty():
-		parts.append(tag_line)
-
-	return "\n".join(parts)
-
-
-func _apply_hover_panel_visuals(card_info: Dictionary) -> void:
-	var suit_key := String(card_info.get("suit", "")).to_lower()
-	var suit_visual := _lookup_visual(SUIT_VISUALS, suit_key)
-	var accent_hex := String(suit_visual.get("color", "#c7b289"))
-	var accent := Color.from_string(accent_hex, Color(0.85, 0.7, 0.4, 1.0))
-
-	card_hover_info_title.add_theme_color_override("font_color", accent.lightened(0.15))
-	card_hover_info_inner.color = Color(
-		HOVER_PANEL_BASE_COLOR.r * 0.78 + accent.r * 0.16,
-		HOVER_PANEL_BASE_COLOR.g * 0.78 + accent.g * 0.16,
-		HOVER_PANEL_BASE_COLOR.b * 0.78 + accent.b * 0.16,
-		HOVER_PANEL_BASE_COLOR.a
-	)
-
-
-func _lookup_visual(visual_map: Dictionary, key: String) -> Dictionary:
-	var normalized := key.to_lower()
-	if visual_map.has(normalized):
-		return visual_map[normalized]
-
-	var fallback_abbr := "UNK"
-	if not normalized.is_empty():
-		fallback_abbr = normalized.substr(0, mini(3, normalized.length())).to_upper()
-
-	return {
-		"abbr": fallback_abbr,
-		"icon": HOVER_DEFAULT_ICON,
-		"color": "#c7b289",
-	}
-
-
-func _build_compact_row(left_visual: Dictionary, left_text: String, right_visual: Dictionary, right_text: String) -> String:
-	return "%s [color=%s][b]%s[/b][/color]  %s [color=%s][b]%s[/b][/color]" % [
-		_build_hover_icon(String(left_visual.get("icon", HOVER_DEFAULT_ICON))),
-		String(left_visual.get("color", "#c7b289")),
-		_escape_bbcode(left_text),
-		_build_hover_icon(String(right_visual.get("icon", HOVER_DEFAULT_ICON))),
-		String(right_visual.get("color", "#c7b289")),
-		_escape_bbcode(right_text),
-	]
-
-
-func _build_hover_icon(icon_path: String) -> String:
-	if icon_path.is_empty():
-		return "*"
-	return "[img]%s[/img]" % icon_path
-
-
-func _compact_hover_description(text: String, max_chars: int = 72) -> String:
-	var trimmed := text.strip_edges()
-	if trimmed.is_empty():
-		return "No omen appears."
-	if trimmed.length() <= max_chars:
-		return trimmed
-	return "%s..." % trimmed.substr(0, max_chars).strip_edges()
-
-
-func _compact_value_token(value: String, numeric_value: int) -> String:
-	if numeric_value >= 0:
-		return str(numeric_value)
-
-	var compact := _humanize_token(value).to_upper()
-	if compact.length() <= 3:
-		return compact
-	return compact.substr(0, 3)
-
-
-func _compact_tag_line(tags: Array, max_count: int = 2) -> String:
-	if tags.is_empty():
-		return ""
-
-	var tag_tokens: Array[String] = []
-	for i in range(mini(tags.size(), max_count)):
-		var compact := _humanize_token(String(tags[i])).to_upper()
-		if compact.length() > 4:
-			compact = compact.substr(0, 4)
-		tag_tokens.append("#%s" % _escape_bbcode(compact))
-
-	return "[color=%s]%s[/color]" % [HOVER_TAG_COLOR, " ".join(tag_tokens)]
-
-
-func _escape_bbcode(value: String) -> String:
-	return value.replace("[", "\\[").replace("]", "\\]")
+func _build_hover_body_text(card_info: Dictionary) -> String:
+	var description := String(card_info.get("description", "")).strip_edges()
+	if description.is_empty():
+		description = "No omen appears."
+	return "[color=%s][i]%s[/i][/color]" % [HOVER_TEXT_COLOR, description]
 
 
 func _humanize_token(value: String) -> String:
