@@ -1,0 +1,15 @@
+{
+  "name": "the_tower",
+  "front_image": "the_tower.png",
+  "arcana": "major",
+  "suit": "major",
+  "value": "tower",
+  "numeric_value": 16,
+  "description": "Destroys something the person relied on. A sudden collapse that cannot be undone.",
+  "tags": [
+    "loss",
+    "change"
+  ],
+  "rarity": "rare",
+  "outcome": "dark"
+}

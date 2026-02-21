@@ -97,9 +97,9 @@ CardManager must appear **before** all CardContainer nodes in the scene tree. Co
 
 ### Portrait System
 
-`CLIENT_PORTRAITS` dict in `main.gd` maps client names → MinifolksVillagers sprite sheet paths. `_load_portrait_textures()` extracts the first 32x32 frame from each sheet via `AtlasTexture`. Unknown clients get a deterministic fallback from `PORTRAIT_FALLBACKS` using name hash.
+`CLIENT_PORTRAITS` dict in `main.gd` maps client names → portrait sprite sheet paths. `_load_portrait_textures()` extracts the first 32x32 frame from each sheet via `AtlasTexture`. Unknown clients get a deterministic fallback from `PORTRAIT_FALLBACKS` using name hash.
 
-To add a new client portrait: add entry to `CLIENT_PORTRAITS` dict with path to a sprite sheet in `art/MinifolksVillagers/Outline/`.
+To add a new client portrait: add entry to `CLIENT_PORTRAITS` dict with path to a sprite sheet in `assets/portraits/`.
 
 ## Game Data
 
@@ -118,9 +118,10 @@ Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2
 ### Art Assets
 
 - `assets/cards/` — Card face PNGs, back face at `assets/card_back.png`. Card size: 110x159.
-- `art/fantasy_pixelart_ui/` — Pixel art UI kit: `panels/` (gold/wood/silver NinePatchRect sources), `buttons/`, `icons/` (stars, arrows), `scroll/`, `sliders/`.
-- `art/MinifolksVillagers/Outline/` — Character sprite sheets (32x32 frames). Used for client portraits via AtlasTexture.
-- `art/FX/` — Audio files: ambient music, card SFX, and suit-themed reading tones (MP3).
+- `assets/ui/` — Pixel art UI kit: `panels/` (gold/wood/silver NinePatchRect sources), `buttons/`, `icons/` (stars, arrows).
+- `assets/portraits/` — Character sprite sheets (32x32 frames). Used for client portraits via AtlasTexture.
+- `assets/audio/` — Audio files: ambient music, card SFX, and suit-themed reading tones (MP3).
+- `assets/fonts/spectral/` — Spectral font family (SIL OFL).
 
 ## Sound System
 
@@ -130,14 +131,14 @@ Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2
 
 | Sound | File | Exported Property | Loops |
 |-------|------|-------------------|-------|
-| Ambient | `Tarrot Ambience.mp3` | `ambient_stream` | Yes |
-| Shuffle | `Tarrot FX CARD SHUFFLE.mp3` | `shuffle_stream` | No |
-| Card drop | `Tarrot FX CARD.mp3` | `card_drop_stream` | No |
-| Reading (cups) | `Tarrot FX HAPPY.mp3` | `reading_cups_stream` | Yes |
-| Reading (swords) | `Tarrot FX SAD.mp3` | `reading_swords_stream` | Yes |
-| Reading (wands) | `Tarrot FX DEATH.mp3` | `reading_wands_stream` | Yes |
-| Reading (gold) | `Tarrot FX MYSTERY.mp3` | `reading_gold_stream` | Yes |
-| Reading (major) | `Tarrot FX MYSTERY.mp3` | `reading_major_stream` | Yes |
+| Ambient | `ambience.mp3` | `ambient_stream` | Yes |
+| Shuffle | `card_shuffle.mp3` | `shuffle_stream` | No |
+| Card drop | `card_drop.mp3` | `card_drop_stream` | No |
+| Reading (cups) | `reading_happy.mp3` | `reading_cups_stream` | Yes |
+| Reading (swords) | `reading_sad.mp3` | `reading_swords_stream` | Yes |
+| Reading (wands) | `reading_death.mp3` | `reading_wands_stream` | Yes |
+| Reading (gold) | `reading_mystery.mp3` | `reading_gold_stream` | Yes |
+| Reading (major) | `reading_mystery.mp3` | `reading_major_stream` | Yes |
 
 ### Integration Points in main.gd
 
@@ -151,4 +152,3 @@ Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2
 ### Swapping Audio Files
 
 To replace a sound, assign a different `AudioStream` to the corresponding exported property on the `SoundManager` node in the Inspector. The `_set_loop()` helper handles looping for MP3, OGG, and WAV formats automatically.
-

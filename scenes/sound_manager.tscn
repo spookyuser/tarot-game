@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://ke6x51kah8hl"]
 
 [ext_resource type="Script" path="res://scenes/sound_manager.gd" id="1_sound"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot Ambience.mp3" id="audio_ambient"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX CARD SHUFFLE.mp3" id="audio_shuffle"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX CARD.mp3" id="audio_card_drop"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX HAPPY.mp3" id="audio_happy"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX SAD.mp3" id="audio_sad"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX DEATH.mp3" id="audio_death"]
-[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX MYSTERY.mp3" id="audio_mystery"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/ambience.mp3" id="audio_ambient"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/card_shuffle.mp3" id="audio_shuffle"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/card_drop.mp3" id="audio_card_drop"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/reading_happy.mp3" id="audio_happy"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/reading_sad.mp3" id="audio_sad"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/reading_death.mp3" id="audio_death"]
+[ext_resource type="AudioStreamMP3" path="res://assets/audio/reading_mystery.mp3" id="audio_mystery"]
 
 [node name="SoundManager" type="Node"]
 script = ExtResource("1_sound")

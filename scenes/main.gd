@@ -90,19 +90,19 @@ var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
 
 const CLIENT_PORTRAITS := {
-	"Maria the Widow": "res://art/MinifolksVillagers/Outline/MiniVillagerWoman.png",
-	"The Stranger": "res://art/MinifolksVillagers/Outline/MiniNobleMan.png",
+	"Maria the Widow": "res://assets/portraits/MiniVillagerWoman.png",
+	"The Stranger": "res://assets/portraits/MiniNobleMan.png",
 }
 
 const PORTRAIT_FALLBACKS := [
-	"res://art/MinifolksVillagers/Outline/MiniPeasant.png",
-	"res://art/MinifolksVillagers/Outline/MiniWorker.png",
-	"res://art/MinifolksVillagers/Outline/MiniVillagerMan.png",
-	"res://art/MinifolksVillagers/Outline/MiniOldMan.png",
-	"res://art/MinifolksVillagers/Outline/MiniOldWoman.png",
-	"res://art/MinifolksVillagers/Outline/MiniNobleWoman.png",
-	"res://art/MinifolksVillagers/Outline/MiniPrincess.png",
-	"res://art/MinifolksVillagers/Outline/MiniQueen.png",
+	"res://assets/portraits/MiniPeasant.png",
+	"res://assets/portraits/MiniWorker.png",
+	"res://assets/portraits/MiniVillagerMan.png",
+	"res://assets/portraits/MiniOldMan.png",
+	"res://assets/portraits/MiniOldWoman.png",
+	"res://assets/portraits/MiniNobleWoman.png",
+	"res://assets/portraits/MiniPrincess.png",
+	"res://assets/portraits/MiniQueen.png",
 ]
 
 const PORTRAIT_FRAME_SIZE := 32
@@ -201,11 +201,11 @@ func _get_portrait_for_client(client_name: String) -> Texture2D:
 
 func _build_card_name_list() -> void:
 	var major = [
-		"the_fool", "the_magician", "the_high_priestess", "empress",
-		"the_emperor", "the_hierophant", "lovers", "the_chariot",
+		"the_fool", "the_magician", "the_high_priestess", "the_empress",
+		"the_emperor", "the_hierophant", "the_lovers", "the_chariot",
 		"the_strength", "the_hermit", "the_wheel_of_fortune", "the_justice",
 		"the_hanged_man", "the_death", "the_temperance", "the_devil",
-		"tower", "the_stars", "the_moon", "the_sun",
+		"the_tower", "the_stars", "the_moon", "the_sun",
 		"the_judgement", "the_world"
 	]
 	all_card_names.append_array(major)

@@ -1,0 +1,15 @@
+{
+  "name": "the_empress",
+  "front_image": "the_empress.png",
+  "arcana": "major",
+  "suit": "major",
+  "value": "empress",
+  "numeric_value": 3,
+  "description": "Fills the situation with abundance and care. Things flourish and life gets richer.",
+  "tags": [
+    "love",
+    "growth"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
+}

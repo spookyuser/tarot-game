@@ -29,7 +29,7 @@ window/stretch/mode="canvas_items"
 
 [gui]
 
-theme/custom_font="uid://c4vehto7xhw3m"
+theme/custom_font="res://assets/fonts/spectral/Spectral-Bold.ttf"
 
 [rendering]
 
