@@ -1,10 +1,16 @@
 import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
-import { GameState } from "@/lib/data";
+import { GameState, Slot } from "@/lib/data";
+
+const POSITION_ORDER: Array<Slot["position"]> = ["past", "present", "future"];
 
 const SYSTEM_PROMPT = `You are the narrator of fates. People sit before you for a tarot reading. Whatever you write becomes real — these are not predictions, they are events that will happen.
 
-You will receive a JSON object representing a tarot reading in progress. It contains a client and three slots (past, present, future). One slot will have a card but no text. Write the text for that slot.
+You will receive a JSON object with:
+- "reading": the current client and the three reading slots (past, present, future).
+- "context": full encounter/game-state context that may help narrative continuity.
+
+Exactly one slot in reading.slots will have a card but no text. Write text for that slot only.
 
 ## Rules
 
@@ -16,40 +22,257 @@ You will receive a JSON object representing a tarot reading in progress. It cont
 - Never contradict or undo what earlier slots established
 - Do not acknowledge that you are an AI, a game, or a narrator
 
-## Card Attributes
-
-Each slot with a card may include these attributes:
-- **sentiment** ("positive", "negative", "neutral"): Sets the emotional tone of the reading. A positive card produces fortunate events; a negative card produces hardship or loss; neutral is ambiguous.
-- **keywords**: Core themes the card represents. Weave at least one keyword's theme into the narrative.
-- **description**: Background context for the card's meaning. Use it to inform direction but write sharper than the description — your text should feel like fate, not a textbook.
-
-If attributes are missing, fall back to the card's traditional tarot meaning.
-
 Return ONLY the text for the empty slot. No JSON. No quotes. No commentary. Just the sentence.`;
 
+type JsonRecord = Record<string, unknown>;
+
+interface NormalizedReadingRequest {
+  client: GameState["client"];
+  slots: Slot[];
+  gameState?: JsonRecord;
+  activeEncounterIndex?: number;
+  encounterStory?: string;
+}
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  const parsed = asString(value);
+  if (parsed === null) {
+    return null;
+  }
+  const trimmed = parsed.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function asInteger(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function normalizeCardName(cardName: string): string {
+  return cardName.replace(/_/g, " ").trim();
+}
+
+function normalizeSlot(input: unknown, index: number): Slot {
+  const slotRecord = isRecord(input) ? input : {};
+  const defaultPosition = POSITION_ORDER[index] ?? "future";
+
+  const rawPosition = asString(slotRecord.position);
+  const position: Slot["position"] =
+    rawPosition === "past" || rawPosition === "present" || rawPosition === "future"
+      ? rawPosition
+      : defaultPosition;
+
+  const rawCard = asNonEmptyString(slotRecord.card);
+  const rawText = asNonEmptyString(slotRecord.text);
+
+  return {
+    position,
+    card: rawCard ? normalizeCardName(rawCard) : null,
+    text: rawText ?? null,
+  };
+}
+
+function normalizeFromDirectPayload(raw: JsonRecord): NormalizedReadingRequest | null {
+  const clientRecord = isRecord(raw.client) ? raw.client : null;
+  const slotInputs = asArray(raw.slots);
+  if (clientRecord === null || slotInputs.length === 0) {
+    return null;
+  }
+
+  const name = asNonEmptyString(clientRecord.name);
+  const situation = asNonEmptyString(clientRecord.situation);
+  if (name === null || situation === null) {
+    return null;
+  }
+
+  const client: GameState["client"] = { name, situation };
+  if (typeof clientRecord.age === "number" && Number.isFinite(clientRecord.age)) {
+    client.age = clientRecord.age;
+  }
+
+  const slots = POSITION_ORDER.map((_, index) => normalizeSlot(slotInputs[index], index));
+  return { client, slots };
+}
+
+function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | null {
+  const gameState = isRecord(raw.game_state) ? raw.game_state : null;
+  if (gameState === null) {
+    return null;
+  }
+
+  const encounters = asArray(gameState.encounters);
+  if (encounters.length === 0) {
+    return null;
+  }
+
+  const requestedIndex = asInteger(raw.active_encounter_index) ?? 0;
+  const activeEncounterIndex = Math.min(
+    Math.max(requestedIndex, 0),
+    encounters.length - 1
+  );
+
+  const encounter = isRecord(encounters[activeEncounterIndex])
+    ? encounters[activeEncounterIndex]
+    : null;
+  if (encounter === null) {
+    return null;
+  }
+
+  const encounterClient = isRecord(encounter.client) ? encounter.client : null;
+  const name = encounterClient ? asNonEmptyString(encounterClient.name) : null;
+  const situation = encounterClient
+    ? asNonEmptyString(encounterClient.context) ??
+      asNonEmptyString(encounterClient.situation)
+    : null;
+  if (name === null || situation === null) {
+    return null;
+  }
+
+  const runtimeState = isRecord(raw.runtime_state) ? raw.runtime_state : {};
+  const runtimeCards = asArray(runtimeState.slot_cards);
+  const runtimeTexts = asArray(runtimeState.slot_texts);
+  const encounterSlots = asArray(encounter.slots);
+
+  const slots = POSITION_ORDER.map((position, index) => {
+    const hasRuntimeCard = runtimeCards[index] !== undefined;
+    const hasRuntimeText = runtimeTexts[index] !== undefined;
+
+    if (hasRuntimeCard || hasRuntimeText) {
+      const runtimeCardName = asNonEmptyString(runtimeCards[index]);
+      const runtimeText = asNonEmptyString(runtimeTexts[index]);
+      return {
+        position,
+        card: runtimeCardName ? normalizeCardName(runtimeCardName) : null,
+        text: runtimeText ?? null,
+      };
+    }
+
+    const normalized = normalizeSlot(encounterSlots[index], index);
+    return {
+      position,
+      card: normalized.card ?? null,
+      text: normalized.text ?? null,
+    };
+  });
+
+  return {
+    client: { name, situation },
+    slots,
+    gameState,
+    activeEncounterIndex,
+    encounterStory: asString(encounter.story) ?? undefined,
+  };
+}
+
+function normalizeRequestPayload(body: unknown): NormalizedReadingRequest | null {
+  if (!isRecord(body)) {
+    return null;
+  }
+
+  const fromGamePayload = normalizeFromGamePayload(body);
+  if (fromGamePayload) {
+    return fromGamePayload;
+  }
+
+  return normalizeFromDirectPayload(body);
+}
+
+function buildPromptPayload(request: NormalizedReadingRequest): string {
+  const payload: JsonRecord = {
+    reading: {
+      client: request.client,
+      slots: request.slots,
+    },
+  };
+
+  const context: JsonRecord = {};
+  if (request.gameState) {
+    context.game_state = request.gameState;
+  }
+  if (typeof request.activeEncounterIndex === "number") {
+    context.active_encounter_index = request.activeEncounterIndex;
+  }
+  if (request.encounterStory) {
+    context.encounter_story = request.encounterStory;
+  }
+
+  if (Object.keys(context).length > 0) {
+    payload.context = context;
+  }
+
+  return JSON.stringify(payload, null, 2);
+}
+
+function buildUpdatedGameState(
+  request: NormalizedReadingRequest,
+  updatedSlots: Slot[]
+): JsonRecord | null {
+  if (!request.gameState) {
+    return null;
+  }
+
+  const nextGameState = structuredClone(request.gameState) as JsonRecord;
+  const encounters = asArray(nextGameState.encounters);
+  if (
+    typeof request.activeEncounterIndex !== "number" ||
+    request.activeEncounterIndex < 0 ||
+    request.activeEncounterIndex >= encounters.length
+  ) {
+    return nextGameState;
+  }
+
+  const encounterValue = encounters[request.activeEncounterIndex];
+  if (!isRecord(encounterValue)) {
+    return nextGameState;
+  }
+
+  encounterValue.slots = updatedSlots.map((slot) => ({
+    card: slot.card ?? "",
+    text: slot.text ?? "",
+  }));
+  encounters[request.activeEncounterIndex] = encounterValue;
+  nextGameState.encounters = encounters;
+  return nextGameState;
+}
+
 export async function POST(request: NextRequest) {
-  let body: GameState;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!body?.client?.situation) {
+  const normalized = normalizeRequestPayload(body);
+  if (!normalized) {
+    return NextResponse.json(
+      {
+        error:
+          "Invalid request body. Send either { client, slots } or { game_state, active_encounter_index, runtime_state }.",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (!normalized.client.situation) {
     return NextResponse.json(
       { error: "client.situation is required" },
       { status: 400 }
     );
   }
 
-  if (!Array.isArray(body.slots) || body.slots.length === 0) {
-    return NextResponse.json(
-      { error: "slots array is required" },
-      { status: 400 }
-    );
-  }
-
-  const targetIndex = body.slots.findIndex(
+  const targetIndex = normalized.slots.findIndex(
     (s) => s.card && (s.text === null || s.text === undefined || s.text === "")
   );
 
@@ -63,9 +286,9 @@ export async function POST(request: NextRequest) {
   let generated: string;
   try {
     const result = await generateText({
-      model:'anthropic/claude-haiku-4.5', 
+      model: "anthropic/claude-haiku-4.5",
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(body, null, 2) }],
+      messages: [{ role: "user", content: buildPromptPayload(normalized) }],
       maxOutputTokens: 150,
     });
     generated = result.text.trim();
@@ -77,14 +300,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const updatedSlots = body.slots.map((slot, i) =>
+  const updatedSlots = normalized.slots.map((slot, i) =>
     i === targetIndex ? { ...slot, text: generated } : slot
   );
+  const updatedGameState = buildUpdatedGameState(normalized, updatedSlots);
 
   return NextResponse.json({
-    client: body.client,
+    client: normalized.client,
     slots: updatedSlots,
     generated,
-    filled_position: body.slots[targetIndex].position,
+    filled_position: normalized.slots[targetIndex].position,
+    game_state: updatedGameState,
+    active_encounter_index: normalized.activeEncounterIndex ?? null,
   });
 }
