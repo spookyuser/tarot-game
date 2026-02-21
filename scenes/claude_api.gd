@@ -3,8 +3,6 @@ extends Node
 signal request_completed(request_id: String, text: String)
 signal request_failed(request_id: String, error_message: String)
 
-const POSITION_NAMES := ["past", "present", "future"]
-
 var _api_url: String = "http://localhost:3000/api/reading"
 var _pending_requests: Dictionary = {}
 
@@ -24,46 +22,19 @@ func is_available() -> bool:
 
 func generate_reading(
 	request_id: String,
-	client_name: String,
-	client_context: String,
-	slot_cards: Array,
-	slot_texts: Array[String],
-	target_slot: int
+	reading_state: Dictionary
 ) -> void:
 	if not is_available():
 		request_failed.emit(request_id, "API URL not configured")
 		return
 
-	var slots := []
-	for i in range(mini(3, slot_cards.size())):
-		var slot := {
-			"position": POSITION_NAMES[i],
-		}
-		var card_data: Dictionary = slot_cards[i] if slot_cards[i] is Dictionary else {}
-		var card_name: String = card_data.get("name", "") if not card_data.is_empty() else (slot_cards[i] if slot_cards[i] is String else "")
-		if not card_name.is_empty():
-			slot["card"] = card_name.replace("_", " ")
-			if card_data.has("sentiment"):
-				slot["sentiment"] = card_data["sentiment"]
-			if card_data.has("keywords"):
-				slot["keywords"] = card_data["keywords"]
-			if card_data.has("description"):
-				slot["description"] = card_data["description"]
-		else:
-			slot["card"] = null
-		if not slot_texts[i].is_empty():
-			slot["text"] = slot_texts[i]
-		else:
-			slot["text"] = null
-		slots.append(slot)
+	if not reading_state.has("game_state") or not reading_state.has("runtime_state"):
+		var shape_error := "Invalid reading state payload: missing game_state or runtime_state"
+		_debug_log(shape_error, reading_state)
+		request_failed.emit(request_id, shape_error)
+		return
 
-	var body := {
-		"client": {
-			"name": client_name,
-			"situation": client_context,
-		},
-		"slots": slots,
-	}
+	var body: Dictionary = reading_state.duplicate(true)
 
 	var json_body := JSON.stringify(body)
 	var headers := PackedStringArray([
@@ -78,14 +49,17 @@ func generate_reading(
 
 	_pending_requests[request_id] = http_request
 
+	_debug_log("POST %s request_id=%s" % [_api_url, request_id], body)
 	var err := http_request.request(_api_url, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
+		_debug_log("Failed to start request_id=%s error=%d" % [request_id, err], body)
 		_cleanup_request(request_id)
 		request_failed.emit(request_id, "HTTP request failed to start: %d" % err)
 
 
 func cancel_request(request_id: String) -> void:
 	if _pending_requests.has(request_id):
+		_debug_log("Canceling request_id=%s" % request_id)
 		var http_request: HTTPRequest = _pending_requests[request_id]
 		http_request.cancel_request()
 		_cleanup_request(request_id)
@@ -100,20 +74,29 @@ func _on_http_completed(
 	http_request: HTTPRequest
 ) -> void:
 	_cleanup_request(request_id)
+	var response_text := body.get_string_from_utf8()
+	_debug_log(
+		"Response received request_id=%s result=%d code=%d" % [request_id, result, response_code],
+		{
+			"headers": _headers,
+			"body": response_text,
+		}
+	)
 
 	if result != HTTPRequest.RESULT_SUCCESS:
 		request_failed.emit(request_id, "HTTP result error: %d" % result)
 		return
 
 	if response_code != 200:
-		var error_text := body.get_string_from_utf8()
+		var error_text := response_text
 		push_warning("ReadingAPI: HTTP %d — %s" % [response_code, error_text])
 		request_failed.emit(request_id, "HTTP %d" % response_code)
 		return
 
 	var json := JSON.new()
-	var parse_err := json.parse(body.get_string_from_utf8())
+	var parse_err := json.parse(response_text)
 	if parse_err != OK:
+		_debug_log("JSON parse error request_id=%s parse_err=%d" % [request_id, parse_err], response_text)
 		request_failed.emit(request_id, "JSON parse error")
 		return
 
@@ -131,3 +114,12 @@ func _cleanup_request(request_id: String) -> void:
 		var http_request: HTTPRequest = _pending_requests[request_id]
 		_pending_requests.erase(request_id)
 		http_request.queue_free()
+
+
+func _debug_log(message: String, data: Variant = null) -> void:
+	if not OS.is_debug_build():
+		return
+	if data == null:
+		print("[ReadingAPI][Debug] %s" % message)
+		return
+	print("[ReadingAPI][Debug] %s\n%s" % [message, JSON.stringify(data, "  ")])

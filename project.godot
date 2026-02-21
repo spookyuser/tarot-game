@@ -27,6 +27,10 @@ window/size/mode=2
 window/size/resizable=false
 window/stretch/mode="canvas_items"
 
+[gui]
+
+theme/custom_font="uid://c4vehto7xhw3m"
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

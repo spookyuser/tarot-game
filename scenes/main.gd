@@ -98,9 +98,6 @@ const HOVER_COLORS := [
 	"#7888a0", # Slot 2 hover
 ]
 
-
-
-
 func _ready() -> void:
 	back_texture = load("res://assets/card_back.png")
 
@@ -290,15 +287,16 @@ func _find_held_card() -> Card:
 
 
 
-func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array:
-	var cards: Array = [{}, {}, {}]
+func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array[String]:
+	var cards: Array[String] = ["", "", ""]
 	for i in range(3):
 		if slot_filled[i]:
 			var pile_cards = slot_piles[i].get_top_cards(1)
 			if pile_cards.size() > 0:
-				cards[i] = pile_cards[0].card_info
+				var slot_card: Card = pile_cards[0]
+				cards[i] = slot_card.card_name
 		elif i == hover_slot and hover_card != null:
-			cards[i] = hover_card.card_info
+			cards[i] = hover_card.card_name
 	return cards
 
 
@@ -307,6 +305,46 @@ func _build_slot_texts() -> Array[String]:
 	for i in range(3):
 		texts[i] = slot_readings[i]
 	return texts
+
+
+func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[String]) -> Dictionary:
+	var full_game_state: Dictionary = game_state.duplicate(true)
+	var encounter_index := maxi(current_encounter_index - 1, 0)
+	var encounters: Array = full_game_state.get("encounters", [])
+	if encounter_index < encounters.size() and encounters[encounter_index] is Dictionary:
+		var encounter_state: Dictionary = encounters[encounter_index]
+		var encounter_slots: Array = encounter_state.get("slots", [])
+		for i in range(mini(3, encounter_slots.size())):
+			var runtime_card := ""
+			if i < slot_cards.size():
+				runtime_card = slot_cards[i]
+
+			var runtime_text := ""
+			if i < slot_texts.size():
+				runtime_text = slot_texts[i]
+
+			var card_value := ""
+			if not runtime_card.is_empty():
+				card_value = runtime_card
+
+			var slot_state := {
+				"card": card_value,
+				"text": runtime_text,
+			}
+			encounter_slots[i] = slot_state
+
+		encounter_state["slots"] = encounter_slots
+		encounters[encounter_index] = encounter_state
+		full_game_state["encounters"] = encounters
+
+	return {
+		"game_state": full_game_state,
+		"active_encounter_index": encounter_index,
+		"runtime_state": {
+			"slot_cards": slot_cards.duplicate(true),
+			"slot_texts": slot_texts.duplicate(true),
+		},
+	}
 
 
 func _update_slot_labels() -> void:
@@ -417,16 +455,13 @@ func _update_hover_previews() -> void:
 	var request_id := cache_key
 	_pending_requests[request_id] = new_hover_slot
 
-	var slot_cards: Array = _build_slot_cards(new_hover_slot, held_card)
+	var slot_cards: Array[String] = _build_slot_cards(new_hover_slot, held_card)
 	var slot_texts: Array[String] = _build_slot_texts()
+	var request_state := _build_reading_request_state(slot_cards, slot_texts)
 
 	claude_api.generate_reading(
 		request_id,
-		current_encounter["client"]["name"],
-		current_encounter["client"]["context"],
-		slot_cards,
-		slot_texts,
-		new_hover_slot
+		request_state
 	)
 
 
