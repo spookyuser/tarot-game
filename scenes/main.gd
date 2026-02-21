@@ -2,14 +2,22 @@ extends Control
 
 @onready var card_manager: CardManager = $CardManager
 @onready var player_hand: Hand = $PlayerHand
-@onready var client_name_label: Label = $ClientPanel/ClientName
-@onready var client_story_label: RichTextLabel = $ClientPanel/ClientStory
-@onready var client_counter_label: Label = $ClientCounter
 @onready var resolution_panel: Control = $ResolutionPanel
 @onready var resolution_title: Label = $ResolutionPanel/StoryBox/ResolutionTitle
 @onready var resolution_text: RichTextLabel = $ResolutionPanel/StoryBox/ResolutionText
 @onready var next_button: Button = $ResolutionPanel/StoryBox/NextButton
 @onready var claude_api: Node = $ClaudeAPI
+
+@onready var client_name_left: Label = $ClientNameLeft
+@onready var client_counter_left: Label = $ClientCounterLeft
+@onready var portrait_frame: TextureRect = $PortraitFrame
+@onready var deck_count_label: Label = $DeckCountLabel
+@onready var deck_icon: TextureRect = $DeckIcon
+@onready var story_title_label: Label = $StoryTitleLabel
+@onready var story_rich_text: RichTextLabel = $StoryRichText
+@onready var progress_icons: Array[TextureRect] = [
+	$ProgressIcon0, $ProgressIcon1, $ProgressIcon2
+]
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
@@ -37,6 +45,25 @@ var _pending_requests: Dictionary = {}
 var _loading_slots: Dictionary = {}
 
 var back_texture: Texture2D
+var portrait_textures: Dictionary = {}
+
+const CLIENT_PORTRAITS := {
+	"Maria the Widow": "res://art/MinifolksVillagers/Outline/MiniVillagerWoman.png",
+	"The Stranger": "res://art/MinifolksVillagers/Outline/MiniNobleMan.png",
+}
+
+const PORTRAIT_FALLBACKS := [
+	"res://art/MinifolksVillagers/Outline/MiniPeasant.png",
+	"res://art/MinifolksVillagers/Outline/MiniWorker.png",
+	"res://art/MinifolksVillagers/Outline/MiniVillagerMan.png",
+	"res://art/MinifolksVillagers/Outline/MiniOldMan.png",
+	"res://art/MinifolksVillagers/Outline/MiniOldWoman.png",
+	"res://art/MinifolksVillagers/Outline/MiniNobleWoman.png",
+	"res://art/MinifolksVillagers/Outline/MiniPrincess.png",
+	"res://art/MinifolksVillagers/Outline/MiniQueen.png",
+]
+
+const PORTRAIT_FRAME_SIZE := 32
 
 const MAJOR_MEANINGS := {
 	"the_fool": "a leap of faith into the unknown",
@@ -88,12 +115,12 @@ const VALUE_INTENSITIES := {
 }
 
 const READING_TEMPLATES := [
-	"The cards reveal %s, and its influence spreads across everything.",
-	"Here the cards speak of %s, a thread woven deep into this tale.",
-	"What emerges now is %s, quiet but undeniable.",
-	"The reading turns upon %s, reshaping all that came before.",
-	"Through the veil, %s makes itself known.",
-	"The cards whisper of %s, and the whisper becomes a roar.",
+	"What stirs here is %s, quiet but unmistakable.",
+	"Something shifts — %s, threading through everything.",
+	"%s settles over the moment like dust.",
+	"Here, %s makes itself known without a sound.",
+	"There is %s beneath the surface, patient and sure.",
+	"%s passes through like a breath held too long.",
 ]
 
 
@@ -115,10 +142,45 @@ func _ready() -> void:
 	claude_api.request_completed.connect(_on_claude_request_completed)
 	claude_api.request_failed.connect(_on_claude_request_failed)
 
+	_load_portrait_textures()
+
 	_build_card_name_list()
 	_load_clients()
 	_shuffle_deck()
 	_next_client()
+
+
+func _load_portrait_textures() -> void:
+	var all_paths := {}
+	for client_name in CLIENT_PORTRAITS:
+		all_paths[CLIENT_PORTRAITS[client_name]] = true
+	for path in PORTRAIT_FALLBACKS:
+		all_paths[path] = true
+
+	for path in all_paths.keys():
+		var sheet := load(path) as Texture2D
+		if sheet == null:
+			continue
+		var atlas := AtlasTexture.new()
+		atlas.atlas = sheet
+		atlas.region = Rect2(0, 0, PORTRAIT_FRAME_SIZE, PORTRAIT_FRAME_SIZE)
+		portrait_textures[path] = atlas
+
+
+func _get_portrait_for_client(client_name: String) -> Texture2D:
+	if CLIENT_PORTRAITS.has(client_name):
+		var path: String = CLIENT_PORTRAITS[client_name]
+		if portrait_textures.has(path):
+			return portrait_textures[path]
+
+	var fallback_index := client_name.hash() % PORTRAIT_FALLBACKS.size()
+	if fallback_index < 0:
+		fallback_index += PORTRAIT_FALLBACKS.size()
+	var fallback_path: String = PORTRAIT_FALLBACKS[fallback_index]
+	if portrait_textures.has(fallback_path):
+		return portrait_textures[fallback_path]
+
+	return null
 
 
 func _build_card_name_list() -> void:
@@ -146,12 +208,7 @@ func _load_clients() -> void:
 	var file = FileAccess.open("res://data/clients.json", FileAccess.READ)
 	var fallback = [{
 		"name": "The Stranger",
-		"story_parts": [
-			"A figure in a dark cloak sits before you. They say nothing, only wait.",
-			"The silence deepens between you like a well with no bottom.",
-			"Something stirs in the dark behind their eyes.",
-			"The stranger rises, pulls their cloak tight, and vanishes into the night."
-		]
+		"story": "A figure in a dark cloak sits before you. They say nothing, only wait. {0} The silence deepens between you like a well with no bottom.\n\nSomething stirs in the dark behind their eyes. {1} You feel it watching, measuring, considering.\n\nThe stranger rises, pulls their cloak tight. {2} They vanish into the night."
 	}]
 
 	if file:
@@ -205,8 +262,8 @@ func _next_client() -> void:
 	_pending_requests.clear()
 	_loading_slots.clear()
 
-	client_name_label.text = current_client["name"]
-	client_counter_label.text = "Client #%d" % client_count
+	_update_sidebar()
+	story_title_label.text = current_client["name"]
 
 	for i in range(3):
 		reading_labels[i].text = ""
@@ -223,10 +280,37 @@ func _next_client() -> void:
 	_deal_hand()
 
 
+func _update_sidebar() -> void:
+	client_name_left.text = current_client["name"]
+	client_counter_left.text = "Client #%d" % client_count
+
+	var portrait := _get_portrait_for_client(current_client["name"])
+	if portrait != null:
+		portrait_frame.texture = portrait
+	else:
+		portrait_frame.texture = null
+
+	_update_deck_count()
+	_update_progress_icons()
+
+
+func _update_deck_count() -> void:
+	deck_count_label.text = "%d remaining" % deck.size()
+
+
+func _update_progress_icons() -> void:
+	for i in range(3):
+		if slot_filled[i]:
+			progress_icons[i].modulate = Color(0.85, 0.7, 0.4, 1.0)
+		else:
+			progress_icons[i].modulate = Color(0.3, 0.25, 0.4, 0.5)
+
+
 func _deal_hand() -> void:
 	var drawn = _draw_cards(3)
 	for card_name in drawn:
 		card_manager.card_factory.create_card(card_name, player_hand)
+	_update_deck_count()
 
 
 func _find_held_card() -> Card:
@@ -275,26 +359,20 @@ func _update_slot_labels() -> void:
 
 
 func _render_story() -> void:
-	var parts: Array = current_client["story_parts"]
-	var text := ""
+	var text: String = current_client["story"]
 
 	for i in range(3):
-		if i > _active_slot and not slot_filled[i]:
-			break
-
-		text += "%s\n\n" % parts[i]
-
+		var placeholder := "{%d}" % i
 		if slot_filled[i]:
-			text += "[i]%s[/i]\n\n" % slot_readings[i]
-		elif i == _active_slot and _hover_preview_text != "":
-			text += "[color=#8878a0][i]%s[/i][/color]\n\n" % _hover_preview_text
+			var colored := "[color=#c8b8e0]%s[/color]" % slot_readings[i]
+			text = text.replace(placeholder, colored)
+		elif i == _current_hover_slot and _hover_preview_text != "":
+			var preview := "[color=#8878a0][i]%s[/i][/color]" % _hover_preview_text
+			text = text.replace(placeholder, preview)
 		else:
-			text += "[color=#4a3a60]__________________________________________[/color]\n\n"
+			text = text.replace(placeholder, "[color=#4a3a60]___________[/color]")
 
-	if slot_filled[0] and slot_filled[1] and slot_filled[2]:
-		text += "%s" % parts[3]
-
-	client_story_label.text = text
+	story_rich_text.text = text
 
 
 func _process(_delta: float) -> void:
@@ -365,23 +443,14 @@ func _update_hover_previews() -> void:
 			return
 
 		var card_meaning := _get_card_meaning(held_card.card_info)
-		var story_parts: Array = current_client["story_parts"]
-
-		var locked_paragraphs: Array[String] = []
-		for i in range(3):
-			locked_paragraphs.append(slot_readings[i])
 
 		var request_id := cache_key
 		_pending_requests[request_id] = new_hover_slot
 
 		claude_api.generate_reading(
 			request_id,
-			current_client["name"],
-			story_parts,
-			new_hover_slot,
 			new_hover_card_name,
 			card_meaning,
-			locked_paragraphs
 		)
 	else:
 		var held_card = _find_held_card()
@@ -475,6 +544,8 @@ func _lock_slot(slot_index: int) -> void:
 
 	_update_slot_labels()
 	_render_story()
+	_update_progress_icons()
+	_update_deck_count()
 
 	if slot_filled[0] and slot_filled[1] and slot_filled[2]:
 		get_tree().create_timer(1.2).timeout.connect(_show_resolution)
@@ -496,14 +567,11 @@ func _show_resolution() -> void:
 	resolution_panel.visible = true
 	resolution_title.text = "Reading for %s" % current_client["name"]
 
-	var parts: Array = current_client["story_parts"]
-	var full_text := ""
+	var text: String = current_client["story"]
 	for i in range(3):
-		full_text += "[i][color=#9a8ab0]%s[/color][/i]\n\n" % parts[i]
-		full_text += "%s\n\n" % slot_readings[i]
-	full_text += "[i][color=#9a8ab0]%s[/color][/i]" % parts[3]
+		text = text.replace("{%d}" % i, "[color=#c8b8e0]%s[/color]" % slot_readings[i])
 
-	resolution_text.text = full_text
+	resolution_text.text = text
 
 
 func _on_next_button_pressed() -> void:

@@ -4,8 +4,8 @@ signal request_completed(request_id: String, text: String)
 signal request_failed(request_id: String, error_message: String)
 
 const API_URL := "https://api.anthropic.com/v1/messages"
-const MODEL := "claude-sonnet-4-20250514"
-const MAX_TOKENS := 300
+const MODEL := "claude-haiku-4-5"
+const MAX_TOKENS := 150
 const API_VERSION := "2023-06-01"
 
 var _api_key: String = ""
@@ -27,37 +27,20 @@ func is_available() -> bool:
 
 func generate_reading(
 	request_id: String,
-	client_name: String,
-	story_parts: Array,
-	slot_index: int,
 	card_name: String,
 	card_meaning: String,
-	locked_paragraphs: Array[String]
 ) -> void:
 	if not is_available():
 		request_failed.emit(request_id, "API key not configured")
 		return
 
 	var system_prompt := (
-		"You are a mystical tarot card reader with a gothic, atmospheric voice. "
-		+ "You speak in second person, addressing the querent directly. "
-		+ "Write exactly one paragraph of 2-4 sentences. "
-		+ "Be evocative and specific to the card's meaning and the client's situation. "
-		+ "Do not use markdown, bullet points, or headers. Just flowing prose."
+		"You are a tarot card reader. "
+		+ "Write one short evocative sentence about what the card suggests. "
+		+ "No quotes, no markdown. Just the sentence."
 	)
 
-	var user_prompt := "Client: %s\n\n" % client_name
-	user_prompt += "The story unfolds in parts, with card readings woven between them:\n\n"
-
-	for i in range(slot_index + 1):
-		user_prompt += "--- Story segment %d ---\n%s\n\n" % [i + 1, story_parts[i]]
-		if i < slot_index and not locked_paragraphs[i].is_empty():
-			user_prompt += "--- Card reading %d ---\n%s\n\n" % [i + 1, locked_paragraphs[i]]
-
-	user_prompt += "The querent now places card %d of 3.\n" % (slot_index + 1)
-	user_prompt += "The card drawn is: %s\n" % card_name.replace("_", " ")
-	user_prompt += "Its meaning: %s\n\n" % card_meaning
-	user_prompt += "Write the reading paragraph for this moment in the story. It should flow naturally after the story segment above."
+	var user_prompt := "Card: %s\nMeaning: %s" % [card_name.replace("_", " "), card_meaning]
 
 	var body := {
 		"model": MODEL,
