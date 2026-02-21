@@ -37,8 +37,7 @@ var game_state: Dictionary = {
 		{
 			"client": {
 				"name": "Maria the Widow",
-				"context": "Maria lost her husband to the winter sea. She runs his vineyard alone now, but creditors close in. The vines hang heavy in the autumn air, waiting for hands that may never come.\n\nA letter from the creditors sits unopened on the table, its seal like a wound. She traces the wax with her thumbnail, feeling it crack beneath the pressure.\n\nWhat choice has Maria made?"
-			},
+				"context": "I lost my husband, and i don't know what to do" 		},
 			"story": "{0}\n\n{1}\n\n{2}",
 			"slots": [
 				{"card": "", "text": ""},
