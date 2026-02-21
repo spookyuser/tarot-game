@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "four",
-  "numeric_value": 4
+  "numeric_value": 4,
+  "description": "Celebrates a milestone. Stability and community create a moment of shared joy.",
+  "tags": [
+    "love",
+    "fortune"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

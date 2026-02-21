@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "seven",
-  "numeric_value": 7
+  "numeric_value": 7,
+  "description": "Overwhelms with too many choices. Fantasies cloud judgment and nothing feels solid.",
+  "tags": [
+    "mystery"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

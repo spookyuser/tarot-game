@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "judgement",
-  "numeric_value": 20
+  "numeric_value": 20,
+  "description": "Forces a reckoning with the past. Old actions are judged and a new chapter begins.",
+  "tags": [
+    "truth",
+    "change"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

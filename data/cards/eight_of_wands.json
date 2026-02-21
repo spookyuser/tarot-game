@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "eight",
-  "numeric_value": 8
+  "numeric_value": 8,
+  "description": "Accelerates everything at once. Messages, travel, and events arrive in a rush.",
+  "tags": [
+    "change"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

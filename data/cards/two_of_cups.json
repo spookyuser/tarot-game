@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "two",
-  "numeric_value": 2
+  "numeric_value": 2,
+  "description": "Strengthens a meaningful connection. Mutual understanding and partnership deepen.",
+  "tags": [
+    "love"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "world",
-  "numeric_value": 21
+  "numeric_value": 21,
+  "description": "Brings a chapter to its best possible conclusion. Wholeness and fulfillment are achieved.",
+  "tags": [
+    "fortune",
+    "growth"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

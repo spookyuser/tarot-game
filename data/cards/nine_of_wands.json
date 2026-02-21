@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "nine",
-  "numeric_value": 9
+  "numeric_value": 9,
+  "description": "Pushes endurance to the breaking point. Battered but still standing \u2014 barely.",
+  "tags": [
+    "conflict",
+    "loss"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

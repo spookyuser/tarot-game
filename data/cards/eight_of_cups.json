@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "eight",
-  "numeric_value": 8
+  "numeric_value": 8,
+  "description": "Forces someone to walk away. Something familiar is abandoned in search of something better.",
+  "tags": [
+    "loss",
+    "change"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

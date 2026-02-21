@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "eight",
-  "numeric_value": 8
+  "numeric_value": 8,
+  "description": "Deepens a skill through dedicated effort. Hard work steadily builds competence.",
+  "tags": [
+    "fortune",
+    "growth"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

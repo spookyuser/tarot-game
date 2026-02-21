@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "hanged_man",
-  "numeric_value": 12
+  "numeric_value": 12,
+  "description": "Suspends everything. What looks like sacrifice or stalling leads to an unexpected breakthrough.",
+  "tags": [
+    "mystery",
+    "growth"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

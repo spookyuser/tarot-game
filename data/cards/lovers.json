@@ -4,5 +4,11 @@
   "arcana": "major",
   "suit": "major",
   "value": "lovers",
-  "numeric_value": 6
+  "numeric_value": 6,
+  "description": "Deepens a meaningful connection. A relationship or important choice becomes the turning point.",
+  "tags": [
+    "love"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

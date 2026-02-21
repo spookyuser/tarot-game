@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "eight",
-  "numeric_value": 8
+  "numeric_value": 8,
+  "description": "Traps the person in perceived limitations. The prison feels real but may be self-made.",
+  "tags": [
+    "conflict",
+    "mystery"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

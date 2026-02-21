@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "stars",
-  "numeric_value": 17
+  "numeric_value": 17,
+  "description": "Brings hope and healing after hardship. A gentle guiding light appears in the darkness.",
+  "tags": [
+    "growth",
+    "mystery"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

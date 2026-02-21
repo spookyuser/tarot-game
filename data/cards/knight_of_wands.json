@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "knight",
-  "numeric_value": 12
+  "numeric_value": 12,
+  "description": "Blazes forward with passionate recklessness. Daring energy leads, consequences follow.",
+  "tags": [
+    "power",
+    "change"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

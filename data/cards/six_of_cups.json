@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "six",
-  "numeric_value": 6
+  "numeric_value": 6,
+  "description": "Reconnects with the past. Old memories or relationships resurface in a comforting way.",
+  "tags": [
+    "love"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "magician",
-  "numeric_value": 1
+  "numeric_value": 1,
+  "description": "Unlocks hidden potential. The person gains the ability to shape their own circumstances.",
+  "tags": [
+    "power",
+    "growth"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }

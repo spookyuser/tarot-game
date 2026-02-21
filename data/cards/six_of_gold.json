@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "six",
-  "numeric_value": 6
+  "numeric_value": 6,
+  "description": "Sends help where it is needed. Generosity and support flow freely.",
+  "tags": [
+    "fortune",
+    "love"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

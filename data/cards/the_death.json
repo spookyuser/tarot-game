@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "death",
-  "numeric_value": 13
+  "numeric_value": 13,
+  "description": "Ends something permanently. What existed before is gone, making room for what comes next.",
+  "tags": [
+    "loss",
+    "change"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

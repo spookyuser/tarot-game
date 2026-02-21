@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "king",
-  "numeric_value": 14
+  "numeric_value": 14,
+  "description": "Establishes material mastery. Sound judgment builds a foundation that endures.",
+  "tags": [
+    "fortune",
+    "power"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "wheel_of_fortune",
-  "numeric_value": 10
+  "numeric_value": 10,
+  "description": "Spins fate in a new direction. Luck shifts dramatically \u2014 for better or worse.",
+  "tags": [
+    "mystery",
+    "fortune"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

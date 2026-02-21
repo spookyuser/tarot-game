@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "three",
-  "numeric_value": 3
+  "numeric_value": 3,
+  "description": "Delivers a painful truth. Heartbreak arrives but at least it is honest.",
+  "tags": [
+    "loss",
+    "truth"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

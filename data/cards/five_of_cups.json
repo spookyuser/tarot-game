@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "five",
-  "numeric_value": 5
+  "numeric_value": 5,
+  "description": "Brings grief and regret. A loss overshadows everything, even what is still good.",
+  "tags": [
+    "loss"
+  ],
+  "rarity": "common",
+  "outcome": "dark"
 }

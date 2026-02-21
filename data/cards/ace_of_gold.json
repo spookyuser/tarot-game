@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "ace",
-  "numeric_value": 1
+  "numeric_value": 1,
+  "description": "Plants a seed of material opportunity. New resources or prospects appear.",
+  "tags": [
+    "fortune"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "five",
-  "numeric_value": 5
+  "numeric_value": 5,
+  "description": "Stirs up competition and clashing wills. The struggle might be creative or just petty.",
+  "tags": [
+    "conflict"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

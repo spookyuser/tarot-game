@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "queen",
-  "numeric_value": 13
+  "numeric_value": 13,
+  "description": "Brings deep emotional understanding. Empathy and intuition guide the situation wisely.",
+  "tags": [
+    "love",
+    "truth"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

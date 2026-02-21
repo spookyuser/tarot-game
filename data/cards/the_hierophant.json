@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "hierophant",
-  "numeric_value": 5
+  "numeric_value": 5,
+  "description": "Traditions and established rules take hold. Convention guides the outcome for better or worse.",
+  "tags": [
+    "truth",
+    "power"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

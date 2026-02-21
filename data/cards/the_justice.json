@@ -4,5 +4,11 @@
   "arcana": "major",
   "suit": "major",
   "value": "justice",
-  "numeric_value": 11
+  "numeric_value": 11,
+  "description": "Delivers exactly what is deserved. Consequences arrive, fair but unavoidable.",
+  "tags": [
+    "truth"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

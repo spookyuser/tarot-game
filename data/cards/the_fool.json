@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "fool",
-  "numeric_value": 0
+  "numeric_value": 0,
+  "description": "Throws everything into chaos. Plans fall apart and an unexpected new direction takes hold.",
+  "tags": [
+    "change",
+    "mystery"
+  ],
+  "rarity": "rare",
+  "outcome": "mixed"
 }

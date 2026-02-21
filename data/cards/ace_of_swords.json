@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "ace",
-  "numeric_value": 1
+  "numeric_value": 1,
+  "description": "Cuts through confusion with sudden clarity. A breakthrough insight changes everything.",
+  "tags": [
+    "truth"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

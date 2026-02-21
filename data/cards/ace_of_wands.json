@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "ace",
-  "numeric_value": 1
+  "numeric_value": 1,
+  "description": "Ignites a burst of inspiration and initiative. Creative energy surges forward.",
+  "tags": [
+    "power",
+    "growth"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

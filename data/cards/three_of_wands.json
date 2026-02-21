@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "wands",
   "value": "three",
-  "numeric_value": 3
+  "numeric_value": 3,
+  "description": "Shows early efforts beginning to pay off. Expansion and new opportunity appear on the horizon.",
+  "tags": [
+    "fortune",
+    "growth"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

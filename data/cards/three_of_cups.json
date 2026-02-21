@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "three",
-  "numeric_value": 3
+  "numeric_value": 3,
+  "description": "Brings celebration and togetherness. Friendships and community lift everyone up.",
+  "tags": [
+    "love",
+    "fortune"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

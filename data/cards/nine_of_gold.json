@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "gold",
   "value": "nine",
-  "numeric_value": 9
+  "numeric_value": 9,
+  "description": "Delivers comfortable independence. Self-sufficiency and quiet luxury are earned.",
+  "tags": [
+    "fortune"
+  ],
+  "rarity": "common",
+  "outcome": "bright"
 }

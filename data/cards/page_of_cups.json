@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "cups",
   "value": "page",
-  "numeric_value": 11
+  "numeric_value": 11,
+  "description": "Delivers a surprising emotional message. Something tender and unexpected stirs feelings.",
+  "tags": [
+    "love",
+    "mystery"
+  ],
+  "rarity": "uncommon",
+  "outcome": "bright"
 }

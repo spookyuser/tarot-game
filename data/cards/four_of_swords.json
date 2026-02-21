@@ -4,5 +4,11 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "four",
-  "numeric_value": 4
+  "numeric_value": 4,
+  "description": "Forces a necessary rest. Recovery happens only through stopping and being still.",
+  "tags": [
+    "growth"
+  ],
+  "rarity": "common",
+  "outcome": "mixed"
 }

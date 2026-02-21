@@ -4,5 +4,12 @@
   "arcana": "minor",
   "suit": "swords",
   "value": "king",
-  "numeric_value": 14
+  "numeric_value": 14,
+  "description": "Commands with intellectual authority. Decisions are made with precision but little warmth.",
+  "tags": [
+    "truth",
+    "power"
+  ],
+  "rarity": "uncommon",
+  "outcome": "mixed"
 }

@@ -4,5 +4,12 @@
   "arcana": "major",
   "suit": "major",
   "value": "chariot",
-  "numeric_value": 7
+  "numeric_value": 7,
+  "description": "Drives through every obstacle. Willpower and determination force a breakthrough.",
+  "tags": [
+    "power",
+    "conflict"
+  ],
+  "rarity": "rare",
+  "outcome": "bright"
 }
