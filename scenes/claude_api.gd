@@ -3,56 +3,63 @@ extends Node
 signal request_completed(request_id: String, text: String)
 signal request_failed(request_id: String, error_message: String)
 
-const API_URL := "https://api.anthropic.com/v1/messages"
-const MODEL := "claude-haiku-4-5"
-const MAX_TOKENS := 150
-const API_VERSION := "2023-06-01"
+const POSITION_NAMES := ["past", "present", "future"]
 
-var _api_key: String = ""
+var _api_url: String = "http://localhost:3000/api/reading"
 var _pending_requests: Dictionary = {}
 
 
 func _ready() -> void:
 	var config := ConfigFile.new()
-	var err := config.load("res://config/api_key.cfg")
+	var err := config.load("res://config/api_url.cfg")
 	if err == OK:
-		_api_key = config.get_value("anthropic", "api_key", "")
-	if _api_key.is_empty():
-		push_warning("ClaudeAPI: No API key found in config/api_key.cfg — AI readings disabled")
+		var url: String = config.get_value("api", "url", "")
+		if not url.is_empty():
+			_api_url = url
 
 
 func is_available() -> bool:
-	return not _api_key.is_empty()
+	return not _api_url.is_empty()
 
 
 func generate_reading(
 	request_id: String,
-	card_name: String
+	client_name: String,
+	client_story: String,
+	slot_cards: Array[String],
+	slot_texts: Array[String],
+	target_slot: int
 ) -> void:
 	if not is_available():
-		request_failed.emit(request_id, "API key not configured")
+		request_failed.emit(request_id, "API URL not configured")
 		return
 
-	var system_prompt := (
-		"You are a tarot card reader. "
-		+ "Write one short evocative sentence about what the card suggests. "
-		+ "No quotes, no markdown. Just the sentence."
-	)
-
-	var user_prompt := "Card: %s" % [card_name.replace("_", " ")]
+	var slots := []
+	for i in range(mini(3, slot_cards.size())):
+		var slot := {
+			"position": POSITION_NAMES[i],
+		}
+		if not slot_cards[i].is_empty():
+			slot["card"] = slot_cards[i].replace("_", " ")
+		else:
+			slot["card"] = null
+		if not slot_texts[i].is_empty():
+			slot["text"] = slot_texts[i]
+		else:
+			slot["text"] = null
+		slots.append(slot)
 
 	var body := {
-		"model": MODEL,
-		"max_tokens": MAX_TOKENS,
-		"system": system_prompt,
-		"messages": [{"role": "user", "content": user_prompt}],
+		"client": {
+			"name": client_name,
+			"situation": client_story,
+		},
+		"slots": slots,
 	}
 
 	var json_body := JSON.stringify(body)
 	var headers := PackedStringArray([
 		"Content-Type: application/json",
-		"x-api-key: %s" % _api_key,
-		"anthropic-version: %s" % API_VERSION,
 	])
 
 	var http_request := HTTPRequest.new()
@@ -63,7 +70,7 @@ func generate_reading(
 
 	_pending_requests[request_id] = http_request
 
-	var err := http_request.request(API_URL, headers, HTTPClient.METHOD_POST, json_body)
+	var err := http_request.request(_api_url, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
 		_cleanup_request(request_id)
 		request_failed.emit(request_id, "HTTP request failed to start: %d" % err)
@@ -92,7 +99,7 @@ func _on_http_completed(
 
 	if response_code != 200:
 		var error_text := body.get_string_from_utf8()
-		push_warning("ClaudeAPI: HTTP %d — %s" % [response_code, error_text])
+		push_warning("ReadingAPI: HTTP %d — %s" % [response_code, error_text])
 		request_failed.emit(request_id, "HTTP %d" % response_code)
 		return
 
@@ -103,14 +110,9 @@ func _on_http_completed(
 		return
 
 	var response: Dictionary = json.get_data()
-	var content: Array = response.get("content", [])
-	if content.is_empty():
-		request_failed.emit(request_id, "Empty response content")
-		return
-
-	var text: String = content[0].get("text", "")
+	var text: String = response.get("generated", "")
 	if text.is_empty():
-		request_failed.emit(request_id, "Empty text in response")
+		request_failed.emit(request_id, "Empty generated text in response")
 		return
 
 	request_completed.emit(request_id, text.strip_edges())

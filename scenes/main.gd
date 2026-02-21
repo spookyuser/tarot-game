@@ -268,6 +268,25 @@ func _find_held_card() -> Card:
 
 
 
+func _build_slot_cards(hover_slot: int, hover_card_name: String) -> Array[String]:
+	var cards: Array[String] = ["", "", ""]
+	for i in range(3):
+		if slot_filled[i]:
+			var pile_cards = slot_piles[i].get_top_cards(1)
+			if pile_cards.size() > 0:
+				cards[i] = pile_cards[0].card_name
+		elif i == hover_slot:
+			cards[i] = hover_card_name
+	return cards
+
+
+func _build_slot_texts() -> Array[String]:
+	var texts: Array[String] = ["", "", ""]
+	for i in range(3):
+		texts[i] = slot_readings[i]
+	return texts
+
+
 func _update_slot_labels() -> void:
 	for i in range(3):
 		if slot_filled[i]:
@@ -365,9 +384,16 @@ func _update_hover_previews() -> void:
 	var request_id := cache_key
 	_pending_requests[request_id] = new_hover_slot
 
+	var slot_cards: Array[String] = _build_slot_cards(new_hover_slot, new_hover_card_name)
+	var slot_texts: Array[String] = _build_slot_texts()
+
 	claude_api.generate_reading(
 		request_id,
-		new_hover_card_name
+		current_client["name"],
+		current_client["story"],
+		slot_cards,
+		slot_texts,
+		new_hover_slot
 	)
 
 
