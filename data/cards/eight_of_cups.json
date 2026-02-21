@@ -7,7 +7,7 @@
   "numeric_value": 8,
   "description": "Forces someone to walk away. Something familiar is abandoned in search of something better.",
   "tags": [
-    "loss",
+	"loss",
     "change"
   ],
   "rarity": "common",

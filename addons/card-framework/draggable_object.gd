@@ -153,7 +153,7 @@ func _enter_state(state: DraggableState, from_state: DraggableState) -> void:
 			
 			current_holding_mouse_position = get_local_mouse_position()
 			z_index = stored_z_index + CardFrameworkSettings.VISUAL_DRAG_Z_OFFSET
-			rotation = 0
+			rotation = original_hover_rotation
 			
 		DraggableState.MOVING:
 			# Stop hover animations and ignore input during programmatic movement
@@ -243,7 +243,7 @@ func _start_hover_animation() -> void:
 	hover_tween.tween_property(self, "scale", original_scale * hover_scale, hover_duration)
 	
 	# Animate rotation
-	hover_tween.tween_property(self, "rotation", deg_to_rad(hover_rotation), hover_duration)
+	hover_tween.tween_property(self, "rotation", original_hover_rotation + deg_to_rad(hover_rotation), hover_duration)
 	
 	# Update current hover position tracking
 	hover_tween.tween_method(_update_hover_position, position, target_position, hover_duration)

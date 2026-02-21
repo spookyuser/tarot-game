@@ -22,6 +22,7 @@ extends Control
 @onready var card_hover_info_inner: ColorRect = $CardHoverInfoPanel/CardHoverInfoInner
 @onready var card_hover_info_title: Label = $CardHoverInfoPanel/CardHoverInfoTitle
 @onready var card_hover_info_body: RichTextLabel = $CardHoverInfoPanel/CardHoverInfoBody
+@onready var reading_vignette: ColorRect = $ReadingVignetteOverlay
 @onready var loading_panel: Control = $LoadingPanel
 @onready var intro_panel: Control = $IntroPanel
 @onready var intro_portrait: TextureRect = $IntroPanel/IntroBox/IntroPortrait
@@ -77,6 +78,8 @@ var _time_passed: float = 0.0
 var _hover_info_showing: bool = false
 var _hover_info_tween: Tween = null
 var _last_hovered_card_pos: Vector2 = Vector2.ZERO
+var _vignette_tween: Tween = null
+var _waiting_for_reading_slot: int = -1
 
 var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
@@ -389,6 +392,7 @@ func _setup_current_client_ui() -> void:
 		_hover_info_tween.kill()
 	card_hover_info_panel.visible = false
 	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
+	_reset_vignette()
 
 	_update_sidebar()
 	story_title_label.text = current_encounter["client"]["name"]
@@ -692,6 +696,33 @@ func _humanize_token(value: String) -> String:
 
 
 
+func _fade_vignette_in() -> void:
+	if _vignette_tween != null and _vignette_tween.is_running():
+		_vignette_tween.kill()
+	_vignette_tween = create_tween()
+	_vignette_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	_vignette_tween.tween_property(
+		reading_vignette.material, "shader_parameter/intensity", 0.7, 0.4
+	)
+
+
+func _fade_vignette_out() -> void:
+	if _vignette_tween != null and _vignette_tween.is_running():
+		_vignette_tween.kill()
+	_vignette_tween = create_tween()
+	_vignette_tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	_vignette_tween.tween_property(
+		reading_vignette.material, "shader_parameter/intensity", 0.0, 0.3
+	)
+
+
+func _reset_vignette() -> void:
+	if _vignette_tween != null and _vignette_tween.is_running():
+		_vignette_tween.kill()
+	reading_vignette.material.set_shader_parameter("intensity", 0.0)
+	_waiting_for_reading_slot = -1
+
+
 func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array[String]:
 	var cards: Array[String] = ["", "", ""]
 	for i in range(3):
@@ -909,6 +940,9 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 		slot_readings[slot_index] = text
 		reading_labels[slot_index].text = text
 		_render_story()
+		if _waiting_for_reading_slot == slot_index:
+			_waiting_for_reading_slot = -1
+			_fade_vignette_out()
 		if resolution_panel.visible:
 			_show_resolution()
 	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
@@ -937,6 +971,9 @@ func _on_claude_request_failed(request_id: String, _error_message: String) -> vo
 		slot_readings[slot_index] = error_text
 		reading_labels[slot_index].text = error_text
 		_render_story()
+		if _waiting_for_reading_slot == slot_index:
+			_waiting_for_reading_slot = -1
+			_fade_vignette_out()
 		if resolution_panel.visible:
 			_show_resolution()
 	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
@@ -967,10 +1004,13 @@ func _lock_slot(slot_index: int) -> void:
 		var cache_key := "%s:%s:%d" % [card.card_name, orient_key, slot_index]
 
 		var reading: String
-		if _reading_cache.has(cache_key):
+		var reading_cached := _reading_cache.has(cache_key)
+		if reading_cached:
 			reading = _reading_cache[cache_key]
 		else:
 			reading = "The cards are speaking..."
+			_waiting_for_reading_slot = slot_index
+			_fade_vignette_in()
 
 		slot_readings[slot_index] = reading
 		reading_labels[slot_index].text = reading
@@ -1044,6 +1084,7 @@ func _destroy_all_card_nodes() -> void:
 		_hover_info_tween.kill()
 	card_hover_info_panel.visible = false
 	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
+	_reset_vignette()
 
 	for pile in slot_piles:
 		pile.clear_cards()

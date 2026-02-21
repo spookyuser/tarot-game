@@ -77,7 +77,8 @@ func create_card(card_name: String, target: CardContainer) -> Card:
 	if preloaded_cards.has(card_name):
 		var card_info = preloaded_cards[card_name]["info"]
 		var front_image = preloaded_cards[card_name]["texture"]
-		return _create_card_node(card_info.name, front_image, target, card_info)
+		var reversed_image = preloaded_cards[card_name].get("reversed_texture")
+		return _create_card_node(card_info.name, front_image, target, card_info, reversed_image)
 	else:
 		# Load card data on-demand (slower but supports dynamic loading)
 		var card_info = _load_card_info(card_name)
@@ -89,7 +90,7 @@ func create_card(card_name: String, target: CardContainer) -> Card:
 		if not card_info.has("front_image"):
 			push_error("Card info does not contain 'front_image' key for card: %s" % card_name)
 			return null
-			
+
 		# Load corresponding image asset
 		var front_image_path = card_asset_dir + "/" + card_info["front_image"]
 		var front_image = _load_image(front_image_path)
@@ -97,7 +98,8 @@ func create_card(card_name: String, target: CardContainer) -> Card:
 			push_error("Card image not found: %s" % front_image_path)
 			return null
 
-		return _create_card_node(card_info.name, front_image, target, card_info)
+		var reversed_image := _create_reversed_texture(front_image)
+		return _create_card_node(card_info.name, front_image, target, card_info, reversed_image)
 
 
 ## Scans card info directory and preloads all JSON data and textures into cache.
@@ -132,10 +134,14 @@ func preload_card_data() -> void:
 			push_error("Failed to load card image: %s" % front_image_path)
 			continue
 
+		# Create 180-degree rotated texture for reversed cards
+		var reversed_texture := _create_reversed_texture(front_image_texture)
+
 		# Cache both JSON data and texture for fast access
 		preloaded_cards[card_name] = {
 			"info": card_info,
-			"texture": front_image_texture
+			"texture": front_image_texture,
+			"reversed_texture": reversed_texture
 		}
 		print("Preloaded card data:", preloaded_cards[card_name])
 		
@@ -182,26 +188,27 @@ func _load_image(image_path: String) -> Texture2D:
 ## @param target: CardContainer to receive the card
 ## @param card_info: Dictionary of card data from JSON
 ## @returns: Configured Card instance or null if addition failed
-func _create_card_node(card_name: String, front_image: Texture2D, target: CardContainer, card_info: Dictionary) -> Card:
+func _create_card_node(card_name: String, front_image: Texture2D, target: CardContainer, card_info: Dictionary, reversed_image: Texture2D = null) -> Card:
 	var card = _generate_card(card_info)
-	
+
 	# Validate container can accept this card
 	if !target._card_can_be_added([card]):
 		print("Card cannot be added: %s" % card_name)
 		card.queue_free()
 		return null
-	
+
 	# Configure card properties
 	card.card_info = card_info
 	card.card_size = card_size
-	
+
 	# Add to scene tree and container
 	var cards_node = target.get_node("Cards")
 	cards_node.add_child(card)
 	target.add_card(card)
-	
+
 	# Set card identity and textures
 	card.card_name = card_name
+	card.reversed_front_image = reversed_image
 	card.set_faces(front_image, back_image)
 
 	return card
@@ -215,3 +222,16 @@ func _generate_card(_card_info: Dictionary) -> Card:
 		push_error("default_card_scene is not assigned!")
 		return null
 	return default_card_scene.instantiate()
+
+
+## Creates a 180-degree rotated copy of a texture for reversed card display.
+func _create_reversed_texture(source: Texture2D) -> Texture2D:
+	if source == null:
+		return null
+	var img := source.get_image()
+	if img == null:
+		return null
+	img = img.duplicate()
+	img.flip_x()
+	img.flip_y()
+	return ImageTexture.create_from_image(img)

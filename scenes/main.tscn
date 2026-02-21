@@ -14,6 +14,7 @@
 [ext_resource type="Script" uid="uid://bgyofpuimgnun" path="res://scenes/main.gd" id="main_script"]
 [ext_resource type="Script" uid="uid://6ams8uvg43gu" path="res://addons/card-framework/pile.gd" id="pile_script"]
 [ext_resource type="Texture2D" uid="uid://ctgir8l4epqs" path="res://art/fantasy_pixelart_ui/panels/silver_panel.png" id="silver_panel_tex"]
+[ext_resource type="Shader" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
 [ext_resource type="Texture2D" uid="uid://cihtmo2u0yujk" path="res://art/fantasy_pixelart_ui/panels/wood_panel.png" id="wood_panel_tex"]
 
 [sub_resource type="Curve" id="hand_rotation"]
@@ -25,6 +26,12 @@ point_count = 2
 _limits = [0.0, 50.0, 0.0, 1.0]
 _data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.5, 35), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 3
+
+[sub_resource type="ShaderMaterial" id="vignette_material"]
+shader = ExtResource("vignette_shader")
+shader_parameter/intensity = 0.0
+shader_parameter/softness = 0.5
+shader_parameter/color = Color(0.04, 0.02, 0.08, 1)
 
 [sub_resource type="StyleBoxTexture" id="btn_normal_style"]
 content_margin_left = 20.0
@@ -380,6 +387,18 @@ max_hand_size = 3
 max_hand_spread = 700
 hand_rotation_curve = SubResource("hand_rotation")
 hand_vertical_curve = SubResource("hand_vertical")
+
+[node name="ReadingVignetteOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+z_index = 200
+mouse_filter = 2
+material = SubResource("vignette_material")
+color = Color(1, 1, 1, 1)
 
 [node name="CardHoverInfoPanel" type="NinePatchRect" parent="." unique_id=927259214]
 visible = false

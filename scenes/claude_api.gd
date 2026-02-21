@@ -187,7 +187,7 @@ func _on_client_http_completed(
 		return
 
 	var response: Dictionary = json.get_data()
-	if not response.has("name") or not response.has("context") or not response.has("story"):
+	if not response.has("name") or not response.has("context"):
 		client_request_failed.emit(request_id, "Invalid client response shape")
 		return
 

@@ -51,7 +51,12 @@ static var holding_card_count: int = 0
 # Card data and container reference
 var card_info: Dictionary
 var card_container: CardContainer
-var is_reversed: bool = false
+var is_reversed: bool = false:
+	set(value):
+		is_reversed = value
+		_apply_reversed_texture()
+var reversed_front_image: Texture2D
+var _upright_front_image: Texture2D
 var _show_front: bool = true
 
 
@@ -103,8 +108,19 @@ func _on_move_done() -> void:
 ## @param front_face: The texture to use for the front face
 ## @param back_face: The texture to use for the back face
 func set_faces(front_face: Texture2D, back_face: Texture2D) -> void:
+	_upright_front_image = front_face
 	front_face_texture.texture = front_face
 	back_face_texture.texture = back_face
+	_apply_reversed_texture()
+
+
+func _apply_reversed_texture() -> void:
+	if front_face_texture == null or _upright_front_image == null:
+		return
+	if is_reversed and reversed_front_image != null:
+		front_face_texture.texture = reversed_front_image
+	else:
+		front_face_texture.texture = _upright_front_image
 
 
 ## Returns the card to its original position with smooth animation.
