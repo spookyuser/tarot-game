@@ -65,10 +65,11 @@ func _ready() -> void:
 		factory.back_image = back_texture
 
 	for i: int in range(3):
-		slot_piles.append(get_node("SlotPile%d" % i) as Pile)
-		slot_labels.append(get_node("SlotLabel%d" % i) as Label)
-		reading_labels.append(get_node("ReadingLabel%d" % i) as RichTextLabel)
-		slot_bgs.append(get_node("SlotBg%d" % i) as NinePatchRect)
+		var slot_root: Node = get_node("ReadingSlots/Slot%d" % i)
+		slot_piles.append(slot_root.get_node("SlotPile") as Pile)
+		slot_labels.append(slot_root.get_node("SlotLabel") as Label)
+		reading_labels.append(slot_root.get_node("ReadingLabel") as RichTextLabel)
+		slot_bgs.append(slot_root.get_node("SlotBg") as NinePatchRect)
 
 	next_button.pressed.connect(_on_next_button_pressed)
 	begin_button.pressed.connect(_on_begin_button_pressed)

@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://bpxk6k6py47l4" path="res://assets/ui/icons/gold_star.png" id="gold_star_tex"]
 [ext_resource type="Script" uid="uid://dj46jo3lfbclo" path="res://addons/card-framework/hand.gd" id="hand_script"]
 [ext_resource type="Script" uid="uid://bgyofpuimgnun" path="res://scenes/main.gd" id="main_script"]
-[ext_resource type="Script" uid="uid://6ams8uvg43gu" path="res://addons/card-framework/pile.gd" id="pile_script"]
+[ext_resource type="PackedScene" path="res://scenes/reading_slot.tscn" id="reading_slot_scene"]
 [ext_resource type="Texture2D" uid="uid://ctgir8l4epqs" path="res://assets/ui/panels/silver_panel.png" id="silver_panel_tex"]
 [ext_resource type="Shader" uid="uid://ryt70jxj8alt" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
 [ext_resource type="Texture2D" uid="uid://cihtmo2u0yujk" path="res://assets/ui/panels/wood_panel.png" id="wood_panel_tex"]
@@ -250,152 +250,33 @@ offset_bottom = 720.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.25)
 
-[node name="SlotLabel0" type="Label" parent="." unique_id=445085563]
+[node name="ReadingSlots" type="Control" parent="."]
 layout_mode = 1
 offset_left = 292.0
 offset_top = 100.0
-offset_right = 442.0
-offset_bottom = 128.0
-theme_override_colors/font_color = Color(0.6, 0.5, 0.7, 1)
-theme_override_font_sizes/font_size = 15
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="SlotBg0" type="NinePatchRect" parent="." unique_id=403920633]
-modulate = Color(1, 1, 1, 0.4)
-layout_mode = 1
-offset_left = 317.0
-offset_top = 140.0
-offset_right = 427.0
-offset_bottom = 299.0
-texture = ExtResource("silver_panel_tex")
-patch_margin_left = 8
-patch_margin_top = 8
-patch_margin_right = 8
-patch_margin_bottom = 8
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
-
-[node name="SlotPile0" type="Control" parent="." unique_id=520304011]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 317.0
-offset_top = 140.0
-offset_right = 427.0
-offset_bottom = 299.0
-script = ExtResource("pile_script")
-allow_card_movement = false
-sensor_size = Vector2(130, 180)
-sensor_position = Vector2(-10, -10)
-
-[node name="ReadingLabel0" type="RichTextLabel" parent="." unique_id=20543788]
-layout_mode = 1
-offset_left = 292.0
-offset_top = 310.0
-offset_right = 442.0
-offset_bottom = 400.0
-theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
-theme_override_font_sizes/normal_font_size = 13
-bbcode_enabled = true
-scroll_active = false
-
-[node name="SlotLabel1" type="Label" parent="." unique_id=124450171]
-layout_mode = 1
-offset_left = 475.0
-offset_top = 100.0
-offset_right = 625.0
-offset_bottom = 128.0
-theme_override_colors/font_color = Color(0.6, 0.5, 0.7, 1)
-theme_override_font_sizes/font_size = 15
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="SlotBg1" type="NinePatchRect" parent="." unique_id=848562091]
-modulate = Color(1, 1, 1, 0.4)
-layout_mode = 1
-offset_left = 500.0
-offset_top = 140.0
-offset_right = 610.0
-offset_bottom = 299.0
-texture = ExtResource("silver_panel_tex")
-patch_margin_left = 8
-patch_margin_top = 8
-patch_margin_right = 8
-patch_margin_bottom = 8
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
-
-[node name="SlotPile1" type="Control" parent="." unique_id=776471172]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 500.0
-offset_top = 140.0
-offset_right = 610.0
-offset_bottom = 299.0
-script = ExtResource("pile_script")
-allow_card_movement = false
-sensor_size = Vector2(130, 180)
-sensor_position = Vector2(-10, -10)
-
-[node name="ReadingLabel1" type="RichTextLabel" parent="." unique_id=1406315362]
-layout_mode = 1
-offset_left = 475.0
-offset_top = 310.0
-offset_right = 625.0
-offset_bottom = 400.0
-theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
-theme_override_font_sizes/normal_font_size = 13
-bbcode_enabled = true
-scroll_active = false
-
-[node name="SlotLabel2" type="Label" parent="." unique_id=1097973277]
-layout_mode = 1
-offset_left = 658.0
-offset_top = 100.0
-offset_right = 808.0
-offset_bottom = 128.0
-theme_override_colors/font_color = Color(0.6, 0.5, 0.7, 1)
-theme_override_font_sizes/font_size = 15
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="SlotBg2" type="NinePatchRect" parent="." unique_id=760820117]
-modulate = Color(1, 1, 1, 0.4)
-layout_mode = 1
-offset_left = 683.0
-offset_top = 140.0
-offset_right = 793.0
-offset_bottom = 299.0
-texture = ExtResource("silver_panel_tex")
-patch_margin_left = 8
-patch_margin_top = 8
-patch_margin_right = 8
-patch_margin_bottom = 8
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
-
-[node name="SlotPile2" type="Control" parent="." unique_id=870639695]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 683.0
-offset_top = 140.0
-offset_right = 793.0
-offset_bottom = 299.0
-script = ExtResource("pile_script")
-allow_card_movement = false
-sensor_size = Vector2(130, 180)
-sensor_position = Vector2(-10, -10)
-
-[node name="ReadingLabel2" type="RichTextLabel" parent="." unique_id=1018525676]
-layout_mode = 1
-offset_left = 658.0
-offset_top = 310.0
 offset_right = 808.0
 offset_bottom = 400.0
-theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
-theme_override_font_sizes/normal_font_size = 13
-bbcode_enabled = true
-scroll_active = false
+mouse_filter = 2
+
+[node name="Slot0" parent="ReadingSlots" instance=ExtResource("reading_slot_scene")]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 150.0
+offset_bottom = 300.0
+
+[node name="Slot1" parent="ReadingSlots" instance=ExtResource("reading_slot_scene")]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 183.0
+offset_right = 333.0
+offset_bottom = 300.0
+
+[node name="Slot2" parent="ReadingSlots" instance=ExtResource("reading_slot_scene")]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 366.0
+offset_right = 516.0
+offset_bottom = 300.0
 
 [node name="PlayerHand" type="Control" parent="." unique_id=420696337]
 z_index = 100

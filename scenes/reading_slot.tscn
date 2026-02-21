@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/card-framework/pile.gd" id="pile_script"]
+[ext_resource type="Texture2D" path="res://assets/ui/panels/silver_panel.png" id="silver_panel_tex"]
+
+[node name="ReadingSlot" type="Control"]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 150.0
+offset_bottom = 300.0
+
+[node name="SlotLabel" type="Label" parent="."]
+layout_mode = 1
+offset_right = 150.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.6, 0.5, 0.7, 1)
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SlotBg" type="NinePatchRect" parent="."]
+modulate = Color(1, 1, 1, 0.4)
+layout_mode = 1
+offset_left = 25.0
+offset_top = 40.0
+offset_right = 135.0
+offset_bottom = 199.0
+texture = ExtResource("silver_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[node name="SlotPile" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 25.0
+offset_top = 40.0
+offset_right = 135.0
+offset_bottom = 199.0
+script = ExtResource("pile_script")
+allow_card_movement = false
+sensor_size = Vector2(130, 180)
+sensor_position = Vector2(-10, -10)
+
+[node name="ReadingLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+offset_top = 210.0
+offset_right = 150.0
+offset_bottom = 300.0
+theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 13
+bbcode_enabled = true
+scroll_active = false
