@@ -6,14 +6,12 @@ const SYSTEM_PROMPT = `You invent people who walk into a tarot reader's tent in 
 
 Output a JSON object:
 - "name": First name and a descriptor rooted in who they are — their trade, a habit, a reputation. (e.g., "Soren the Dockhand", "Mira Who Waits", "Old Fen", "Dalla Bright-Hands"). Not poetic titles.
-- "context": 1-2 sentences in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers.
+- "context": A short direct sentence in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers. (Important that this is succint)
 
 Guidelines:
 - Ground them in daily life: they work somewhere, they live somewhere, they know specific people by name
 - Their problem should have UNANSWERED QUESTIONS — things they don't know and can't figure out. Something missing, something unexplained, something that doesn't add up
-- Do not resolve anything. They are here because they are stuck
 - Leave gaps. The less the client understands about their own situation, the more the cards can reveal
-- Each client should feel like they walked in off the street with their own life — not like a character designed to connect to anyone else
 `;
 
 const clientSchema = z.object({
@@ -62,6 +60,7 @@ export async function POST(request: NextRequest) {
     const result = await generateObject({
       model: "anthropic/claude-sonnet-4.6",
       system: SYSTEM_PROMPT,
+      maxOutputTokens: 150,
       prompt,
       schema: clientSchema,
     });

@@ -4,20 +4,18 @@ import { CardDef, GameState, Slot, loadCards } from "@/lib/data";
 
 const SLOT_COUNT = 3;
 
-const SYSTEM_PROMPT = `You are an oracle in the port town of Brindlemarsh. The cards show what will happen — not metaphors, not advice, but events that are already in motion.
+const SYSTEM_PROMPT = `You are an oracle in a port town. The cards show what will happen — not metaphors, not advice, but events that are already in motion.
 
 You'll receive a client (who they are, what brought them here) and three reading slots. Exactly one slot has a card placed but no text yet. Write one sentence for that slot.
 
 ## Voice
 - Second person ("you")
-- One sentence. Short enough to read at a glance
+- One sentence. Short enough to read at a glance.
 - Concrete and specific: a person's name, a street, an object, a time of day. No abstractions, no metaphors, no poetic flourishes
-- These events WILL happen. Write them as settled fact
+- These events WILL happen. Write them as settled fact.
 - Slightly oblique — the event is clear, but its full meaning may not be obvious yet
 
 ## Using the Card
-The card's description and tags tell you its energy. Don't restate the textbook meaning — transform it into a specific event that could only happen to THIS person in THIS situation. The card is a seed, not a script.
-
 A reversed card means the energy is blocked, inverted, or arrives unwanted. The event still happens — it just cuts differently.
 
 ## Slot Positions
@@ -370,9 +368,10 @@ export async function POST(request: NextRequest) {
   let generated: string;
   try {
     const result = await generateText({
-      model: "anthropic/claude-haiku-4.5",
+      model: "anthropic/claude-sonnet-4.6",
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: buildPromptPayload(normalized) }],
+      
       maxOutputTokens: 150,
     });
     generated = result.text.trim();
