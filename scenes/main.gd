@@ -227,7 +227,7 @@ func _ready() -> void:
 	claude_api.client_request_failed.connect(_on_client_request_failed)
 
 	player_hand.max_hand_size = 10
-	player_hand.max_hand_spread = 520 # Fit within the middle column
+	player_hand.max_hand_spread = 700
 
 	_load_portrait_textures()
 

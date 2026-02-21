@@ -370,13 +370,14 @@ scroll_active = false
 [node name="PlayerHand" type="Control" parent="." unique_id=420696337]
 layout_mode = 1
 anchors_preset = 0
+z_index = 100
 offset_left = 555.0
 offset_top = 570.0
 offset_right = 555.0
 offset_bottom = 570.0
 script = ExtResource("hand_script")
 max_hand_size = 3
-max_hand_spread = 400
+max_hand_spread = 700
 hand_rotation_curve = SubResource("hand_rotation")
 hand_vertical_curve = SubResource("hand_vertical")
 
