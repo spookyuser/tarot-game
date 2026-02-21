@@ -1,0 +1,8 @@
+{
+  "name": "queen_of_swords",
+  "front_image": "queen_of_swords.png",
+  "arcana": "minor",
+  "suit": "swords",
+  "value": "queen",
+  "numeric_value": 13
+}
