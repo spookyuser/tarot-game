@@ -1,9 +1,24 @@
 [gd_scene format=3 uid="uid://ke6x51kah8hl"]
 
 [ext_resource type="Script" path="res://scenes/sound_manager.gd" id="1_sound"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot Ambience.mp3" id="audio_ambient"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX CARD SHUFFLE.mp3" id="audio_shuffle"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX CARD.mp3" id="audio_card_drop"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX HAPPY.mp3" id="audio_happy"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX SAD.mp3" id="audio_sad"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX DEATH.mp3" id="audio_death"]
+[ext_resource type="AudioStreamMP3" path="res://art/FX/Tarrot FX MYSTERY.mp3" id="audio_mystery"]
 
 [node name="SoundManager" type="Node"]
 script = ExtResource("1_sound")
+ambient_stream = ExtResource("audio_ambient")
+shuffle_stream = ExtResource("audio_shuffle")
+card_drop_stream = ExtResource("audio_card_drop")
+reading_cups_stream = ExtResource("audio_happy")
+reading_swords_stream = ExtResource("audio_sad")
+reading_wands_stream = ExtResource("audio_death")
+reading_gold_stream = ExtResource("audio_mystery")
+reading_major_stream = ExtResource("audio_mystery")
 
 [node name="AmbientPlayer" type="AudioStreamPlayer" parent="."]
 volume_db = -6.0

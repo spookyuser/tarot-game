@@ -120,26 +120,24 @@ Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2
 - `assets/cards/` — Card face PNGs, back face at `assets/card_back.png`. Card size: 110x159.
 - `art/fantasy_pixelart_ui/` — Pixel art UI kit: `panels/` (gold/wood/silver NinePatchRect sources), `buttons/`, `icons/` (stars, arrows), `scroll/`, `sliders/`.
 - `art/MinifolksVillagers/Outline/` — Character sprite sheets (32x32 frames). Used for client portraits via AtlasTexture.
-- `assets/audio/` — Audio files directory (currently empty). Place real `.wav`/`.ogg` files here and assign them to SoundManager's exported `AudioStream` properties in the inspector to replace generated tones.
+- `art/FX/` — Audio files: ambient music, card SFX, and suit-themed reading tones (MP3).
 
 ## Sound System
 
-`scenes/sound_manager.gd` (`SoundManager` node in Main) provides centralized audio with three `AudioStreamPlayer` children: `AmbientPlayer` (looping background), `SFXPlayer` (one-shot effects), `ReadingPlayer` (looping tone during reading generation).
+`scenes/sound_manager.gd` (`SoundManager` node in Main) provides centralized audio with three `AudioStreamPlayer` children: `AmbientPlayer` (looping background), `SFXPlayer` (one-shot effects), `ReadingPlayer` (looping tone during reading generation). Generated sine wave tones serve as fallbacks if no audio file is assigned.
 
-### Placeholder Tones
+### Audio File Mapping
 
-Each sound uses a generated sine wave at a distinct frequency. Real audio files override these when assigned to the exported `AudioStream` properties in the inspector.
-
-| Sound | Frequency | Duration | Exported Property |
-|-------|-----------|----------|-------------------|
-| Ambient drone | 80 Hz | 4s loop | `ambient_stream` |
-| Shuffle | 300 Hz | 0.3s | `shuffle_stream` |
-| Card drop | 200 Hz | 0.2s | `card_drop_stream` |
-| Reading (cups) | 440 Hz (A4) | 2s loop | `reading_cups_stream` |
-| Reading (swords) | 520 Hz (C5) | 2s loop | `reading_swords_stream` |
-| Reading (wands) | 392 Hz (G4) | 2s loop | `reading_wands_stream` |
-| Reading (gold) | 349 Hz (F4) | 2s loop | `reading_gold_stream` |
-| Reading (major) | 587 Hz (D5) | 2s loop | `reading_major_stream` |
+| Sound | File | Exported Property | Loops |
+|-------|------|-------------------|-------|
+| Ambient | `Tarrot Ambience.mp3` | `ambient_stream` | Yes |
+| Shuffle | `Tarrot FX CARD SHUFFLE.mp3` | `shuffle_stream` | No |
+| Card drop | `Tarrot FX CARD.mp3` | `card_drop_stream` | No |
+| Reading (cups) | `Tarrot FX HAPPY.mp3` | `reading_cups_stream` | Yes |
+| Reading (swords) | `Tarrot FX SAD.mp3` | `reading_swords_stream` | Yes |
+| Reading (wands) | `Tarrot FX DEATH.mp3` | `reading_wands_stream` | Yes |
+| Reading (gold) | `Tarrot FX MYSTERY.mp3` | `reading_gold_stream` | Yes |
+| Reading (major) | `Tarrot FX MYSTERY.mp3` | `reading_major_stream` | Yes |
 
 ### Integration Points in main.gd
 
@@ -150,10 +148,7 @@ Each sound uses a generated sine wave at a distinct frequency. Real audio files 
 - `_update_hover_previews()` hover exit → `stop_reading()` — stops when card leaves slot
 - `_on_claude_request_completed()` → `stop_reading()` — stops when reading text arrives
 
-### Swapping in Real Audio
+### Swapping Audio Files
 
-1. Place audio files in `assets/audio/`
-2. Select `SoundManager` node in the Main scene
-3. In the Inspector, assign files to the corresponding exported `AudioStream` property
-4. The SoundManager uses the assigned stream instead of the generated tone
+To replace a sound, assign a different `AudioStream` to the corresponding exported property on the `SoundManager` node in the Inspector. The `_set_loop()` helper handles looping for MP3, OGG, and WAV formats automatically.
 

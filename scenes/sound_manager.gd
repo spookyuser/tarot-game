@@ -48,6 +48,13 @@ func _ready() -> void:
 		tone.loop_end = MIX_RATE * 2
 		_generated_readings[suit] = tone
 
+	_set_loop(ambient_stream, true)
+	_set_loop(reading_cups_stream, true)
+	_set_loop(reading_swords_stream, true)
+	_set_loop(reading_wands_stream, true)
+	_set_loop(reading_gold_stream, true)
+	_set_loop(reading_major_stream, true)
+
 
 func play_ambient() -> void:
 	if ambient_stream != null:
@@ -98,10 +105,24 @@ func play_reading(suit: String) -> void:
 
 	if not reading_player.playing:
 		reading_player.play()
+		var length := reading_player.stream.get_length()
+		if length > 0.0:
+			reading_player.seek(length * 0.5)
 
 
 func stop_reading() -> void:
 	reading_player.stop()
+
+
+func _set_loop(stream: AudioStream, enabled: bool) -> void:
+	if stream == null:
+		return
+	if stream is AudioStreamMP3:
+		stream.loop = enabled
+	elif stream is AudioStreamOggVorbis:
+		stream.loop = enabled
+	elif stream is AudioStreamWAV:
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if enabled else AudioStreamWAV.LOOP_DISABLED
 
 
 func _generate_tone(frequency: float, duration: float, volume_db: float) -> AudioStreamWAV:
@@ -114,7 +135,6 @@ func _generate_tone(frequency: float, duration: float, volume_db: float) -> Audi
 		var t := float(i) / float(MIX_RATE)
 		var sample_f := sin(TAU * frequency * t)
 		var sample_i := clampi(int(sample_f * amplitude), -32768, 32767)
-		# 16-bit little-endian
 		data[i * 2] = sample_i & 0xFF
 		data[i * 2 + 1] = (sample_i >> 8) & 0xFF
 
