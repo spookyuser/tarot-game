@@ -6,7 +6,7 @@ const SYSTEM_PROMPT = `You invent people who walk into a tarot reader's tent in 
 
 Output a JSON object:
 - "name": First name and a descriptor rooted in who they are — their trade, a habit, a reputation. (e.g., "Soren the Dockhand", "Mira Who Waits", "Old Fen", "Dalla Bright-Hands"). Not poetic titles.
-- "context": 2-3 sentences in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers.
+- "context": 1-2 sentences in first person ("I"). What they say when they sit down. Raw, direct, specific. They're stuck and they need answers.
 
 Guidelines:
 - Ground them in daily life: they work somewhere, they live somewhere, they know specific people by name
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
   try {
     const result = await generateObject({
       model: "anthropic/claude-sonnet-4.6",
-      temperature: 0.4,
       system: SYSTEM_PROMPT,
       prompt,
       schema: clientSchema,
