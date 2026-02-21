@@ -26,7 +26,7 @@ func generate_reading(
 	request_id: String,
 	client_name: String,
 	client_story: String,
-	slot_cards: Array[String],
+	slot_cards: Array,
 	slot_texts: Array[String],
 	target_slot: int
 ) -> void:
@@ -39,8 +39,16 @@ func generate_reading(
 		var slot := {
 			"position": POSITION_NAMES[i],
 		}
-		if not slot_cards[i].is_empty():
-			slot["card"] = slot_cards[i].replace("_", " ")
+		var card_data: Dictionary = slot_cards[i] if slot_cards[i] is Dictionary else {}
+		var card_name: String = card_data.get("name", "") if not card_data.is_empty() else (slot_cards[i] if slot_cards[i] is String else "")
+		if not card_name.is_empty():
+			slot["card"] = card_name.replace("_", " ")
+			if card_data.has("sentiment"):
+				slot["sentiment"] = card_data["sentiment"]
+			if card_data.has("keywords"):
+				slot["keywords"] = card_data["keywords"]
+			if card_data.has("description"):
+				slot["description"] = card_data["description"]
 		else:
 			slot["card"] = null
 		if not slot_texts[i].is_empty():

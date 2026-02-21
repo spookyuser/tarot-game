@@ -10,6 +10,9 @@ export interface CardDef {
   suit: string;
   value: string;
   numeric_value: number;
+  sentiment?: "positive" | "negative" | "neutral";
+  keywords?: string[];
+  description?: string;
 }
 
 export interface ClientDef {
@@ -21,6 +24,9 @@ export interface Slot {
   position: "past" | "present" | "future";
   card?: string | null;
   text?: string | null;
+  sentiment?: string | null;
+  keywords?: string[] | null;
+  description?: string | null;
 }
 
 export interface GameState {
