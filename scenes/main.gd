@@ -866,17 +866,25 @@ func _update_hover_previews() -> void:
 
 	# Hover exit
 	if _current_hover_slot != -1 and (_current_hover_slot != new_hover_slot or _current_hover_card_name != new_hover_card_name):
-		if not slot_filled[_current_hover_slot] and not _loading_slots.has(_current_hover_slot):
+		if not slot_filled[_current_hover_slot]:
 			reading_labels[_current_hover_slot].text = ""
 			_hover_preview_text = ""
 			_render_story()
+		if _loading_slots.has(_current_hover_slot):
+			_loading_slots.erase(_current_hover_slot)
+			if _current_hover_slot == _active_slot:
+				slot_piles[_active_slot].enable_drop_zone = true
 
 	# No hover
 	if new_hover_slot == -1:
-		if _current_hover_slot != -1 and not _loading_slots.has(_active_slot):
-			reading_labels[_active_slot].text = ""
+		if _current_hover_slot != -1:
+			if not slot_filled[_active_slot]:
+				reading_labels[_active_slot].text = ""
 			_hover_preview_text = ""
 			_render_story()
+			if _loading_slots.has(_active_slot):
+				_loading_slots.erase(_active_slot)
+				slot_piles[_active_slot].enable_drop_zone = true
 		_current_hover_slot = -1
 		_current_hover_card_name = ""
 		return
@@ -950,6 +958,11 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 		_hover_preview_text = text
 		_render_story()
 		if slot_index == _active_slot and not slot_filled[slot_index]:
+			slot_piles[_active_slot].enable_drop_zone = true
+	else:
+		# Card left while request was in-flight — clean up stale state
+		if slot_index == _active_slot and not slot_filled[slot_index]:
+			reading_labels[slot_index].text = ""
 			slot_piles[_active_slot].enable_drop_zone = true
 
 
