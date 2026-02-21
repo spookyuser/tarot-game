@@ -36,6 +36,8 @@ extends Control
 @onready var end_list: VBoxContainer = $EndPanel/EndBox/EndScroll/EndList
 @onready var play_again_button: Button = $EndPanel/EndBox/PlayAgainButton
 
+@onready var client_context_text: RichTextLabel = $ClientContextText
+
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
 var reading_labels: Array[RichTextLabel] = []
@@ -44,10 +46,6 @@ var slot_bgs: Array[NinePatchRect] = []
 var all_card_names: Array[String] = []
 var deck: Array[String] = []
 var discard: Array[String] = []
-
-@onready var client_context_text: RichTextLabel = $ClientContextText
-
-
 
 var game_state: Dictionary = {
 	"encounters": [
@@ -89,12 +87,12 @@ var _waiting_for_reading_slot: int = -1
 var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
 
-const CLIENT_PORTRAITS := {
+const CLIENT_PORTRAITS: Dictionary = {
 	"Maria the Widow": "res://assets/portraits/MiniVillagerWoman.png",
 	"The Stranger": "res://assets/portraits/MiniNobleMan.png",
 }
 
-const PORTRAIT_FALLBACKS := [
+const PORTRAIT_FALLBACKS: Array[String] = [
 	"res://assets/portraits/MiniPeasant.png",
 	"res://assets/portraits/MiniWorker.png",
 	"res://assets/portraits/MiniVillagerMan.png",
@@ -107,22 +105,23 @@ const PORTRAIT_FALLBACKS := [
 
 const PORTRAIT_FRAME_SIZE := 32
 
-const SLOT_COLORS := [
-	"#e0b8c8", # Slot 0: Pinkish
-	"#b8e0c8", # Slot 1: Greenish
-	"#b8c8e0", # Slot 2: Bluish
+const SLOT_COLORS: Array[String] = [
+	"#e0b8c8",
+	"#b8e0c8",
+	"#b8c8e0",
 ]
 
-const HOVER_COLORS := [
-	"#a07888", # Slot 0 hover
-	"#78a088", # Slot 1 hover
-	"#7888a0", # Slot 2 hover
+const HOVER_COLORS: Array[String] = [
+	"#a07888",
+	"#78a088",
+	"#7888a0",
 ]
 
 const HOVER_INFO_PANEL_MARGIN := 8.0
 const HOVER_INFO_PANEL_X_OFFSET := 10.0
 const HOVER_INFO_PANEL_Y_OFFSET := 0.0
 const HOVER_TEXT_COLOR := "#e8dcc4"
+
 
 func _ready() -> void:
 	back_texture = load("res://assets/card_back.png")
@@ -131,7 +130,7 @@ func _ready() -> void:
 		var factory := card_manager.card_factory as JsonCardFactory
 		factory.back_image = back_texture
 
-	for i in range(3):
+	for i: int in range(3):
 		slot_piles.append(get_node("SlotPile%d" % i) as Pile)
 		slot_labels.append(get_node("SlotLabel%d" % i) as Label)
 		reading_labels.append(get_node("ReadingLabel%d" % i) as RichTextLabel)
@@ -157,9 +156,7 @@ func _ready() -> void:
 	player_hand.max_hand_spread = 700
 
 	_load_portrait_textures()
-
 	_build_card_name_list()
-	_load_clients()
 	_shuffle_deck()
 	_next_client()
 
@@ -167,14 +164,14 @@ func _ready() -> void:
 
 
 func _load_portrait_textures() -> void:
-	var all_paths := {}
-	for client_name in CLIENT_PORTRAITS:
+	var all_paths: Dictionary = {}
+	for client_name: String in CLIENT_PORTRAITS:
 		all_paths[CLIENT_PORTRAITS[client_name]] = true
-	for path in PORTRAIT_FALLBACKS:
+	for path: String in PORTRAIT_FALLBACKS:
 		all_paths[path] = true
 
-	for path in all_paths.keys():
-		var sheet := load(path) as Texture2D
+	for path: String in all_paths.keys():
+		var sheet: Texture2D = load(path) as Texture2D
 		if sheet == null:
 			continue
 		var atlas := AtlasTexture.new()
@@ -189,7 +186,7 @@ func _get_portrait_for_client(client_name: String) -> Texture2D:
 		if portrait_textures.has(path):
 			return portrait_textures[path]
 
-	var fallback_index := client_name.hash() % PORTRAIT_FALLBACKS.size()
+	var fallback_index: int = client_name.hash() % PORTRAIT_FALLBACKS.size()
 	if fallback_index < 0:
 		fallback_index += PORTRAIT_FALLBACKS.size()
 	var fallback_path: String = PORTRAIT_FALLBACKS[fallback_index]
@@ -200,7 +197,7 @@ func _get_portrait_for_client(client_name: String) -> Texture2D:
 
 
 func _build_card_name_list() -> void:
-	var major = [
+	var major: Array[String] = [
 		"the_fool", "the_magician", "the_high_priestess", "the_empress",
 		"the_emperor", "the_hierophant", "the_lovers", "the_chariot",
 		"the_strength", "the_hermit", "the_wheel_of_fortune", "the_justice",
@@ -210,23 +207,18 @@ func _build_card_name_list() -> void:
 	]
 	all_card_names.append_array(major)
 
-	var suits = ["cups", "gold", "swords", "wands"]
-	var values = [
+	var suits: Array[String] = ["cups", "gold", "swords", "wands"]
+	var values: Array[String] = [
 		"ace", "two", "three", "four", "five", "six", "seven",
 		"eight", "nine", "ten", "page", "knight", "queen", "king"
 	]
-	for suit in suits:
-		for val in values:
+	for suit: String in suits:
+		for val: String in values:
 			all_card_names.append("%s_of_%s" % [val, suit])
 
 
-func _load_clients() -> void:
-	# `clients.json` logic removed. Game state is now initialized at the script level.
-	pass
-
-
 func _shuffle_deck() -> void:
-	var pool := all_card_names.duplicate()
+	var pool: Array[String] = all_card_names.duplicate()
 	pool.shuffle()
 	deck = pool.slice(0, 9) as Array[String]
 	discard.clear()
@@ -235,7 +227,7 @@ func _shuffle_deck() -> void:
 
 func _draw_cards(count: int) -> Array[String]:
 	var drawn: Array[String] = []
-	for i in range(mini(count, deck.size())):
+	for i: int in range(mini(count, deck.size())):
 		drawn.append(deck.pop_back())
 	return drawn
 
@@ -248,7 +240,6 @@ func _next_client() -> void:
 
 	current_encounter = game_state["encounters"][current_encounter_index]
 	current_encounter_index += 1
-
 	_show_intro()
 
 
@@ -259,10 +250,7 @@ func _show_intro() -> void:
 	var client_name: String = current_encounter["client"]["name"]
 	intro_name.text = client_name
 	intro_context.text = "[center]%s[/center]" % current_encounter["client"]["context"]
-
-	var portrait := _get_portrait_for_client(client_name)
-	intro_portrait.texture = portrait
-
+	intro_portrait.texture = _get_portrait_for_client(client_name)
 	intro_panel.visible = true
 
 
@@ -279,14 +267,15 @@ func _show_client_loading() -> void:
 	loading_panel.visible = true
 	resolution_panel.visible = false
 	card_hover_info_panel.visible = false
-	for i in range(3):
+	for i: int in range(3):
 		reading_labels[i].text = ""
 		slot_labels[i].text = ""
 		slot_piles[i].enable_drop_zone = false
 
+
 func _on_client_request_completed(_request_id: String, client_data: Dictionary) -> void:
 	loading_panel.visible = false
-	var new_encounter := {
+	var new_encounter: Dictionary = {
 		"client": {
 			"name": client_data.get("name", "Unknown"),
 			"context": client_data.get("context", "")
@@ -300,9 +289,11 @@ func _on_client_request_completed(_request_id: String, client_data: Dictionary) 
 	game_state["encounters"].append(new_encounter)
 	_next_client()
 
+
 func _on_client_request_failed(_request_id: String, error_message: String) -> void:
 	loading_panel.visible = false
 	story_rich_text.text = "[color=#a05a5a]No one came to the table. (%s)[/color]" % error_message
+
 
 func _setup_current_client_ui() -> void:
 	client_count += 1
@@ -329,18 +320,14 @@ func _setup_current_client_ui() -> void:
 	story_title_label.text = current_encounter["client"]["name"]
 	client_context_text.text = current_encounter["client"]["context"]
 
-	for i in range(3):
+	for i: int in range(3):
 		reading_labels[i].text = ""
-		if i == 0:
-			slot_piles[i].enable_drop_zone = true
-		else:
-			slot_piles[i].enable_drop_zone = false
+		slot_piles[i].enable_drop_zone = (i == 0)
 
 	_update_slot_labels()
 	_render_story()
 
 	resolution_panel.visible = false
-
 	_deal_hand()
 
 
@@ -348,11 +335,8 @@ func _update_sidebar() -> void:
 	client_name_left.text = current_encounter["client"]["name"]
 	client_counter_left.text = "Client #%d" % client_count
 
-	var portrait := _get_portrait_for_client(current_encounter["client"]["name"])
-	if portrait != null:
-		portrait_frame.texture = portrait
-	else:
-		portrait_frame.texture = null
+	var portrait: Texture2D = _get_portrait_for_client(current_encounter["client"]["name"])
+	portrait_frame.texture = portrait
 
 	_update_deck_count()
 	_update_progress_icons()
@@ -363,7 +347,7 @@ func _update_deck_count() -> void:
 
 
 func _update_progress_icons() -> void:
-	for i in range(3):
+	for i: int in range(3):
 		if slot_filled[i]:
 			progress_icons[i].modulate = Color(0.85, 0.7, 0.4, 1.0)
 		else:
@@ -371,32 +355,33 @@ func _update_progress_icons() -> void:
 
 
 func _deal_hand() -> void:
-	var available = deck.size()
-	if available <= 0: return
-	var drawn = _draw_cards(available)
-	for card_name in drawn:
-		card_manager.card_factory.create_card(card_name, player_hand)
-		var card: Card = player_hand._held_cards.back()
-		card.is_reversed = randf() < 0.5
+	var available: int = deck.size()
+	if available <= 0:
+		return
+	var drawn: Array[String] = _draw_cards(available)
+	for card_name: String in drawn:
+		var card: Card = card_manager.card_factory.create_card(card_name, player_hand)
+		if card != null:
+			card.is_reversed = randf() < 0.5
 	_update_deck_count()
 
 
 func _find_held_card() -> Card:
-	for card in player_hand._held_cards:
+	for card: Card in player_hand._held_cards:
 		if card.current_state == DraggableObject.DraggableState.HOLDING:
 			return card
 	return null
 
 
 func _find_hovered_hand_card() -> Card:
-	for card in player_hand._held_cards:
+	for card: Card in player_hand._held_cards:
 		if card.current_state == DraggableObject.DraggableState.HOVERING:
 			return card
 	return null
 
 
 func _update_card_hover_info_panel() -> void:
-	var hovered_card := _find_hovered_hand_card()
+	var hovered_card: Card = _find_hovered_hand_card()
 
 	if hovered_card != null:
 		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info)
@@ -406,9 +391,8 @@ func _update_card_hover_info_panel() -> void:
 		if not _hover_info_showing:
 			_hover_info_showing = true
 			_slide_hover_info_in(hovered_card)
-		else:
-			if _hover_info_tween == null or not _hover_info_tween.is_running():
-				_position_hover_info_panel(hovered_card)
+		elif _hover_info_tween == null or not _hover_info_tween.is_running():
+			_position_hover_info_panel(hovered_card)
 	else:
 		if _hover_info_showing:
 			_hover_info_showing = false
@@ -420,25 +404,14 @@ func _position_hover_info_panel(card: Card) -> void:
 	var panel_size: Vector2 = card_hover_info_panel.size
 	var viewport_size: Vector2 = get_viewport_rect().size
 
-	# Default: extend out from the left side of the card
-	var target_x := card_rect.position.x - panel_size.x - HOVER_INFO_PANEL_X_OFFSET
-
-	# Fall back to right side if no room on the left
+	var target_x: float = card_rect.position.x - panel_size.x - HOVER_INFO_PANEL_X_OFFSET
 	if target_x < HOVER_INFO_PANEL_MARGIN:
 		target_x = card_rect.position.x + card_rect.size.x + HOVER_INFO_PANEL_X_OFFSET
 
-	var target_y := card_rect.position.y + HOVER_INFO_PANEL_Y_OFFSET
+	var target_y: float = card_rect.position.y + HOVER_INFO_PANEL_Y_OFFSET
 
-	target_x = clampf(
-		target_x,
-		HOVER_INFO_PANEL_MARGIN,
-		viewport_size.x - panel_size.x - HOVER_INFO_PANEL_MARGIN
-	)
-	target_y = clampf(
-		target_y,
-		HOVER_INFO_PANEL_MARGIN,
-		viewport_size.y - panel_size.y - HOVER_INFO_PANEL_MARGIN
-	)
+	target_x = clampf(target_x, HOVER_INFO_PANEL_MARGIN, viewport_size.x - panel_size.x - HOVER_INFO_PANEL_MARGIN)
+	target_y = clampf(target_y, HOVER_INFO_PANEL_MARGIN, viewport_size.y - panel_size.y - HOVER_INFO_PANEL_MARGIN)
 
 	card_hover_info_panel.global_position = Vector2(target_x, target_y)
 
@@ -448,16 +421,11 @@ func _slide_hover_info_in(card: Card) -> void:
 		_hover_info_tween.kill()
 
 	card_hover_info_panel.visible = true
-
-	# Set final position first, then read it back
 	_position_hover_info_panel(card)
-	var final_pos := card_hover_info_panel.global_position
+	var final_pos: Vector2 = card_hover_info_panel.global_position
 
-	# Start behind the card edge
-	var card_rect := card.get_global_rect()
-	var start_pos := Vector2(card_rect.position.x, final_pos.y)
-
-	card_hover_info_panel.global_position = start_pos
+	var card_rect: Rect2 = card.get_global_rect()
+	card_hover_info_panel.global_position = Vector2(card_rect.position.x, final_pos.y)
 	card_hover_info_panel.modulate = Color(1, 1, 1, 0)
 
 	_hover_info_tween = create_tween()
@@ -471,8 +439,8 @@ func _slide_hover_info_out() -> void:
 	if _hover_info_tween != null and _hover_info_tween.is_running():
 		_hover_info_tween.kill()
 
-	var current_pos := card_hover_info_panel.global_position
-	var target_pos := Vector2(_last_hovered_card_pos.x, current_pos.y)
+	var current_pos: Vector2 = card_hover_info_panel.global_position
+	var target_pos: Vector2 = Vector2(_last_hovered_card_pos.x, current_pos.y)
 
 	_hover_info_tween = create_tween()
 	_hover_info_tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
@@ -480,11 +448,11 @@ func _slide_hover_info_out() -> void:
 	_hover_info_tween.tween_property(card_hover_info_panel, "global_position", target_pos, 0.1)
 	_hover_info_tween.tween_property(card_hover_info_panel, "modulate", Color(1, 1, 1, 0), 0.1)
 	_hover_info_tween.set_parallel(false)
-	_hover_info_tween.tween_callback(func(): card_hover_info_panel.visible = false)
+	_hover_info_tween.tween_callback(func() -> void: card_hover_info_panel.visible = false)
 
 
 func _build_hover_body_text(card_info: Dictionary) -> String:
-	var description := String(card_info.get("description", "")).strip_edges()
+	var description: String = String(card_info.get("description", "")).strip_edges()
 	if description.is_empty():
 		description = "No omen appears."
 	return "[color=%s][i]%s[/i][/color]" % [HOVER_TEXT_COLOR, description]
@@ -493,16 +461,12 @@ func _build_hover_body_text(card_info: Dictionary) -> String:
 func _humanize_token(value: String) -> String:
 	if value.is_empty():
 		return value
-
 	var words: Array[String] = []
-	for part in value.split("_"):
+	for part: String in value.split("_"):
 		if part.is_empty():
 			continue
 		words.append(part.capitalize())
 	return " ".join(words)
-
-
-
 
 
 func _fade_vignette_in() -> void:
@@ -510,9 +474,7 @@ func _fade_vignette_in() -> void:
 		_vignette_tween.kill()
 	_vignette_tween = create_tween()
 	_vignette_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	_vignette_tween.tween_property(
-		reading_vignette.material, "shader_parameter/intensity", 0.7, 0.4
-	)
+	_vignette_tween.tween_property(reading_vignette.material, "shader_parameter/intensity", 0.7, 0.4)
 
 
 func _fade_vignette_out() -> void:
@@ -520,9 +482,7 @@ func _fade_vignette_out() -> void:
 		_vignette_tween.kill()
 	_vignette_tween = create_tween()
 	_vignette_tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	_vignette_tween.tween_property(
-		reading_vignette.material, "shader_parameter/intensity", 0.0, 0.3
-	)
+	_vignette_tween.tween_property(reading_vignette.material, "shader_parameter/intensity", 0.0, 0.3)
 
 
 func _reset_vignette() -> void:
@@ -534,12 +494,11 @@ func _reset_vignette() -> void:
 
 func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array[String]:
 	var cards: Array[String] = ["", "", ""]
-	for i in range(3):
+	for i: int in range(3):
 		if slot_filled[i]:
-			var pile_cards = slot_piles[i].get_top_cards(1)
+			var pile_cards: Array[Card] = slot_piles[i].get_top_cards(1)
 			if pile_cards.size() > 0:
-				var slot_card: Card = pile_cards[0]
-				cards[i] = slot_card.card_name
+				cards[i] = pile_cards[0].card_name
 		elif i == hover_slot and hover_card != null:
 			cards[i] = hover_card.card_name
 	return cards
@@ -547,54 +506,39 @@ func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array[String]:
 
 func _build_slot_orientations(hover_slot: int, hover_card: Card) -> Array[String]:
 	var orientations: Array[String] = ["", "", ""]
-	for i in range(3):
+	for i: int in range(3):
 		if slot_filled[i]:
-			var pile_cards = slot_piles[i].get_top_cards(1)
+			var pile_cards: Array[Card] = slot_piles[i].get_top_cards(1)
 			if pile_cards.size() > 0:
-				var slot_card: Card = pile_cards[0]
-				orientations[i] = "reversed" if slot_card.is_reversed else "upright"
+				orientations[i] = "reversed" if pile_cards[0].is_reversed else "upright"
 		elif i == hover_slot and hover_card != null:
 			orientations[i] = "reversed" if hover_card.is_reversed else "upright"
 	return orientations
 
 
 func _build_slot_texts() -> Array[String]:
-	var texts: Array[String] = ["", "", ""]
-	for i in range(3):
-		texts[i] = slot_readings[i]
-	return texts
+	return slot_readings.duplicate()
 
 
 func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[String], slot_orientations: Array[String] = []) -> Dictionary:
 	var full_game_state: Dictionary = game_state.duplicate(true)
-	var encounter_index := maxi(current_encounter_index - 1, 0)
+	var encounter_index: int = maxi(current_encounter_index - 1, 0)
 	var encounters: Array = full_game_state.get("encounters", [])
+
 	if encounter_index < encounters.size() and encounters[encounter_index] is Dictionary:
 		var encounter_state: Dictionary = encounters[encounter_index]
 		var encounter_slots: Array = encounter_state.get("slots", [])
-		for i in range(mini(3, encounter_slots.size())):
-			var runtime_card := ""
-			if i < slot_cards.size():
-				runtime_card = slot_cards[i]
 
-			var runtime_text := ""
-			if i < slot_texts.size():
-				runtime_text = slot_texts[i]
+		for i: int in range(mini(3, encounter_slots.size())):
+			var runtime_card: String = slot_cards[i] if i < slot_cards.size() else ""
+			var runtime_text: String = slot_texts[i] if i < slot_texts.size() else ""
+			var orientation_value: String = slot_orientations[i] if i < slot_orientations.size() else ""
 
-			var card_value := ""
-			if not runtime_card.is_empty():
-				card_value = runtime_card
-
-			var orientation_value := ""
-			if i < slot_orientations.size():
-				orientation_value = slot_orientations[i]
-
-			var slot_state := {
-				"card": card_value,
+			encounter_slots[i] = {
+				"card": runtime_card,
 				"text": runtime_text,
 				"orientation": orientation_value,
 			}
-			encounter_slots[i] = slot_state
 
 		encounter_state["slots"] = encounter_slots
 		encounters[encounter_index] = encounter_state
@@ -612,9 +556,9 @@ func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[S
 
 
 func _update_slot_labels() -> void:
-	for i in range(3):
+	for i: int in range(3):
 		if slot_filled[i]:
-			pass  # Preserve label set by _lock_slot (card name + orientation)
+			pass  # Label set by _lock_slot; preserve it
 		elif i == _active_slot:
 			slot_labels[i].text = "Place a card"
 			slot_labels[i].self_modulate = Color(0.85, 0.7, 0.4, 1.0)
@@ -624,7 +568,7 @@ func _update_slot_labels() -> void:
 
 func _render_story() -> void:
 	var lines: Array[String] = []
-	for i in range(3):
+	for i: int in range(3):
 		if slot_filled[i]:
 			lines.append("[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
 		elif i == _current_hover_slot and _hover_preview_text != "":
@@ -645,9 +589,9 @@ func _process(delta: float) -> void:
 		return
 
 	_time_passed += delta * 3.0
-	for i in range(3):
+	for i: int in range(3):
 		if i == _active_slot and not slot_filled[i]:
-			var pulse := (sin(_time_passed) + 1.0) * 0.5 # 0.0 to 1.0
+			var pulse: float = (sin(_time_passed) + 1.0) * 0.5
 			var active_color := Color(SLOT_COLORS[i])
 			slot_bgs[i].modulate = active_color.lerp(Color.WHITE, 0.2)
 			slot_bgs[i].modulate.a = lerp(0.5, 1.0, pulse)
@@ -663,11 +607,11 @@ func _update_hover_previews() -> void:
 	if _active_slot >= 3:
 		return
 
-	var new_hover_slot := -1
-	var new_hover_card_name := ""
+	var new_hover_slot: int = -1
+	var new_hover_card_name: String = ""
 
 	if Card.holding_card_count > 0:
-		var held_card = _find_held_card()
+		var held_card: Card = _find_held_card()
 		if held_card != null:
 			new_hover_card_name = held_card.card_name
 			if slot_piles[_active_slot].drop_zone != null and slot_piles[_active_slot].drop_zone.check_mouse_is_in_drop_zone():
@@ -685,7 +629,7 @@ func _update_hover_previews() -> void:
 			if _current_hover_slot == _active_slot:
 				slot_piles[_active_slot].enable_drop_zone = true
 
-	# No hover
+	# No card hovering
 	if new_hover_slot == -1:
 		if _current_hover_slot != -1:
 			if not slot_filled[_active_slot]:
@@ -699,7 +643,7 @@ func _update_hover_previews() -> void:
 		_current_hover_card_name = ""
 		return
 
-	# Same hover as last frame
+	# Same hover as last frame — no change
 	if new_hover_slot == _current_hover_slot and new_hover_card_name == _current_hover_card_name:
 		return
 
@@ -707,9 +651,9 @@ func _update_hover_previews() -> void:
 	_current_hover_slot = new_hover_slot
 	_current_hover_card_name = new_hover_card_name
 
-	var held_card_for_key = _find_held_card()
-	var orientation_key := "reversed" if (held_card_for_key != null and held_card_for_key.is_reversed) else "upright"
-	var cache_key := "%s:%s:%d" % [new_hover_card_name, orientation_key, new_hover_slot]
+	var held_card: Card = _find_held_card()
+	var orientation_key: String = "reversed" if (held_card != null and held_card.is_reversed) else "upright"
+	var cache_key: String = "%s:%s:%d" % [new_hover_card_name, orientation_key, new_hover_slot]
 
 	if _reading_cache.has(cache_key):
 		var cached: String = _reading_cache[cache_key]
@@ -725,24 +669,20 @@ func _update_hover_previews() -> void:
 	_loading_slots[new_hover_slot] = true
 	slot_piles[_active_slot].enable_drop_zone = false
 
-	var held_card = held_card_for_key
-	if held_card != null:
-		sound_manager.play_reading(held_card.card_info.get("suit", "major"))
 	if held_card == null:
 		return
 
-	var request_id := cache_key
+	sound_manager.play_reading(held_card.card_info.get("suit", "major"))
+
+	var request_id: String = cache_key
 	_pending_requests[request_id] = new_hover_slot
 
 	var slot_cards: Array[String] = _build_slot_cards(new_hover_slot, held_card)
 	var slot_texts: Array[String] = _build_slot_texts()
 	var slot_orientations: Array[String] = _build_slot_orientations(new_hover_slot, held_card)
-	var request_state := _build_reading_request_state(slot_cards, slot_texts, slot_orientations)
+	var request_state: Dictionary = _build_reading_request_state(slot_cards, slot_texts, slot_orientations)
 
-	claude_api.generate_reading(
-		request_id,
-		request_state
-	)
+	claude_api.generate_reading(request_id, request_state)
 
 
 func _on_claude_request_completed(request_id: String, text: String) -> void:
@@ -773,7 +713,7 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 		if slot_index == _active_slot and not slot_filled[slot_index]:
 			slot_piles[_active_slot].enable_drop_zone = true
 	else:
-		# Card left while request was in-flight — clean up stale state
+		# Card moved away while request was in-flight
 		if slot_index == _active_slot and not slot_filled[slot_index]:
 			reading_labels[slot_index].text = ""
 			slot_piles[_active_slot].enable_drop_zone = true
@@ -812,8 +752,8 @@ func _detect_drops() -> void:
 	if _active_slot >= 3:
 		return
 
-	var i := _active_slot
-	var current_count = slot_piles[i].get_card_count()
+	var i: int = _active_slot
+	var current_count: int = slot_piles[i].get_card_count()
 	if current_count > 0 and slot_prev_counts[i] == 0:
 		_lock_slot(i)
 	slot_prev_counts[i] = current_count
@@ -825,15 +765,14 @@ func _lock_slot(slot_index: int) -> void:
 	slot_filled[slot_index] = true
 	slot_piles[slot_index].enable_drop_zone = false
 
-	var cards = slot_piles[slot_index].get_top_cards(1)
+	var cards: Array[Card] = slot_piles[slot_index].get_top_cards(1)
 	if cards.size() > 0:
 		var card: Card = cards[0]
-		var orient_key := "reversed" if card.is_reversed else "upright"
-		var cache_key := "%s:%s:%d" % [card.card_name, orient_key, slot_index]
+		var orient_key: String = "reversed" if card.is_reversed else "upright"
+		var cache_key: String = "%s:%s:%d" % [card.card_name, orient_key, slot_index]
 
 		var reading: String
-		var reading_cached := _reading_cache.has(cache_key)
-		if reading_cached:
+		if _reading_cache.has(cache_key):
 			reading = _reading_cache[cache_key]
 		else:
 			reading = "The cards are speaking..."
@@ -844,7 +783,7 @@ func _lock_slot(slot_index: int) -> void:
 		reading_labels[slot_index].text = reading
 		discard.append(card.card_name)
 
-		var display_name := _humanize_token(card.card_name)
+		var display_name: String = _humanize_token(card.card_name)
 		if card.is_reversed:
 			display_name += " (Reversed)"
 		slot_labels[slot_index].text = display_name
@@ -858,7 +797,6 @@ func _lock_slot(slot_index: int) -> void:
 	_loading_slots.erase(slot_index)
 
 	_active_slot = slot_index + 1
-
 	if _active_slot < 3:
 		slot_piles[_active_slot].enable_drop_zone = true
 
@@ -873,14 +811,13 @@ func _lock_slot(slot_index: int) -> void:
 
 func _invalidate_unfilled_caches() -> void:
 	var keys_to_erase: Array[String] = []
-	for key in _reading_cache.keys():
+	for key: String in _reading_cache.keys():
 		var parts: PackedStringArray = key.split(":")
-		# Cache key format: "card_name:orientation:slot_index"
 		if parts.size() == 3:
-			var idx := parts[2].to_int()
+			var idx: int = parts[2].to_int()
 			if not slot_filled[idx]:
 				keys_to_erase.append(key)
-	for key in keys_to_erase:
+	for key: String in keys_to_erase:
 		_reading_cache.erase(key)
 
 
@@ -889,47 +826,43 @@ func _show_resolution() -> void:
 	resolution_title.text = "Reading for %s" % current_encounter["client"]["name"]
 
 	var lines: Array[String] = []
-	for i in range(3):
+	for i: int in range(3):
 		lines.append("[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
 	resolution_text.text = "\n\n".join(lines)
 
 
 func _on_next_button_pressed() -> void:
 	_destroy_all_card_nodes()
-	# The player hand will have fewer than 3 cards if they can't fulfill the next client
 	if player_hand.get_card_count() < 3:
 		_show_end_screen()
 	else:
 		_next_client()
 
+
 func _show_end_screen() -> void:
-	# Clean up any previous rows just in case
-	for child in end_list.get_children():
+	for child: Node in end_list.get_children():
 		child.queue_free()
 
 	end_title.text = "The Reading Concludes"
 
-	# Build a row for every encounter
 	var encounters: Array = game_state.get("encounters", [])
-	for encounter in encounters:
-		var client_name = encounter.get("client", {}).get("name", "Unknown")
-		var slots = encounter.get("slots", [])
+	for encounter: Dictionary in encounters:
+		var client_name: String = encounter.get("client", {}).get("name", "Unknown")
+		var slots: Array = encounter.get("slots", [])
 
-		var row = HBoxContainer.new()
+		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 24)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 
-		# 1) Portrait
-		var portrait_rect = TextureRect.new()
-		var p_tex = _get_portrait_for_client(client_name)
+		var portrait_rect := TextureRect.new()
+		var p_tex: Texture2D = _get_portrait_for_client(client_name)
 		if p_tex:
 			portrait_rect.texture = p_tex
 		portrait_rect.custom_minimum_size = Vector2(48, 48)
 		portrait_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		row.add_child(portrait_rect)
 
-		# 2) Client Name
-		var name_label = Label.new()
+		var name_label := Label.new()
 		name_label.text = client_name
 		name_label.add_theme_color_override("font_color", Color(0.85, 0.7, 0.4, 1.0))
 		name_label.add_theme_font_size_override("font_size", 14)
@@ -938,33 +871,27 @@ func _show_end_screen() -> void:
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(name_label)
 
-		# 3) Three Card Icons
-		var cards_box = HBoxContainer.new()
+		var cards_box := HBoxContainer.new()
 		cards_box.add_theme_constant_override("separation", 8)
 		cards_box.alignment = BoxContainer.ALIGNMENT_CENTER
-		
-		for slot in slots:
-			var c_name = slot.get("card", "")
-			var orient = slot.get("orientation", "upright")
-			
-			var c_rect = TextureRect.new()
+
+		for slot: Dictionary in slots:
+			var c_name: String = slot.get("card", "")
+			var orient: String = slot.get("orientation", "upright")
+
+			var c_rect := TextureRect.new()
 			c_rect.custom_minimum_size = Vector2(36, 52)
 			c_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-			
+
 			if c_name.is_empty():
 				c_rect.texture = back_texture
 			else:
-				var tex_path = "res://assets/cards/%s.png" % c_name
-				if ResourceLoader.exists(tex_path):
-					c_rect.texture = load(tex_path)
-				else:
-					c_rect.texture = back_texture
+				var tex_path: String = "res://assets/cards/%s.png" % c_name
+				c_rect.texture = load(tex_path) if ResourceLoader.exists(tex_path) else back_texture
 
-			if orient == "reversed":
-				c_rect.flip_v = true
-			
+			c_rect.flip_v = (orient == "reversed")
 			cards_box.add_child(c_rect)
-			
+
 		row.add_child(cards_box)
 		end_list.add_child(row)
 
@@ -973,12 +900,13 @@ func _show_end_screen() -> void:
 	if end_panel:
 		end_panel.visible = true
 
+
 func _on_play_again_pressed() -> void:
 	get_tree().reload_current_scene()
 
 
 func _destroy_all_card_nodes() -> void:
-	for request_id in _pending_requests.keys():
+	for request_id: String in _pending_requests.keys():
 		claude_api.cancel_request(request_id)
 	_pending_requests.clear()
 	_loading_slots.clear()
@@ -992,7 +920,7 @@ func _destroy_all_card_nodes() -> void:
 	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
 	_reset_vignette()
 
-	for pile in slot_piles:
+	for pile: Pile in slot_piles:
 		pile.clear_cards()
 	card_manager.reset_history()
 	Card.holding_card_count = 0

@@ -18,7 +18,7 @@ const AMBIENT_FREQ := 80.0
 const SHUFFLE_FREQ := 300.0
 const CARD_DROP_FREQ := 200.0
 
-const READING_FREQS := {
+const READING_FREQS: Dictionary = {
 	"cups": 440.0,
 	"swords": 520.0,
 	"wands": 392.0,
@@ -41,8 +41,8 @@ func _ready() -> void:
 	_generated_shuffle = _generate_tone(SHUFFLE_FREQ, 0.3, -10.0)
 	_generated_card_drop = _generate_tone(CARD_DROP_FREQ, 0.2, -10.0)
 
-	for suit in READING_FREQS:
-		var tone := _generate_tone(READING_FREQS[suit], 2.0, -14.0)
+	for suit: String in READING_FREQS:
+		var tone: AudioStreamWAV = _generate_tone(READING_FREQS[suit], 2.0, -14.0)
 		tone.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		tone.loop_begin = 0
 		tone.loop_end = MIX_RATE * 2
@@ -57,10 +57,7 @@ func _ready() -> void:
 
 
 func play_ambient() -> void:
-	if ambient_stream != null:
-		ambient_player.stream = ambient_stream
-	else:
-		ambient_player.stream = _generated_ambient
+	ambient_player.stream = ambient_stream if ambient_stream != null else _generated_ambient
 	ambient_player.play()
 
 
@@ -69,27 +66,21 @@ func stop_ambient() -> void:
 
 
 func play_shuffle() -> void:
-	if shuffle_stream != null:
-		sfx_player.stream = shuffle_stream
-	else:
-		sfx_player.stream = _generated_shuffle
+	sfx_player.stream = shuffle_stream if shuffle_stream != null else _generated_shuffle
 	sfx_player.play()
 
 
 func play_card_drop() -> void:
-	if card_drop_stream != null:
-		sfx_player.stream = card_drop_stream
-	else:
-		sfx_player.stream = _generated_card_drop
+	sfx_player.stream = card_drop_stream if card_drop_stream != null else _generated_card_drop
 	sfx_player.play()
 
 
 func play_reading(suit: String) -> void:
-	var key := suit.to_lower()
+	var key: String = suit.to_lower()
 	if not READING_FREQS.has(key):
 		key = "major"
 
-	var override_map := {
+	var override_map: Dictionary = {
 		"cups": reading_cups_stream,
 		"swords": reading_swords_stream,
 		"wands": reading_wands_stream,
@@ -98,14 +89,11 @@ func play_reading(suit: String) -> void:
 	}
 
 	var override: AudioStream = override_map.get(key)
-	if override != null:
-		reading_player.stream = override
-	else:
-		reading_player.stream = _generated_readings[key]
+	reading_player.stream = override if override != null else _generated_readings[key]
 
 	if not reading_player.playing:
 		reading_player.play()
-		var length := reading_player.stream.get_length()
+		var length: float = reading_player.stream.get_length()
 		if length > 0.0:
 			reading_player.seek(length * 0.5)
 
@@ -126,15 +114,15 @@ func _set_loop(stream: AudioStream, enabled: bool) -> void:
 
 
 func _generate_tone(frequency: float, duration: float, volume_db: float) -> AudioStreamWAV:
-	var sample_count := int(MIX_RATE * duration)
-	var amplitude := int(32767.0 * db_to_linear(volume_db))
+	var sample_count: int = int(MIX_RATE * duration)
+	var amplitude: int = int(32767.0 * db_to_linear(volume_db))
 	var data := PackedByteArray()
 	data.resize(sample_count * 2)
 
-	for i in range(sample_count):
-		var t := float(i) / float(MIX_RATE)
-		var sample_f := sin(TAU * frequency * t)
-		var sample_i := clampi(int(sample_f * amplitude), -32768, 32767)
+	for i: int in range(sample_count):
+		var t: float = float(i) / float(MIX_RATE)
+		var sample_f: float = sin(TAU * frequency * t)
+		var sample_i: int = clampi(int(sample_f * amplitude), -32768, 32767)
 		data[i * 2] = sample_i & 0xFF
 		data[i * 2 + 1] = (sample_i >> 8) & 0xFF
 
