@@ -22,6 +22,7 @@ extends Control
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
 var reading_labels: Array[RichTextLabel] = []
+var slot_bgs: Array[NinePatchRect] = []
 
 var all_card_names: Array[String] = []
 var deck: Array[String] = []
@@ -43,6 +44,7 @@ var _current_hover_card_name: String = ""
 var _hover_preview_text: String = ""
 var _pending_requests: Dictionary = {}
 var _loading_slots: Dictionary = {}
+var _time_passed: float = 0.0
 
 var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
@@ -65,6 +67,18 @@ const PORTRAIT_FALLBACKS := [
 
 const PORTRAIT_FRAME_SIZE := 32
 
+const SLOT_COLORS := [
+	"#e0b8c8", # Slot 0: Pinkish
+	"#b8e0c8", # Slot 1: Greenish
+	"#b8c8e0", # Slot 2: Bluish
+]
+
+const HOVER_COLORS := [
+	"#a07888", # Slot 0 hover
+	"#78a088", # Slot 1 hover
+	"#7888a0", # Slot 2 hover
+]
+
 
 
 
@@ -79,6 +93,7 @@ func _ready() -> void:
 		slot_piles.append(get_node("SlotPile%d" % i) as Pile)
 		slot_labels.append(get_node("SlotLabel%d" % i) as Label)
 		reading_labels.append(get_node("ReadingLabel%d" % i) as RichTextLabel)
+		slot_bgs.append(get_node("SlotBg%d" % i) as NinePatchRect)
 
 	next_button.pressed.connect(_on_next_button_pressed)
 	resolution_panel.visible = false
@@ -304,10 +319,10 @@ func _render_story() -> void:
 	for i in range(3):
 		var placeholder := "{%d}" % i
 		if slot_filled[i]:
-			var colored := "[color=#c8b8e0]%s[/color]" % slot_readings[i]
+			var colored := "[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]]
 			text = text.replace(placeholder, colored)
 		elif i == _current_hover_slot and _hover_preview_text != "":
-			var preview := "[color=#8878a0][i]%s[/i][/color]" % _hover_preview_text
+			var preview := "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[i], _hover_preview_text]
 			text = text.replace(placeholder, preview)
 		else:
 			text = text.replace(placeholder, "[color=#4a3a60]___________[/color]")
@@ -315,9 +330,19 @@ func _render_story() -> void:
 	story_rich_text.text = text
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if resolution_panel.visible:
 		return
+
+	_time_passed += delta * 3.0
+	for i in range(3):
+		if i == _active_slot and not slot_filled[i]:
+			var pulse := (sin(_time_passed) + 1.0) * 0.5 # 0.0 to 1.0
+			var active_color := Color(SLOT_COLORS[i])
+			slot_bgs[i].modulate = active_color.lerp(Color.WHITE, 0.2)
+			slot_bgs[i].modulate.a = lerp(0.5, 1.0, pulse)
+		else:
+			slot_bgs[i].modulate = Color(1.0, 1.0, 1.0, 0.4)
 
 	_update_hover_previews()
 	_detect_drops()
@@ -366,13 +391,14 @@ func _update_hover_previews() -> void:
 
 	if _reading_cache.has(cache_key):
 		var cached: String = _reading_cache[cache_key]
-		reading_labels[new_hover_slot].text = "[color=#8878a0][i]%s[/i][/color]" % cached
+		reading_labels[new_hover_slot].text = "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[new_hover_slot], cached]
 		_hover_preview_text = cached
 		_render_story()
 		return
 
 	var loading_text := "The cards are speaking..."
-	reading_labels[new_hover_slot].text = "[color=#6a5a80][i]%s[/i][/color]" % loading_text
+	# Use a grayish purple for loading state, keeping the wave effect
+	reading_labels[new_hover_slot].text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % loading_text
 	_hover_preview_text = loading_text
 	_render_story()
 	_loading_slots[new_hover_slot] = true
@@ -415,7 +441,7 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 		if resolution_panel.visible:
 			_show_resolution()
 	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
-		reading_labels[slot_index].text = "[color=#8878a0][i]%s[/i][/color]" % text
+		reading_labels[slot_index].text = "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[slot_index], text]
 		_hover_preview_text = text
 		_render_story()
 
@@ -439,7 +465,7 @@ func _on_claude_request_failed(request_id: String, _error_message: String) -> vo
 		if resolution_panel.visible:
 			_show_resolution()
 	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
-		reading_labels[slot_index].text = "[color=#a05a5a][i]%s[/i][/color]" % error_text
+		reading_labels[slot_index].text = "[color=#a05a5a][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % error_text
 		_hover_preview_text = error_text
 		_render_story()
 
@@ -513,7 +539,7 @@ func _show_resolution() -> void:
 
 	var text: String = current_client["story"]
 	for i in range(3):
-		text = text.replace("{%d}" % i, "[color=#c8b8e0]%s[/color]" % slot_readings[i])
+		text = text.replace("{%d}" % i, "[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
 
 	resolution_text.text = text
 

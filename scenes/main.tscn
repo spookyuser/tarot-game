@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://6ams8uvg43gu" path="res://addons/card-framework/pile.gd" id="pile_script"]
 [ext_resource type="Texture2D" path="res://art/fantasy_pixelart_ui/panels/gold_panel.png" id="gold_panel_tex"]
 [ext_resource type="Texture2D" path="res://art/fantasy_pixelart_ui/panels/wood_panel.png" id="wood_panel_tex"]
+[ext_resource type="Texture2D" path="res://art/fantasy_pixelart_ui/panels/silver_panel.png" id="silver_panel_tex"]
 [ext_resource type="Texture2D" path="res://art/fantasy_pixelart_ui/icons/gold_star.png" id="gold_star_tex"]
 [ext_resource type="Texture2D" path="res://assets/card_back.png" id="card_back_tex"]
 [ext_resource type="Texture2D" path="res://art/fantasy_pixelart_ui/buttons/gold_button_normal.png" id="gold_btn_normal_tex"]
@@ -240,13 +241,20 @@ theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="SlotBg0" type="ColorRect" parent="."]
+[node name="SlotBg0" type="NinePatchRect" parent="."]
 layout_mode = 1
 offset_left = 317.0
 offset_top = 140.0
 offset_right = 427.0
 offset_bottom = 299.0
-color = Color(0.15, 0.1, 0.25, 0.4)
+texture = ExtResource("silver_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+modulate = Color(1.0, 1.0, 1.0, 0.4)
 
 [node name="SlotPile0" type="Control" parent="."]
 layout_mode = 1
@@ -282,13 +290,20 @@ theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="SlotBg1" type="ColorRect" parent="."]
+[node name="SlotBg1" type="NinePatchRect" parent="."]
 layout_mode = 1
 offset_left = 500.0
 offset_top = 140.0
 offset_right = 610.0
 offset_bottom = 299.0
-color = Color(0.15, 0.1, 0.25, 0.4)
+texture = ExtResource("silver_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+modulate = Color(1.0, 1.0, 1.0, 0.4)
 
 [node name="SlotPile1" type="Control" parent="."]
 layout_mode = 1
@@ -324,13 +339,20 @@ theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="SlotBg2" type="ColorRect" parent="."]
+[node name="SlotBg2" type="NinePatchRect" parent="."]
 layout_mode = 1
 offset_left = 683.0
 offset_top = 140.0
 offset_right = 793.0
 offset_bottom = 299.0
-color = Color(0.15, 0.1, 0.25, 0.4)
+texture = ExtResource("silver_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+modulate = Color(1.0, 1.0, 1.0, 0.4)
 
 [node name="SlotPile2" type="Control" parent="."]
 layout_mode = 1
