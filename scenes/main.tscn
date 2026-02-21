@@ -14,7 +14,7 @@
 [ext_resource type="Script" uid="uid://bgyofpuimgnun" path="res://scenes/main.gd" id="main_script"]
 [ext_resource type="Script" uid="uid://6ams8uvg43gu" path="res://addons/card-framework/pile.gd" id="pile_script"]
 [ext_resource type="Texture2D" uid="uid://ctgir8l4epqs" path="res://art/fantasy_pixelart_ui/panels/silver_panel.png" id="silver_panel_tex"]
-[ext_resource type="Shader" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
+[ext_resource type="Shader" uid="uid://ryt70jxj8alt" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
 [ext_resource type="Texture2D" uid="uid://cihtmo2u0yujk" path="res://art/fantasy_pixelart_ui/panels/wood_panel.png" id="wood_panel_tex"]
 
 [sub_resource type="Curve" id="hand_rotation"]
@@ -219,6 +219,19 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
+[node name="RestartButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 650.0
+offset_right = 220.0
+offset_bottom = 690.0
+theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/hover = SubResource("btn_normal_style")
+theme_override_styles/pressed = SubResource("btn_pressed_style")
+theme_override_styles/normal = SubResource("btn_normal_style")
+text = "Restart"
+
 [node name="ColumnDividerLeft" type="ColorRect" parent="." unique_id=686245416]
 layout_mode = 1
 offset_left = 279.0
@@ -375,30 +388,28 @@ bbcode_enabled = true
 scroll_active = false
 
 [node name="PlayerHand" type="Control" parent="." unique_id=420696337]
+z_index = 100
 layout_mode = 1
 anchors_preset = 0
-z_index = 100
 offset_left = 555.0
 offset_top = 570.0
 offset_right = 555.0
 offset_bottom = 570.0
 script = ExtResource("hand_script")
 max_hand_size = 3
-max_hand_spread = 700
 hand_rotation_curve = SubResource("hand_rotation")
 hand_vertical_curve = SubResource("hand_vertical")
 
-[node name="ReadingVignetteOverlay" type="ColorRect" parent="."]
+[node name="ReadingVignetteOverlay" type="ColorRect" parent="." unique_id=1397845669]
+z_index = 200
+material = SubResource("vignette_material")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-z_index = 200
 mouse_filter = 2
-material = SubResource("vignette_material")
-color = Color(1, 1, 1, 1)
 
 [node name="CardHoverInfoPanel" type="NinePatchRect" parent="." unique_id=927259214]
 visible = false
@@ -617,7 +628,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Next Client"
 
-[node name="EndPanel" type="Control" parent="."]
+[node name="EndPanel" type="Control" parent="." unique_id=132627432]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -626,7 +637,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Overlay" type="ColorRect" parent="EndPanel"]
+[node name="Overlay" type="ColorRect" parent="EndPanel" unique_id=645602222]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -635,7 +646,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.85)
 
-[node name="EndBg" type="NinePatchRect" parent="EndPanel"]
+[node name="EndBg" type="NinePatchRect" parent="EndPanel" unique_id=1920747769]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -656,7 +667,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="EndBgInner" type="ColorRect" parent="EndPanel"]
+[node name="EndBgInner" type="ColorRect" parent="EndPanel" unique_id=634051540]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -671,7 +682,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.03, 0.12, 0.92)
 
-[node name="EndBox" type="VBoxContainer" parent="EndPanel"]
+[node name="EndBox" type="VBoxContainer" parent="EndPanel" unique_id=241274930]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -687,25 +698,25 @@ grow_vertical = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="EndTitle" type="Label" parent="EndPanel/EndBox"]
+[node name="EndTitle" type="Label" parent="EndPanel/EndBox" unique_id=20235812]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
-[node name="EndScroll" type="ScrollContainer" parent="EndPanel/EndBox"]
+[node name="EndScroll" type="ScrollContainer" parent="EndPanel/EndBox" unique_id=796385230]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 2
 
-[node name="EndList" type="VBoxContainer" parent="EndPanel/EndBox/EndScroll"]
+[node name="EndList" type="VBoxContainer" parent="EndPanel/EndBox/EndScroll" unique_id=1137179208]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="PlayAgainButton" type="Button" parent="EndPanel/EndBox"]
+[node name="PlayAgainButton" type="Button" parent="EndPanel/EndBox" unique_id=1328665856]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 16
@@ -714,7 +725,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Play Again"
 
-[node name="IntroPanel" type="Control" parent="."]
+[node name="IntroPanel" type="Control" parent="." unique_id=982457165]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -723,7 +734,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="IntroBg" type="ColorRect" parent="IntroPanel"]
+[node name="IntroBg" type="ColorRect" parent="IntroPanel" unique_id=1261279816]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -732,7 +743,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.08, 0.04, 0.14, 1)
 
-[node name="IntroBox" type="VBoxContainer" parent="IntroPanel"]
+[node name="IntroBox" type="VBoxContainer" parent="IntroPanel" unique_id=1097738364]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -748,28 +759,28 @@ grow_vertical = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="IntroPortrait" type="TextureRect" parent="IntroPanel/IntroBox"]
-layout_mode = 2
+[node name="IntroPortrait" type="TextureRect" parent="IntroPanel/IntroBox" unique_id=803731281]
 custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
 
-[node name="IntroName" type="Label" parent="IntroPanel/IntroBox"]
+[node name="IntroName" type="Label" parent="IntroPanel/IntroBox" unique_id=2049283831]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
-[node name="IntroContext" type="RichTextLabel" parent="IntroPanel/IntroBox"]
-layout_mode = 2
+[node name="IntroContext" type="RichTextLabel" parent="IntroPanel/IntroBox" unique_id=1973197151]
 custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
 theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true
 scroll_active = false
 
-[node name="BeginButton" type="Button" parent="IntroPanel/IntroBox"]
+[node name="BeginButton" type="Button" parent="IntroPanel/IntroBox" unique_id=547709585]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 16
@@ -778,7 +789,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Begin Reading"
 
-[node name="LoadingPanel" type="Control" parent="."]
+[node name="LoadingPanel" type="Control" parent="." unique_id=680425478]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -787,7 +798,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="LoadingOverlay" type="ColorRect" parent="LoadingPanel"]
+[node name="LoadingOverlay" type="ColorRect" parent="LoadingPanel" unique_id=802987281]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -796,7 +807,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.85)
 
-[node name="LoadingBg" type="NinePatchRect" parent="LoadingPanel"]
+[node name="LoadingBg" type="NinePatchRect" parent="LoadingPanel" unique_id=423373207]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -817,7 +828,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="LoadingBgInner" type="ColorRect" parent="LoadingPanel"]
+[node name="LoadingBgInner" type="ColorRect" parent="LoadingPanel" unique_id=1117876688]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -832,7 +843,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.03, 0.12, 0.92)
 
-[node name="LoadingText" type="RichTextLabel" parent="LoadingPanel"]
+[node name="LoadingText" type="RichTextLabel" parent="LoadingPanel" unique_id=1800696918]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

@@ -29,6 +29,7 @@ extends Control
 @onready var intro_name: Label = $IntroPanel/IntroBox/IntroName
 @onready var intro_context: RichTextLabel = $IntroPanel/IntroBox/IntroContext
 @onready var begin_button: Button = $IntroPanel/IntroBox/BeginButton
+@onready var restart_button: Button = $RestartButton
 
 @onready var end_panel: Control = $EndPanel
 @onready var end_title: Label = $EndPanel/EndBox/EndTitle
@@ -52,9 +53,8 @@ var game_state: Dictionary = {
 	"encounters": [
 		{
 			"client": {
-				"name": "Dalla the Netmender",
-				"context": "I found a coin in my husband's coat that doesn't belong to any mint I know. He's been coming home late from the docks smelling like smoke, but there's been no fire on the wharf. I don't think he's lying to me — I think he doesn't know what's happening to him either."
-			},
+				"name": "Maria the Widow",
+				"context": "my husband is dead, i'm sad and i don't know what to do."},
 			"slots": [
 				{"card": "", "text": ""},
 				{"card": "", "text": ""},
@@ -90,7 +90,7 @@ var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
 
 const CLIENT_PORTRAITS := {
-	"Dalla the Netmender": "res://art/MinifolksVillagers/Outline/MiniVillagerWoman.png",
+	"Maria the Widow": "res://art/MinifolksVillagers/Outline/MiniVillagerWoman.png",
 	"The Stranger": "res://art/MinifolksVillagers/Outline/MiniNobleMan.png",
 }
 
@@ -225,6 +225,7 @@ func _ready() -> void:
 
 	next_button.pressed.connect(_on_next_button_pressed)
 	begin_button.pressed.connect(_on_begin_button_pressed)
+	restart_button.pressed.connect(_on_restart_button_pressed)
 	resolution_panel.visible = false
 	intro_panel.visible = false
 	card_hover_info_panel.z_index = 4096
@@ -351,6 +352,10 @@ func _show_intro() -> void:
 func _on_begin_button_pressed() -> void:
 	intro_panel.visible = false
 	_setup_current_client_ui()
+
+
+func _on_restart_button_pressed() -> void:
+	get_tree().reload_current_scene()
 
 
 func _show_client_loading() -> void:
