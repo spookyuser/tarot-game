@@ -64,7 +64,7 @@ Major arcana use `"arcana": "major"`, `"suit": "major"`. 78 cards total (22 majo
 
 ### Client JSON Format (`data/clients.json`)
 
-Array of objects with `name` (string), `story` (narrative text), `slots` (array of 3 slot label strings).
+Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2}` placeholders for inline card readings). Each placeholder marks where a generated sentence will be inserted into the prose.
 
 ### Card Assets
 
@@ -72,6 +72,8 @@ PNGs in `assets/cards/`, shared back face at `assets/card_back.png`. Card size i
 
 ## Game Flow (scenes/main.gd)
 
-Deck shuffled → client appears with 3 named slots → draw 3 cards into hand → drag cards to slots (hover shows preview reading, drop locks permanently) → all 3 filled triggers resolution overlay after 1.2s → "Next Client" button discards and deals fresh. Deck reshuffles discards when running low.
+Deck shuffled → client appears with story (blanks shown as `___________`) → draw 3 cards into hand → drag cards to slots (hover shows preview reading inline in story, drop locks permanently) → all 3 filled triggers resolution overlay after 1.2s → "Next Client" button discards and deals fresh. Deck reshuffles discards when running low.
 
-Reading text is template-based: major arcana map to hardcoded meanings, minor arcana combine `VALUE_INTENSITIES[value] + SUIT_THEMES[suit]`, wrapped in `SLOT_TEMPLATES[slot_index]` sentence frames.
+Story uses Mad Libs format: `current_client["story"]` contains `{0}`, `{1}`, `{2}` placeholders replaced inline with card readings. `_render_story()` substitutes filled readings, hover previews, or blank markers into the template.
+
+Reading text is template-based (fallback when no API key): major arcana map to hardcoded meanings, minor arcana combine `VALUE_INTENSITIES[value] + SUIT_THEMES[suit]`, wrapped in `READING_TEMPLATES` sentence frames designed to read as natural inline prose. With API key, Claude generates one sentence per blank that flows with surrounding text.
