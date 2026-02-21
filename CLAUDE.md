@@ -5,7 +5,7 @@ A client arrives with a story — a short narrative with three blanks where taro
 
 ## Current State
 
-Three-column UI redesign just implemented (not yet tested in Godot). Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings via Claude API are optional (template fallback works). Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
+Three-column UI redesign just implemented. Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings served by Next.js API (`api/`) — Godot sends full game state to `POST /api/reading` and receives contextual narrative text. Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
 
 ## Project Overview
 
@@ -15,14 +15,15 @@ Godot 4.6 tarot card reading game built on a reusable card framework addon. Play
 
 Open in Godot Engine 4.6. Main scene: `res://scenes/main.tscn`. Viewport: 1280x720, GL Compatibility renderer. No external build tools, package managers, or test frameworks.
 
-### API Key (Optional)
+### Reading API
 
-For AI-generated readings, create `config/api_key.cfg`:
+AI-generated readings are served by the Next.js API in `api/`. Start it with `cd api && pnpm dev` (runs on `http://localhost:3000`). The API requires `ANTHROPIC_API_KEY` in `api/.env`. Godot's `scenes/claude_api.gd` calls `POST /api/reading` with the full game state (client + slots) and receives the generated reading text. Without the API running, readings will show "The cards are silent..."
+
+To override the API URL, create `config/api_url.cfg`:
 ```ini
-[anthropic]
-api_key=sk-ant-...
+[api]
+url=http://localhost:3000/api/reading
 ```
-Without this file, readings will show an error message. The API uses `claude-haiku-4-5` via `scenes/claude_api.gd`.
 
 ## Card Framework Architecture
 
