@@ -29,7 +29,7 @@ If earlier slots have text, continue from them. Never contradict what's establis
 ## Echoes Across Readings
 If previous readings from other clients are included, you may OCCASIONALLY reuse a specific detail from an earlier reading — the same street name, object, time of day, or person's name — woven naturally into THIS client's event. Do this rarely (at most once per full reading, and not every reading). Never explain the connection. Never call attention to it. The player notices, or they don't.
 
-Return ONLY the sentence. No JSON. No quotes. No commentary.`;
+Return ONLY the sentence. No JSON. No quotes. No commentary. It should be short and direct enough to fit on a small slip of paper.`;
 
 const cardsByName = buildCardLookup();
 
