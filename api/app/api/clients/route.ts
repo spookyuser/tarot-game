@@ -6,14 +6,12 @@ const SYSTEM_PROMPT = `A new person approaches your tarot table for a reading. I
 
 Output a JSON object:
 - "name": A short descriptive name (e.g., "Elara the Betrayed", "The Lost Merchant", "Anya").
-- "context": One sentence — what the client says to you in their own voice, first person.
-- "story": NOT used for display — leave it as an empty string "".
+- "context": 2-3 sentences in first person ("I"). What brings them here, what's troubling them. Direct and specific, not flowery. This is what they say to you when they sit down.
 `;
 
 const clientSchema = z.object({
   name: z.string(),
   context: z.string(),
-  story: z.string(),
 });
 
 export async function POST(request: NextRequest) {

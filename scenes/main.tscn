@@ -597,6 +597,70 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Next Client"
 
+[node name="IntroPanel" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="IntroBg" type="ColorRect" parent="IntroPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.04, 0.14, 1)
+
+[node name="IntroBox" type="VBoxContainer" parent="IntroPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -200.0
+offset_right = 280.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="IntroPortrait" type="TextureRect" parent="IntroPanel/IntroBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(96, 96)
+size_flags_horizontal = 4
+expand_mode = 1
+
+[node name="IntroName" type="Label" parent="IntroPanel/IntroBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="IntroContext" type="RichTextLabel" parent="IntroPanel/IntroBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 80)
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 16
+bbcode_enabled = true
+scroll_active = false
+
+[node name="BeginButton" type="Button" parent="IntroPanel/IntroBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("btn_normal_style")
+theme_override_styles/pressed = SubResource("btn_pressed_style")
+theme_override_styles/hover = SubResource("btn_normal_style")
+text = "Begin Reading"
+
 [node name="LoadingPanel" type="Control" parent="."]
 visible = false
 layout_mode = 1

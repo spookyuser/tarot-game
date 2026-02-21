@@ -23,6 +23,11 @@ extends Control
 @onready var card_hover_info_title: Label = $CardHoverInfoPanel/CardHoverInfoTitle
 @onready var card_hover_info_body: RichTextLabel = $CardHoverInfoPanel/CardHoverInfoBody
 @onready var loading_panel: Control = $LoadingPanel
+@onready var intro_panel: Control = $IntroPanel
+@onready var intro_portrait: TextureRect = $IntroPanel/IntroBox/IntroPortrait
+@onready var intro_name: Label = $IntroPanel/IntroBox/IntroName
+@onready var intro_context: RichTextLabel = $IntroPanel/IntroBox/IntroContext
+@onready var begin_button: Button = $IntroPanel/IntroBox/BeginButton
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
@@ -42,9 +47,8 @@ var game_state: Dictionary = {
 		{
 			"client": {
 				"name": "Maria the Widow",
-				"context": "I lost my husband, and I don't know what to do."
+				"context": "I lost my husband three weeks ago. The house is too quiet and I keep setting the table for two. I need to know if he's at peace."
 			},
-			"story": "",
 			"slots": [
 				{"card": "", "text": ""},
 				{"card": "", "text": ""},
@@ -212,7 +216,9 @@ func _ready() -> void:
 		slot_bgs.append(get_node("SlotBg%d" % i) as NinePatchRect)
 
 	next_button.pressed.connect(_on_next_button_pressed)
+	begin_button.pressed.connect(_on_begin_button_pressed)
 	resolution_panel.visible = false
+	intro_panel.visible = false
 	card_hover_info_panel.z_index = 4096
 
 	claude_api.request_completed.connect(_on_claude_request_completed)
@@ -313,7 +319,27 @@ func _next_client() -> void:
 	current_encounter = game_state["encounters"][current_encounter_index]
 	current_encounter_index += 1
 
+	_show_intro()
+
+
+func _show_intro() -> void:
+	loading_panel.visible = false
+	resolution_panel.visible = false
+
+	var client_name: String = current_encounter["client"]["name"]
+	intro_name.text = client_name
+	intro_context.text = "[center]%s[/center]" % current_encounter["client"]["context"]
+
+	var portrait := _get_portrait_for_client(client_name)
+	intro_portrait.texture = portrait
+
+	intro_panel.visible = true
+
+
+func _on_begin_button_pressed() -> void:
+	intro_panel.visible = false
 	_setup_current_client_ui()
+
 
 func _show_client_loading() -> void:
 	loading_panel.visible = true
@@ -331,7 +357,6 @@ func _on_client_request_completed(_request_id: String, client_data: Dictionary) 
 			"name": client_data.get("name", "Unknown"),
 			"context": client_data.get("context", "")
 		},
-		"story": client_data.get("story", "{0}\n\n{1}\n\n{2}"),
 		"slots": [
 			{"card": "", "text": ""},
 			{"card": "", "text": ""},
