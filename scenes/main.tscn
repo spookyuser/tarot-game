@@ -69,7 +69,16 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("main_script")
 
-[node name="Background" type="ColorRect" parent="." unique_id=1363296096]
+[node name="SceneRoot" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Background" type="ColorRect" parent="SceneRoot" unique_id=1363296096]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -78,7 +87,16 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.08, 0.04, 0.14, 1)
 
-[node name="CardManager" type="Control" parent="." unique_id=822202162]
+[node name="Gameplay" type="Control" parent="SceneRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CardManager" type="Control" parent="SceneRoot/Gameplay" unique_id=822202162]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -90,14 +108,43 @@ script = ExtResource("card_manager_script")
 card_size = Vector2(110, 159)
 card_factory_scene = ExtResource("factory_scene")
 
-[node name="Sidebar" type="Control" parent="."]
+[node name="ReadingArea" type="Control" parent="SceneRoot/Gameplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="StoryArea" type="Control" parent="SceneRoot/Gameplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="OverlayLayer" type="Control" parent="SceneRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Systems" type="Node" parent="."]
+
+[node name="Sidebar" type="Control" parent="SceneRoot/Gameplay"]
 layout_mode = 1
 offset_right = 280.0
 offset_bottom = 720.0
 mouse_filter = 2
 script = ExtResource("sidebar_script")
 
-[node name="LeftPanel" type="NinePatchRect" parent="Sidebar" unique_id=659719436]
+[node name="LeftPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=659719436]
 layout_mode = 1
 offset_right = 280.0
 offset_bottom = 720.0
@@ -109,7 +156,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="LeftPanelOverlay" type="ColorRect" parent="Sidebar" unique_id=375122736]
+[node name="LeftPanelOverlay" type="ColorRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=375122736]
 layout_mode = 1
 offset_left = 6.0
 offset_top = 6.0
@@ -118,7 +165,7 @@ offset_bottom = 714.0
 mouse_filter = 2
 color = Color(0.06, 0.03, 0.12, 0.88)
 
-[node name="PortraitFrame" type="TextureRect" parent="Sidebar" unique_id=582070813]
+[node name="PortraitFrame" type="TextureRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=582070813]
 layout_mode = 1
 offset_left = 100.0
 offset_top = 30.0
@@ -127,7 +174,7 @@ offset_bottom = 110.0
 mouse_filter = 2
 expand_mode = 1
 
-[node name="ClientNameLeft" type="Label" parent="Sidebar" unique_id=1438243809]
+[node name="ClientNameLeft" type="Label" parent="SceneRoot/Gameplay/Sidebar" unique_id=1438243809]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 120.0
@@ -138,7 +185,7 @@ theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="ClientCounterLeft" type="Label" parent="Sidebar" unique_id=2121015749]
+[node name="ClientCounterLeft" type="Label" parent="SceneRoot/Gameplay/Sidebar" unique_id=2121015749]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 150.0
@@ -148,7 +195,7 @@ theme_override_colors/font_color = Color(0.55, 0.48, 0.65, 1)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 
-[node name="SidebarDivider1" type="ColorRect" parent="Sidebar" unique_id=885361402]
+[node name="SidebarDivider1" type="ColorRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=885361402]
 layout_mode = 1
 offset_left = 24.0
 offset_top = 186.0
@@ -157,7 +204,7 @@ offset_bottom = 187.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.4)
 
-[node name="DeckIcon" type="TextureRect" parent="Sidebar" unique_id=287519906]
+[node name="DeckIcon" type="TextureRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=287519906]
 layout_mode = 1
 offset_left = 80.0
 offset_top = 205.0
@@ -167,7 +214,7 @@ mouse_filter = 2
 texture = ExtResource("card_back_tex")
 expand_mode = 1
 
-[node name="DeckCountLabel" type="Label" parent="Sidebar" unique_id=1252210121]
+[node name="DeckCountLabel" type="Label" parent="SceneRoot/Gameplay/Sidebar" unique_id=1252210121]
 layout_mode = 1
 offset_left = 132.0
 offset_top = 225.0
@@ -176,7 +223,7 @@ offset_bottom = 255.0
 theme_override_colors/font_color = Color(0.7, 0.65, 0.8, 1)
 theme_override_font_sizes/font_size = 14
 
-[node name="SidebarDivider2" type="ColorRect" parent="Sidebar" unique_id=1938769211]
+[node name="SidebarDivider2" type="ColorRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=1938769211]
 layout_mode = 1
 offset_left = 24.0
 offset_top = 290.0
@@ -185,7 +232,7 @@ offset_bottom = 291.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.4)
 
-[node name="ProgressLabel" type="Label" parent="Sidebar" unique_id=834644278]
+[node name="ProgressLabel" type="Label" parent="SceneRoot/Gameplay/Sidebar" unique_id=834644278]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 308.0
@@ -196,7 +243,7 @@ theme_override_font_sizes/font_size = 13
 text = "Readings"
 horizontal_alignment = 1
 
-[node name="ProgressIcon0" type="TextureRect" parent="Sidebar" unique_id=2021814441]
+[node name="ProgressIcon0" type="TextureRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=2021814441]
 modulate = Color(0.3, 0.25, 0.4, 0.5)
 layout_mode = 1
 offset_left = 91.0
@@ -207,7 +254,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="ProgressIcon1" type="TextureRect" parent="Sidebar" unique_id=1005463128]
+[node name="ProgressIcon1" type="TextureRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=1005463128]
 modulate = Color(0.3, 0.25, 0.4, 0.5)
 layout_mode = 1
 offset_left = 126.0
@@ -218,7 +265,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="ProgressIcon2" type="TextureRect" parent="Sidebar" unique_id=1104981438]
+[node name="ProgressIcon2" type="TextureRect" parent="SceneRoot/Gameplay/Sidebar" unique_id=1104981438]
 modulate = Color(0.3, 0.25, 0.4, 0.5)
 layout_mode = 1
 offset_left = 161.0
@@ -229,7 +276,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="RestartButton" type="Button" parent="Sidebar"]
+[node name="RestartButton" type="Button" parent="SceneRoot/Gameplay/Sidebar"]
 layout_mode = 0
 offset_left = 60.0
 offset_top = 650.0
@@ -242,7 +289,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/normal = SubResource("btn_normal_style")
 text = "Restart"
 
-[node name="ColumnDividerLeft" type="ColorRect" parent="." unique_id=686245416]
+[node name="ColumnDividerLeft" type="ColorRect" parent="SceneRoot/Gameplay" unique_id=686245416]
 layout_mode = 1
 offset_left = 279.0
 offset_right = 280.0
@@ -250,7 +297,7 @@ offset_bottom = 720.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.25)
 
-[node name="ReadingSlots" type="Control" parent="."]
+[node name="ReadingSlots" type="Control" parent="SceneRoot/Gameplay/ReadingArea"]
 layout_mode = 1
 offset_left = 292.0
 offset_top = 100.0
@@ -258,27 +305,27 @@ offset_right = 808.0
 offset_bottom = 400.0
 mouse_filter = 2
 
-[node name="Slot0" parent="ReadingSlots" instance=ExtResource("reading_slot_scene")]
+[node name="Slot0" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" instance=ExtResource("reading_slot_scene")]
 layout_mode = 1
 anchors_preset = 0
 offset_right = 150.0
 offset_bottom = 300.0
 
-[node name="Slot1" parent="ReadingSlots" instance=ExtResource("reading_slot_scene")]
+[node name="Slot1" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" instance=ExtResource("reading_slot_scene")]
 layout_mode = 1
 anchors_preset = 0
 offset_left = 183.0
 offset_right = 333.0
 offset_bottom = 300.0
 
-[node name="Slot2" parent="ReadingSlots" instance=ExtResource("reading_slot_scene")]
+[node name="Slot2" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" instance=ExtResource("reading_slot_scene")]
 layout_mode = 1
 anchors_preset = 0
 offset_left = 366.0
 offset_right = 516.0
 offset_bottom = 300.0
 
-[node name="PlayerHand" type="Control" parent="." unique_id=420696337]
+[node name="PlayerHand" type="Control" parent="SceneRoot/Gameplay/ReadingArea" unique_id=420696337]
 z_index = 100
 layout_mode = 1
 anchors_preset = 0
@@ -291,7 +338,7 @@ max_hand_size = 3
 hand_rotation_curve = SubResource("hand_rotation")
 hand_vertical_curve = SubResource("hand_vertical")
 
-[node name="ReadingVignetteOverlay" type="ColorRect" parent="." unique_id=1397845669]
+[node name="ReadingVignetteOverlay" type="ColorRect" parent="SceneRoot/OverlayLayer" unique_id=1397845669]
 z_index = 200
 material = SubResource("vignette_material")
 script = ExtResource("vignette_effect_script")
@@ -303,7 +350,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="CardHoverInfoPanel" type="NinePatchRect" parent="." unique_id=927259214]
+[node name="CardHoverInfoPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/ReadingArea" unique_id=927259214]
 visible = false
 z_index = 4096
 script = ExtResource("hover_panel_script")
@@ -321,7 +368,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="CardHoverInfoBody" type="RichTextLabel" parent="CardHoverInfoPanel" unique_id=631767293]
+[node name="CardHoverInfoBody" type="RichTextLabel" parent="SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel" unique_id=631767293]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -339,7 +386,7 @@ bbcode_enabled = true
 scroll_active = false
 autowrap_mode = 2
 
-[node name="ReversedLabel" type="Label" parent="CardHoverInfoPanel"]
+[node name="ReversedLabel" type="Label" parent="SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel"]
 layout_mode = 1
 offset_left = 0.0
 offset_top = -14.0
@@ -352,7 +399,7 @@ text = "REVERSED"
 horizontal_alignment = 1
 visible = false
 
-[node name="ColumnDividerRight" type="ColorRect" parent="." unique_id=1654313414]
+[node name="ColumnDividerRight" type="ColorRect" parent="SceneRoot/Gameplay" unique_id=1654313414]
 layout_mode = 1
 offset_left = 830.0
 offset_right = 831.0
@@ -360,7 +407,7 @@ offset_bottom = 720.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.25)
 
-[node name="StoryPanel" type="NinePatchRect" parent="." unique_id=1543021944]
+[node name="StoryPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=1543021944]
 layout_mode = 1
 offset_left = 830.0
 offset_right = 1280.0
@@ -373,7 +420,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="StoryPanelOverlay" type="ColorRect" parent="." unique_id=942051855]
+[node name="StoryPanelOverlay" type="ColorRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=942051855]
 layout_mode = 1
 offset_left = 836.0
 offset_top = 6.0
@@ -382,7 +429,7 @@ offset_bottom = 714.0
 mouse_filter = 2
 color = Color(0.06, 0.03, 0.12, 0.85)
 
-[node name="StoryTitleLabel" type="Label" parent="." unique_id=433875344]
+[node name="StoryTitleLabel" type="Label" parent="SceneRoot/Gameplay/StoryArea" unique_id=433875344]
 layout_mode = 1
 offset_left = 850.0
 offset_top = 24.0
@@ -392,7 +439,7 @@ theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 
-[node name="StoryDivider" type="ColorRect" parent="." unique_id=1112296309]
+[node name="StoryDivider" type="ColorRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=1112296309]
 layout_mode = 1
 offset_left = 870.0
 offset_top = 62.0
@@ -401,7 +448,7 @@ offset_bottom = 63.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.3)
 
-[node name="ClientContextText" type="RichTextLabel" parent="." unique_id=1326070971]
+[node name="ClientContextText" type="RichTextLabel" parent="SceneRoot/Gameplay/StoryArea" unique_id=1326070971]
 layout_mode = 1
 offset_left = 854.0
 offset_top = 74.0
@@ -412,7 +459,7 @@ theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
 theme_override_font_sizes/normal_font_size = 14
 bbcode_enabled = true
 
-[node name="StoryRichText" type="RichTextLabel" parent="." unique_id=820856239]
+[node name="StoryRichText" type="RichTextLabel" parent="SceneRoot/Gameplay/StoryArea" unique_id=820856239]
 layout_mode = 1
 offset_left = 854.0
 offset_top = 280.0
@@ -423,18 +470,18 @@ theme_override_colors/default_color = Color(0.7, 0.65, 0.8, 1)
 theme_override_font_sizes/normal_font_size = 14
 bbcode_enabled = true
 
-[node name="ClaudeAPI" type="Node" parent="." unique_id=2024195088]
+[node name="ClaudeAPI" type="Node" parent="Systems" unique_id=2024195088]
 script = ExtResource("claude_api_script")
 
-[node name="SoundManager" parent="." instance=ExtResource("sound_mgr_scene")]
+[node name="SoundManager" parent="Systems" instance=ExtResource("sound_mgr_scene")]
 
-[node name="StoryRenderer" type="Node" parent="."]
+[node name="StoryRenderer" type="Node" parent="Systems"]
 script = ExtResource("story_renderer_script")
 
-[node name="ReadingSlotManager" type="Node" parent="."]
+[node name="ReadingSlotManager" type="Node" parent="Systems"]
 script = ExtResource("slot_mgr_script")
 
-[node name="ResolutionPanel" type="Control" parent="." unique_id=2000854802]
+[node name="ResolutionPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=2000854802]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -443,7 +490,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Overlay" type="ColorRect" parent="ResolutionPanel" unique_id=128060038]
+[node name="Overlay" type="ColorRect" parent="SceneRoot/OverlayLayer/ResolutionPanel" unique_id=128060038]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -452,7 +499,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.85)
 
-[node name="ResolutionBg" type="NinePatchRect" parent="ResolutionPanel" unique_id=1618854334]
+[node name="ResolutionBg" type="NinePatchRect" parent="SceneRoot/OverlayLayer/ResolutionPanel" unique_id=1618854334]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -473,7 +520,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="ResolutionBgInner" type="ColorRect" parent="ResolutionPanel" unique_id=2007921227]
+[node name="ResolutionBgInner" type="ColorRect" parent="SceneRoot/OverlayLayer/ResolutionPanel" unique_id=2007921227]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -488,7 +535,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.03, 0.12, 0.92)
 
-[node name="StoryBox" type="VBoxContainer" parent="ResolutionPanel" unique_id=504740909]
+[node name="StoryBox" type="VBoxContainer" parent="SceneRoot/OverlayLayer/ResolutionPanel" unique_id=504740909]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -504,20 +551,20 @@ grow_vertical = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="ResolutionTitle" type="Label" parent="ResolutionPanel/StoryBox" unique_id=1188240268]
+[node name="ResolutionTitle" type="Label" parent="SceneRoot/OverlayLayer/ResolutionPanel/StoryBox" unique_id=1188240268]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
-[node name="ResolutionText" type="RichTextLabel" parent="ResolutionPanel/StoryBox" unique_id=1246921190]
+[node name="ResolutionText" type="RichTextLabel" parent="SceneRoot/OverlayLayer/ResolutionPanel/StoryBox" unique_id=1246921190]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
 theme_override_font_sizes/normal_font_size = 15
 bbcode_enabled = true
 
-[node name="NextButton" type="Button" parent="ResolutionPanel/StoryBox" unique_id=507503837]
+[node name="NextButton" type="Button" parent="SceneRoot/OverlayLayer/ResolutionPanel/StoryBox" unique_id=507503837]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 16
@@ -526,7 +573,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Next Client"
 
-[node name="EndPanel" type="Control" parent="." unique_id=132627432]
+[node name="EndPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=132627432]
 visible = false
 script = ExtResource("end_screen_script")
 layout_mode = 1
@@ -536,7 +583,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Overlay" type="ColorRect" parent="EndPanel" unique_id=645602222]
+[node name="Overlay" type="ColorRect" parent="SceneRoot/OverlayLayer/EndPanel" unique_id=645602222]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -545,7 +592,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.85)
 
-[node name="EndBg" type="NinePatchRect" parent="EndPanel" unique_id=1920747769]
+[node name="EndBg" type="NinePatchRect" parent="SceneRoot/OverlayLayer/EndPanel" unique_id=1920747769]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -566,7 +613,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="EndBgInner" type="ColorRect" parent="EndPanel" unique_id=634051540]
+[node name="EndBgInner" type="ColorRect" parent="SceneRoot/OverlayLayer/EndPanel" unique_id=634051540]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -581,7 +628,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.03, 0.12, 0.92)
 
-[node name="EndBox" type="VBoxContainer" parent="EndPanel" unique_id=241274930]
+[node name="EndBox" type="VBoxContainer" parent="SceneRoot/OverlayLayer/EndPanel" unique_id=241274930]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -597,25 +644,25 @@ grow_vertical = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="EndTitle" type="Label" parent="EndPanel/EndBox" unique_id=20235812]
+[node name="EndTitle" type="Label" parent="SceneRoot/OverlayLayer/EndPanel/EndBox" unique_id=20235812]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
-[node name="EndScroll" type="ScrollContainer" parent="EndPanel/EndBox" unique_id=796385230]
+[node name="EndScroll" type="ScrollContainer" parent="SceneRoot/OverlayLayer/EndPanel/EndBox" unique_id=796385230]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 2
 
-[node name="EndList" type="VBoxContainer" parent="EndPanel/EndBox/EndScroll" unique_id=1137179208]
+[node name="EndList" type="VBoxContainer" parent="SceneRoot/OverlayLayer/EndPanel/EndBox/EndScroll" unique_id=1137179208]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="PlayAgainButton" type="Button" parent="EndPanel/EndBox" unique_id=1328665856]
+[node name="PlayAgainButton" type="Button" parent="SceneRoot/OverlayLayer/EndPanel/EndBox" unique_id=1328665856]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 16
@@ -624,7 +671,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Play Again"
 
-[node name="IntroPanel" type="Control" parent="." unique_id=982457165]
+[node name="IntroPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=982457165]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -633,7 +680,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="IntroBg" type="ColorRect" parent="IntroPanel" unique_id=1261279816]
+[node name="IntroBg" type="ColorRect" parent="SceneRoot/OverlayLayer/IntroPanel" unique_id=1261279816]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -642,7 +689,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.08, 0.04, 0.14, 1)
 
-[node name="IntroBox" type="VBoxContainer" parent="IntroPanel" unique_id=1097738364]
+[node name="IntroBox" type="VBoxContainer" parent="SceneRoot/OverlayLayer/IntroPanel" unique_id=1097738364]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -658,19 +705,19 @@ grow_vertical = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="IntroPortrait" type="TextureRect" parent="IntroPanel/IntroBox" unique_id=803731281]
+[node name="IntroPortrait" type="TextureRect" parent="SceneRoot/OverlayLayer/IntroPanel/IntroBox" unique_id=803731281]
 custom_minimum_size = Vector2(96, 96)
 layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
 
-[node name="IntroName" type="Label" parent="IntroPanel/IntroBox" unique_id=2049283831]
+[node name="IntroName" type="Label" parent="SceneRoot/OverlayLayer/IntroPanel/IntroBox" unique_id=2049283831]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 
-[node name="IntroContext" type="RichTextLabel" parent="IntroPanel/IntroBox" unique_id=1973197151]
+[node name="IntroContext" type="RichTextLabel" parent="SceneRoot/OverlayLayer/IntroPanel/IntroBox" unique_id=1973197151]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_vertical = 3
@@ -679,7 +726,7 @@ theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true
 scroll_active = false
 
-[node name="BeginButton" type="Button" parent="IntroPanel/IntroBox" unique_id=547709585]
+[node name="BeginButton" type="Button" parent="SceneRoot/OverlayLayer/IntroPanel/IntroBox" unique_id=547709585]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 16
@@ -688,7 +735,7 @@ theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Begin Reading"
 
-[node name="LoadingPanel" type="Control" parent="." unique_id=680425478]
+[node name="LoadingPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=680425478]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -697,7 +744,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="LoadingOverlay" type="ColorRect" parent="LoadingPanel" unique_id=802987281]
+[node name="LoadingOverlay" type="ColorRect" parent="SceneRoot/OverlayLayer/LoadingPanel" unique_id=802987281]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -706,7 +753,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.85)
 
-[node name="LoadingBg" type="NinePatchRect" parent="LoadingPanel" unique_id=423373207]
+[node name="LoadingBg" type="NinePatchRect" parent="SceneRoot/OverlayLayer/LoadingPanel" unique_id=423373207]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -727,7 +774,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="LoadingBgInner" type="ColorRect" parent="LoadingPanel" unique_id=1117876688]
+[node name="LoadingBgInner" type="ColorRect" parent="SceneRoot/OverlayLayer/LoadingPanel" unique_id=1117876688]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -742,7 +789,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.06, 0.03, 0.12, 0.92)
 
-[node name="LoadingText" type="RichTextLabel" parent="LoadingPanel" unique_id=1800696918]
+[node name="LoadingText" type="RichTextLabel" parent="SceneRoot/OverlayLayer/LoadingPanel" unique_id=1800696918]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

@@ -1,31 +1,31 @@
 extends Control
 
-@onready var card_manager: CardManager = $CardManager
-@onready var player_hand: Hand = $PlayerHand
-@onready var resolution_panel: Control = $ResolutionPanel
-@onready var resolution_title: Label = $ResolutionPanel/StoryBox/ResolutionTitle
-@onready var resolution_text: RichTextLabel = $ResolutionPanel/StoryBox/ResolutionText
-@onready var next_button: Button = $ResolutionPanel/StoryBox/NextButton
-@onready var claude_api: Node = $ClaudeAPI
-@onready var sound_manager: Node = $SoundManager
+@onready var card_manager: CardManager = $SceneRoot/Gameplay/CardManager
+@onready var player_hand: Hand = $SceneRoot/Gameplay/ReadingArea/PlayerHand
+@onready var resolution_panel: Control = $SceneRoot/OverlayLayer/ResolutionPanel
+@onready var resolution_title: Label = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/ResolutionTitle
+@onready var resolution_text: RichTextLabel = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/ResolutionText
+@onready var next_button: Button = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/NextButton
+@onready var claude_api: Node = $Systems/ClaudeAPI
+@onready var sound_manager: Node = $Systems/SoundManager
 
-@onready var card_hover_panel: CardHoverInfoPanel = $CardHoverInfoPanel
-@onready var reading_vignette: VignetteEffect = $ReadingVignetteOverlay
-@onready var reading_slot_mgr: ReadingSlotManager = $ReadingSlotManager
-@onready var story_renderer: StoryRenderer = $StoryRenderer
-@onready var end_screen: EndScreen = $EndPanel
+@onready var card_hover_panel: CardHoverInfoPanel = $SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel
+@onready var reading_vignette: VignetteEffect = $SceneRoot/OverlayLayer/ReadingVignetteOverlay
+@onready var reading_slot_mgr: ReadingSlotManager = $Systems/ReadingSlotManager
+@onready var story_renderer: StoryRenderer = $Systems/StoryRenderer
+@onready var end_screen: EndScreen = $SceneRoot/OverlayLayer/EndPanel
 
-@onready var sidebar: Sidebar = $Sidebar
-@onready var story_title_label: Label = $StoryTitleLabel
-@onready var story_rich_text: RichTextLabel = $StoryRichText
-@onready var client_context_text: RichTextLabel = $ClientContextText
+@onready var sidebar: Sidebar = $SceneRoot/Gameplay/Sidebar
+@onready var story_title_label: Label = $SceneRoot/Gameplay/StoryArea/StoryTitleLabel
+@onready var story_rich_text: RichTextLabel = $SceneRoot/Gameplay/StoryArea/StoryRichText
+@onready var client_context_text: RichTextLabel = $SceneRoot/Gameplay/StoryArea/ClientContextText
 
-@onready var loading_panel: Control = $LoadingPanel
-@onready var intro_panel: Control = $IntroPanel
-@onready var intro_portrait: TextureRect = $IntroPanel/IntroBox/IntroPortrait
-@onready var intro_name: Label = $IntroPanel/IntroBox/IntroName
-@onready var intro_context: RichTextLabel = $IntroPanel/IntroBox/IntroContext
-@onready var begin_button: Button = $IntroPanel/IntroBox/BeginButton
+@onready var loading_panel: Control = $SceneRoot/OverlayLayer/LoadingPanel
+@onready var intro_panel: Control = $SceneRoot/OverlayLayer/IntroPanel
+@onready var intro_portrait: TextureRect = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/IntroPortrait
+@onready var intro_name: Label = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/IntroName
+@onready var intro_context: RichTextLabel = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/IntroContext
+@onready var begin_button: Button = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/BeginButton
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
@@ -65,7 +65,7 @@ func _ready() -> void:
 		factory.back_image = back_texture
 
 	for i: int in range(3):
-		var slot_root: Node = get_node("ReadingSlots/Slot%d" % i)
+		var slot_root: Node = get_node("SceneRoot/Gameplay/ReadingArea/ReadingSlots/Slot%d" % i)
 		slot_piles.append(slot_root.get_node("SlotPile") as Pile)
 		slot_labels.append(slot_root.get_node("SlotLabel") as Label)
 		reading_labels.append(slot_root.get_node("ReadingLabel") as RichTextLabel)
