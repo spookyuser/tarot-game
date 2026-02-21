@@ -16,6 +16,7 @@ const clientSchema = z.object({
 
 export async function POST(request: NextRequest) {
   let body: unknown;
+
   try {
     body = await request.json();
   } catch {
@@ -35,17 +36,19 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join(", ");
     if (previousNames) {
-      prompt += `\n\nPrevious clients have included: ${previousNames}. Make sure this new client is significantly different from them.`;
+      prompt += `\n\nPrevious clients have included: ${previousNames}. Make sure this new client is significantly different from them, however this client still exists in the same world and may have some connection to the events of previous clients or readings. This is optional though.`;
     }
   }
 
   try {
     const result = await generateObject({
-      model: "anthropic/claude-haiku-4.5",
+      model: "anthropic/claude-sonnet-4.6",
+      temperature: 0.4,
       system: SYSTEM_PROMPT,
       prompt,
       schema: clientSchema,
     });
+
 
     return NextResponse.json(result.object);
   } catch (err) {

@@ -13,7 +13,7 @@ Exactly one slot will have a card but no text. Write one sentence for that slot.
 ## Rules
 
 - Write in second person ("you")
-- One sentence only
+- One sentence only. It should be short and understandable just by glancing at it.
 - Be specific. Names, places, moments. No metaphors. No abstractions. No poetic language.
 - These events WILL happen to this person. Write them as facts.
 - If other slots already have text, continue that sequence coherently — each event follows from the last
