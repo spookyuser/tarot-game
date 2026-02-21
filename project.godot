@@ -27,6 +27,10 @@ window/size/mode=2
 window/size/resizable=false
 window/stretch/mode="canvas_items"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/beehave/plugin.cfg")
+
 [gui]
 
 theme/custom_font="res://assets/fonts/spectral/Spectral-Bold.ttf"

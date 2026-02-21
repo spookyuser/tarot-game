@@ -1,5 +1,10 @@
 extends Control
 
+const BB_KEY_GAME_STATE: StringName = &"game_state"
+const BB_KEY_CURRENT_ENCOUNTER_INDEX: StringName = &"current_encounter_index"
+const BB_KEY_CURRENT_ENCOUNTER: StringName = &"current_encounter"
+const BB_KEY_CLIENT_COUNT: StringName = &"client_count"
+
 @onready var card_manager: CardManager = $SceneRoot/Gameplay/CardManager
 @onready var player_hand: Hand = $SceneRoot/Gameplay/ReadingArea/PlayerHand
 @onready var resolution_panel: Control = $SceneRoot/OverlayLayer/ResolutionPanel
@@ -8,6 +13,7 @@ extends Control
 @onready var next_button: Button = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/NextButton
 @onready var claude_api: Node = $Systems/ClaudeAPI
 @onready var sound_manager: Node = $Systems/SoundManager
+@onready var game_blackboard: Node = $Systems/GameBlackboard
 
 @onready var card_hover_panel: CardHoverInfoPanel = $SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel
 @onready var reading_vignette: VignetteEffect = $SceneRoot/OverlayLayer/ReadingVignetteOverlay
@@ -34,24 +40,6 @@ var slot_bgs: Array[NinePatchRect] = []
 
 var portraits := PortraitLoader.new()
 var deck := DeckManager.new()
-
-var game_state: Dictionary = {
-	"encounters": [
-		{
-			"client": {
-				"name": "Maria the Widow",
-				"context": "I got married at 23. Everyone told me not to but i did and last week, my husband just, he's just dead, i'm sad and i don't know what to do. is he at peace?"},
-			"slots": [
-				{"card": "", "text": ""},
-				{"card": "", "text": ""},
-				{"card": "", "text": ""}
-			]
-		}
-	]
-}
-var current_encounter_index: int = 0
-var current_encounter: Dictionary = {}
-var client_count: int = 0
 
 var back_texture: Texture2D
 var _time_passed: float = 0.0
@@ -83,8 +71,10 @@ func _ready() -> void:
 
 	end_screen.play_again_requested.connect(func() -> void: get_tree().reload_current_scene())
 
+	_initialize_game_blackboard()
+
 	# Reading slot manager wiring
-	reading_slot_mgr.initialize(slot_piles, slot_labels, reading_labels, player_hand, claude_api)
+	reading_slot_mgr.initialize(slot_piles, slot_labels, reading_labels, player_hand, claude_api, game_blackboard)
 	reading_slot_mgr.slot_locked.connect(_on_slot_locked)
 	reading_slot_mgr.all_slots_filled.connect(_on_all_slots_filled)
 	reading_slot_mgr.story_changed.connect(_render_story)
@@ -130,17 +120,87 @@ func _process(delta: float) -> void:
 	reading_slot_mgr.process_frame()
 
 
+func _initialize_game_blackboard() -> void:
+	_set_game_state(_build_initial_game_state())
+	_set_current_encounter_index(0)
+	_set_current_encounter({})
+	_set_client_count(0)
+
+
+func _build_initial_game_state() -> Dictionary:
+	return {
+		"encounters": [
+			{
+				"client": {
+					"name": "Maria the Widow",
+					"context": "I got married at 23. Everyone told me not to but i did and last week, my husband just, he's just dead, i'm sad and i don't know what to do. is he at peace?"
+				},
+				"slots": [
+					{"card": "", "text": "", "orientation": ""},
+					{"card": "", "text": "", "orientation": ""},
+					{"card": "", "text": "", "orientation": ""}
+				]
+			}
+		]
+	}
+
+
+func _get_game_state() -> Dictionary:
+	var game_state: Variant = game_blackboard.get_value(BB_KEY_GAME_STATE, _build_initial_game_state())
+	if game_state is Dictionary:
+		return (game_state as Dictionary).duplicate(true)
+	return _build_initial_game_state()
+
+
+func _set_game_state(game_state: Dictionary) -> void:
+	game_blackboard.set_value(BB_KEY_GAME_STATE, game_state.duplicate(true))
+
+
+func _get_current_encounter_index() -> int:
+	var encounter_index: Variant = game_blackboard.get_value(BB_KEY_CURRENT_ENCOUNTER_INDEX, 0)
+	return int(encounter_index)
+
+
+func _set_current_encounter_index(value: int) -> void:
+	game_blackboard.set_value(BB_KEY_CURRENT_ENCOUNTER_INDEX, value)
+
+
+func _get_current_encounter() -> Dictionary:
+	var encounter: Variant = game_blackboard.get_value(BB_KEY_CURRENT_ENCOUNTER, {})
+	if encounter is Dictionary:
+		return (encounter as Dictionary).duplicate(true)
+	return {}
+
+
+func _set_current_encounter(encounter: Dictionary) -> void:
+	game_blackboard.set_value(BB_KEY_CURRENT_ENCOUNTER, encounter.duplicate(true))
+
+
+func _get_client_count() -> int:
+	var client_count: Variant = game_blackboard.get_value(BB_KEY_CLIENT_COUNT, 0)
+	return int(client_count)
+
+
+func _set_client_count(value: int) -> void:
+	game_blackboard.set_value(BB_KEY_CLIENT_COUNT, value)
+
+
 # --- Client Flow ---
 
 
 func _next_client() -> void:
-	if current_encounter_index >= game_state["encounters"].size():
+	var game_state: Dictionary = _get_game_state()
+	var encounters: Array = game_state.get("encounters", [])
+	var encounter_index: int = _get_current_encounter_index()
+
+	if encounter_index >= encounters.size():
 		_show_client_loading()
 		claude_api.generate_client("client_req", game_state)
 		return
 
-	current_encounter = game_state["encounters"][current_encounter_index]
-	current_encounter_index += 1
+	var encounter: Dictionary = encounters[encounter_index]
+	_set_current_encounter(encounter)
+	_set_current_encounter_index(encounter_index + 1)
 	_show_intro()
 
 
@@ -148,9 +208,10 @@ func _show_intro() -> void:
 	loading_panel.visible = false
 	resolution_panel.visible = false
 
-	var client_name: String = current_encounter["client"]["name"]
+	var current_encounter: Dictionary = _get_current_encounter()
+	var client_name: String = current_encounter.get("client", {}).get("name", "Unknown")
 	intro_name.text = client_name
-	intro_context.text = "[center]%s[/center]" % current_encounter["client"]["context"]
+	intro_context.text = "[center]%s[/center]" % current_encounter.get("client", {}).get("context", "")
 	intro_portrait.texture = portraits.get_portrait(client_name)
 	intro_panel.visible = true
 
@@ -178,12 +239,18 @@ func _on_client_request_completed(_request_id: String, client_data: Dictionary) 
 			"context": client_data.get("context", "")
 		},
 		"slots": [
-			{"card": "", "text": ""},
-			{"card": "", "text": ""},
-			{"card": "", "text": ""}
+			{"card": "", "text": "", "orientation": ""},
+			{"card": "", "text": "", "orientation": ""},
+			{"card": "", "text": "", "orientation": ""}
 		]
 	}
-	game_state["encounters"].append(new_encounter)
+
+	var game_state: Dictionary = _get_game_state()
+	var encounters: Array = game_state.get("encounters", [])
+	encounters.append(new_encounter)
+	game_state["encounters"] = encounters
+	_set_game_state(game_state)
+
 	_next_client()
 
 
@@ -196,20 +263,21 @@ func _on_client_request_failed(_request_id: String, error_message: String) -> vo
 
 
 func _setup_current_client_ui() -> void:
-	client_count += 1
+	_set_client_count(_get_client_count() + 1)
 	loading_panel.visible = false
 
 	card_hover_panel.hide_immediately()
 	reading_vignette.reset()
 
-	reading_slot_mgr.reset_for_client(game_state, current_encounter_index - 1)
+	reading_slot_mgr.reset_for_client(maxi(_get_current_encounter_index() - 1, 0))
 
-	var client_name: String = current_encounter["client"]["name"]
-	sidebar.update_client(client_name, client_count, portraits.get_portrait(client_name))
+	var current_encounter: Dictionary = _get_current_encounter()
+	var client_name: String = current_encounter.get("client", {}).get("name", "Unknown")
+	sidebar.update_client(client_name, _get_client_count(), portraits.get_portrait(client_name))
 	sidebar.update_deck_count(player_hand.get_card_count())
 	sidebar.update_progress(reading_slot_mgr.slot_filled)
 	story_title_label.text = client_name
-	client_context_text.text = current_encounter["client"]["context"]
+	client_context_text.text = current_encounter.get("client", {}).get("context", "")
 
 	_render_story()
 	resolution_panel.visible = false
@@ -260,8 +328,9 @@ func _on_reading_received(_slot_index: int, _text: String) -> void:
 
 
 func _show_resolution() -> void:
+	var current_encounter: Dictionary = _get_current_encounter()
 	resolution_panel.visible = true
-	resolution_title.text = "Reading for %s" % current_encounter["client"]["name"]
+	resolution_title.text = "Reading for %s" % current_encounter.get("client", {}).get("name", "Unknown")
 
 	var lines: Array[String] = []
 	for i: int in range(3):
@@ -272,6 +341,7 @@ func _show_resolution() -> void:
 func _on_next_button_pressed() -> void:
 	_destroy_all_card_nodes()
 	if player_hand.get_card_count() < 3:
+		var game_state: Dictionary = _get_game_state()
 		end_screen.show_summary(
 			game_state.get("encounters", []),
 			portraits.get_portrait,

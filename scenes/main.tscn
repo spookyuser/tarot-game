@@ -21,6 +21,7 @@
 [ext_resource type="Script" path="res://scenes/reading_slot_manager.gd" id="slot_mgr_script"]
 [ext_resource type="Script" path="res://scenes/end_screen.gd" id="end_screen_script"]
 [ext_resource type="Script" path="res://scenes/sidebar.gd" id="sidebar_script"]
+[ext_resource type="Script" path="res://addons/beehave/blackboard.gd" id="beehave_blackboard_script"]
 
 [sub_resource type="Curve" id="hand_rotation"]
 _limits = [-12.0, 12.0, 0.0, 1.0]
@@ -480,6 +481,9 @@ script = ExtResource("story_renderer_script")
 
 [node name="ReadingSlotManager" type="Node" parent="Systems"]
 script = ExtResource("slot_mgr_script")
+
+[node name="GameBlackboard" type="Node" parent="Systems"]
+script = ExtResource("beehave_blackboard_script")
 
 [node name="ResolutionPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=2000854802]
 visible = false

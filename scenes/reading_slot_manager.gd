@@ -1,6 +1,10 @@
 class_name ReadingSlotManager
 extends Node
 
+const BB_KEY_GAME_STATE: StringName = &"game_state"
+const READING_LOADING_TEXT: String = "The cards are speaking..."
+const READING_ERROR_TEXT: String = "The cards are silent..."
+
 signal slot_locked(slot_index: int, card_name: String, display_name: String, reading: String)
 signal all_slots_filled()
 signal reading_received(slot_index: int, text: String)
@@ -29,8 +33,8 @@ var _slot_labels: Array[Label] = []
 var _reading_labels: Array[RichTextLabel] = []
 var _player_hand: Hand
 var _claude_api: Node
+var _game_blackboard: Node
 
-var _game_state: Dictionary = {}
 var _encounter_index: int = 0
 
 
@@ -39,20 +43,21 @@ func initialize(
 	p_slot_labels: Array[Label],
 	p_reading_labels: Array[RichTextLabel],
 	p_player_hand: Hand,
-	p_claude_api: Node
+	p_claude_api: Node,
+	p_game_blackboard: Node
 ) -> void:
 	_slot_piles = p_slot_piles
 	_slot_labels = p_slot_labels
 	_reading_labels = p_reading_labels
 	_player_hand = p_player_hand
 	_claude_api = p_claude_api
+	_game_blackboard = p_game_blackboard
 
 	_claude_api.request_completed.connect(_on_claude_request_completed)
 	_claude_api.request_failed.connect(_on_claude_request_failed)
 
 
-func reset_for_client(game_state: Dictionary, encounter_index: int) -> void:
-	_game_state = game_state
+func reset_for_client(encounter_index: int) -> void:
 	_encounter_index = encounter_index
 
 	slot_filled = [false, false, false]
@@ -152,9 +157,8 @@ func _update_hover_previews() -> void:
 		story_changed.emit()
 		return
 
-	var loading_text := "The cards are speaking..."
-	_reading_labels[new_hover_slot].text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % loading_text
-	hover_preview_text = loading_text
+	_reading_labels[new_hover_slot].text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % READING_LOADING_TEXT
+	hover_preview_text = READING_LOADING_TEXT
 	story_changed.emit()
 	_loading_slots[new_hover_slot] = true
 	_slot_piles[active_slot].enable_drop_zone = false
@@ -205,12 +209,13 @@ func _lock_slot(slot_index: int) -> void:
 		if _reading_cache.has(cache_key):
 			reading = _reading_cache[cache_key]
 		else:
-			reading = "The cards are speaking..."
+			reading = READING_LOADING_TEXT
 			_waiting_for_reading_slot = slot_index
 			waiting_for_reading_started.emit(slot_index)
 
 		slot_readings[slot_index] = reading
 		_reading_labels[slot_index].text = reading
+		_persist_slot_state(slot_index, card.card_name, orient_key, reading)
 
 		var display_name: String = StoryRenderer.humanize_token(card.card_name)
 		if card.is_reversed:
@@ -256,6 +261,7 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 	if slot_filled[slot_index]:
 		slot_readings[slot_index] = text
 		_reading_labels[slot_index].text = text
+		_persist_slot_text(slot_index, text)
 		story_changed.emit()
 		if _waiting_for_reading_slot == slot_index:
 			_waiting_for_reading_slot = -1
@@ -282,22 +288,22 @@ func _on_claude_request_failed(request_id: String, _error_message: String) -> vo
 	if slot_index == active_slot and not slot_filled[slot_index]:
 		_slot_piles[active_slot].enable_drop_zone = true
 
-	var error_text := "The cards are silent..."
-	_reading_cache[request_id] = error_text
+	_reading_cache[request_id] = READING_ERROR_TEXT
 
 	var card_name: String = request_id.get_slice(":", 0)
 
 	if slot_filled[slot_index]:
-		slot_readings[slot_index] = error_text
-		_reading_labels[slot_index].text = error_text
+		slot_readings[slot_index] = READING_ERROR_TEXT
+		_reading_labels[slot_index].text = READING_ERROR_TEXT
+		_persist_slot_text(slot_index, READING_ERROR_TEXT)
 		story_changed.emit()
 		if _waiting_for_reading_slot == slot_index:
 			_waiting_for_reading_slot = -1
 			waiting_for_reading_ended.emit(slot_index)
-		reading_received.emit(slot_index, error_text)
+		reading_received.emit(slot_index, READING_ERROR_TEXT)
 	elif current_hover_slot == slot_index and _current_hover_card_name == card_name:
-		_reading_labels[slot_index].text = "[color=#a05a5a][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % error_text
-		hover_preview_text = error_text
+		_reading_labels[slot_index].text = "[color=#a05a5a][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % READING_ERROR_TEXT
+		hover_preview_text = READING_ERROR_TEXT
 		story_changed.emit()
 
 
@@ -363,7 +369,7 @@ func _build_slot_texts() -> Array[String]:
 
 
 func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[String], slot_orientations: Array[String] = []) -> Dictionary:
-	var full_game_state: Dictionary = _game_state.duplicate(true)
+	var full_game_state: Dictionary = _get_game_state()
 	var encounter_index: int = maxi(_encounter_index, 0)
 	var encounters: Array = full_game_state.get("encounters", [])
 
@@ -371,7 +377,10 @@ func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[S
 		var encounter_state: Dictionary = encounters[encounter_index]
 		var encounter_slots: Array = encounter_state.get("slots", [])
 
-		for i: int in range(mini(3, encounter_slots.size())):
+		while encounter_slots.size() < 3:
+			encounter_slots.append({"card": "", "text": "", "orientation": ""})
+
+		for i: int in range(3):
 			var runtime_card: String = slot_cards[i] if i < slot_cards.size() else ""
 			var runtime_text: String = slot_texts[i] if i < slot_texts.size() else ""
 			var orientation_value: String = slot_orientations[i] if i < slot_orientations.size() else ""
@@ -395,3 +404,70 @@ func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[S
 			"slot_orientations": slot_orientations.duplicate(true) if not slot_orientations.is_empty() else [],
 		},
 	}
+
+
+func _persist_slot_state(slot_index: int, card_name: String, orientation: String, text: String) -> void:
+	var game_state: Dictionary = _get_game_state()
+	var encounters: Array = game_state.get("encounters", [])
+	if _encounter_index < 0 or _encounter_index >= encounters.size():
+		return
+	if not (encounters[_encounter_index] is Dictionary):
+		return
+
+	var encounter_state: Dictionary = encounters[_encounter_index]
+	var encounter_slots: Array = encounter_state.get("slots", [])
+	while encounter_slots.size() < 3:
+		encounter_slots.append({"card": "", "text": "", "orientation": ""})
+
+	encounter_slots[slot_index] = {
+		"card": card_name,
+		"text": text,
+		"orientation": orientation,
+	}
+
+	encounter_state["slots"] = encounter_slots
+	encounters[_encounter_index] = encounter_state
+	game_state["encounters"] = encounters
+	_set_game_state(game_state)
+
+
+func _persist_slot_text(slot_index: int, text: String) -> void:
+	var slot_state: Dictionary = _get_persisted_slot(slot_index)
+	_persist_slot_state(
+		slot_index,
+		slot_state.get("card", ""),
+		slot_state.get("orientation", ""),
+		text
+	)
+
+
+func _get_persisted_slot(slot_index: int) -> Dictionary:
+	var game_state: Dictionary = _get_game_state()
+	var encounters: Array = game_state.get("encounters", [])
+	if _encounter_index < 0 or _encounter_index >= encounters.size():
+		return {}
+	if not (encounters[_encounter_index] is Dictionary):
+		return {}
+
+	var encounter_state: Dictionary = encounters[_encounter_index]
+	var slots: Array = encounter_state.get("slots", [])
+	if slot_index < 0 or slot_index >= slots.size():
+		return {}
+	if not (slots[slot_index] is Dictionary):
+		return {}
+	return (slots[slot_index] as Dictionary).duplicate(true)
+
+
+func _get_game_state() -> Dictionary:
+	if _game_blackboard == null:
+		return {"encounters": []}
+	var game_state: Variant = _game_blackboard.get_value(BB_KEY_GAME_STATE, {"encounters": []})
+	if game_state is Dictionary:
+		return (game_state as Dictionary).duplicate(true)
+	return {"encounters": []}
+
+
+func _set_game_state(game_state: Dictionary) -> void:
+	if _game_blackboard == null:
+		return
+	_game_blackboard.set_value(BB_KEY_GAME_STATE, game_state.duplicate(true))
