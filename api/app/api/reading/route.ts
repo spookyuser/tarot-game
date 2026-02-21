@@ -1,26 +1,50 @@
 import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
-import { GameState, Slot } from "@/lib/data";
+import { CardDef, GameState, Slot, loadCards } from "@/lib/data";
 
 const SLOT_COUNT = 3;
 
-const SYSTEM_PROMPT = `You are the narrator of fates. Whatever you write becomes real — these are not predictions, they are events that will happen.
+const SYSTEM_PROMPT = `You are an oracle in the port town of Brindlemarsh. The cards show what will happen — not metaphors, not advice, but events that are already in motion.
 
-You will receive a JSON object with a client and three slots. The three slots together tell the client's future as a sequence: first this happens, then this, then this. Each slot is one sentence.
+You'll receive a client (who they are, what brought them here) and three reading slots. Exactly one slot has a card placed but no text yet. Write one sentence for that slot.
 
-Exactly one slot will have a card but no text. Write one sentence for that slot.
+## Voice
+- Second person ("you")
+- One sentence. Short enough to read at a glance
+- Concrete and specific: a person's name, a street, an object, a time of day. No abstractions, no metaphors, no poetic flourishes
+- These events WILL happen. Write them as settled fact
+- Slightly oblique — the event is clear, but its full meaning may not be obvious yet
 
-## Rules
+## Using the Card
+The card's description and tags tell you its energy. Don't restate the textbook meaning — transform it into a specific event that could only happen to THIS person in THIS situation. The card is a seed, not a script.
 
-- Write in second person ("you")
-- One sentence only. It should be short and understandable just by glancing at it.
-- Be specific. Names, places, moments. No metaphors. No abstractions. No poetic language.
-- These events WILL happen to this person. Write them as facts.
-- If other slots already have text, continue that sequence coherently — each event follows from the last
-- Never contradict or undo what earlier slots established
-- If a card is marked "reversed", its meaning is inverted or diminished — write the sentence reflecting this darker or blocked version of the card's energy
+A reversed card means the energy is blocked, inverted, or arrives unwanted. The event still happens — it just cuts differently.
+
+## Slot Positions
+- Slot 0: Something arrives or is discovered
+- Slot 1: Something shifts or complicates
+- Slot 2: Where it leads — a door opens or closes
+If earlier slots have text, continue from them. Never contradict what's established.
+
+## Echoes Across Readings
+If previous readings from other clients are included, you may OCCASIONALLY reuse a specific detail from an earlier reading — the same street name, object, time of day, or person's name — woven naturally into THIS client's event. Do this rarely (at most once per full reading, and not every reading). Never explain the connection. Never call attention to it. The player notices, or they don't.
 
 Return ONLY the sentence. No JSON. No quotes. No commentary.`;
+
+const cardsByName = buildCardLookup();
+
+function buildCardLookup(): Map<string, CardDef> {
+  const lookup = new Map<string, CardDef>();
+  try {
+    for (const card of loadCards()) {
+      lookup.set(card.name, card);
+      lookup.set(card.name.replace(/_/g, " "), card);
+    }
+  } catch {
+    // Card data unavailable — readings will work without metadata
+  }
+  return lookup;
+}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -192,27 +216,83 @@ function normalizeRequestPayload(body: unknown): NormalizedReadingRequest | null
   return normalizeFromDirectPayload(body);
 }
 
-function buildPromptPayload(request: NormalizedReadingRequest): string {
-  const payload: JsonRecord = {
-    reading: {
-      client: request.client,
-      slots: request.slots,
-    },
+interface EnrichedSlot {
+  index: number;
+  card: string | null;
+  text: string | null;
+  orientation: string | null;
+  card_meaning?: string;
+  card_tags?: string[];
+  card_outcome?: string;
+}
+
+function enrichSlotWithCardData(slot: Slot): EnrichedSlot {
+  const enriched: EnrichedSlot = {
+    index: slot.index,
+    card: slot.card ?? null,
+    text: slot.text ?? null,
+    orientation: slot.orientation ?? null,
   };
 
-  const context: JsonRecord = {};
-  if (request.gameState) {
-    context.game_state = request.gameState;
-  }
-  if (typeof request.activeEncounterIndex === "number") {
-    context.active_encounter_index = request.activeEncounterIndex;
-  }
-  if (request.encounterStory) {
-    context.encounter_story = request.encounterStory;
+  if (!slot.card) return enriched;
+
+  const cardDef = cardsByName.get(slot.card) ?? cardsByName.get(slot.card.replace(/ /g, "_"));
+  if (cardDef) {
+    if (cardDef.description) enriched.card_meaning = cardDef.description;
+    if (cardDef.keywords?.length) enriched.card_tags = cardDef.keywords;
+    else if (cardDef.tags?.length) enriched.card_tags = cardDef.tags as string[];
+    if (cardDef.sentiment) enriched.card_outcome = cardDef.sentiment;
   }
 
-  if (Object.keys(context).length > 0) {
-    payload.context = context;
+  return enriched;
+}
+
+interface PreviousReading {
+  client: string;
+  readings: string[];
+}
+
+function extractPreviousReadings(request: NormalizedReadingRequest): PreviousReading[] {
+  if (!request.gameState || typeof request.activeEncounterIndex !== "number") {
+    return [];
+  }
+
+  const encounters = asArray(request.gameState.encounters);
+  const previous: PreviousReading[] = [];
+
+  const startIndex = Math.max(0, request.activeEncounterIndex - 3);
+  for (let i = startIndex; i < request.activeEncounterIndex; i++) {
+    const enc = encounters[i];
+    if (!isRecord(enc)) continue;
+
+    const client = isRecord(enc.client) ? enc.client : null;
+    const name = client ? asNonEmptyString(client.name) : null;
+    if (!name) continue;
+
+    const slots = asArray(enc.slots);
+    const readings = slots
+      .map((s) => (isRecord(s) ? asNonEmptyString(s.text) : null))
+      .filter((t): t is string => t !== null);
+
+    if (readings.length > 0) {
+      previous.push({ client: name, readings });
+    }
+  }
+
+  return previous;
+}
+
+function buildPromptPayload(request: NormalizedReadingRequest): string {
+  const enrichedSlots = request.slots.map(enrichSlotWithCardData);
+
+  const payload: JsonRecord = {
+    client: request.client,
+    slots: enrichedSlots,
+  };
+
+  const previousReadings = extractPreviousReadings(request);
+  if (previousReadings.length > 0) {
+    payload.previous_readings = previousReadings;
   }
 
   return JSON.stringify(payload, null, 2);

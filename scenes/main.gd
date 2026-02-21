@@ -47,8 +47,8 @@ var game_state: Dictionary = {
 	"encounters": [
 		{
 			"client": {
-				"name": "Maria the Widow",
-				"context": "I lost my husband three weeks ago. The house is too quiet and I keep setting the table for two. I need to know if he's at peace."
+				"name": "Dalla the Netmender",
+				"context": "I found a coin in my husband's coat that doesn't belong to any mint I know. He's been coming home late from the docks smelling like smoke, but there's been no fire on the wharf. I don't think he's lying to me — I think he doesn't know what's happening to him either."
 			},
 			"slots": [
 				{"card": "", "text": ""},
@@ -85,7 +85,7 @@ var back_texture: Texture2D
 var portrait_textures: Dictionary = {}
 
 const CLIENT_PORTRAITS := {
-	"Maria the Widow": "res://art/MinifolksVillagers/Outline/MiniVillagerWoman.png",
+	"Dalla the Netmender": "res://art/MinifolksVillagers/Outline/MiniVillagerWoman.png",
 	"The Stranger": "res://art/MinifolksVillagers/Outline/MiniNobleMan.png",
 }
 

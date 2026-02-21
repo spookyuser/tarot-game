@@ -13,6 +13,9 @@ export interface CardDef {
   sentiment?: "positive" | "negative" | "neutral";
   keywords?: string[];
   description?: string;
+  tags?: string[];
+  rarity?: string;
+  outcome?: string;
 }
 
 export interface ClientDef {
