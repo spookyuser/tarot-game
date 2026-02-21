@@ -30,14 +30,7 @@ var discard: Array[String] = []
 
 @onready var client_context_text: RichTextLabel = $ClientContextText
 
-var slot_piles: Array[Pile] = []
-var slot_labels: Array[Label] = []
-var reading_labels: Array[RichTextLabel] = []
-var slot_bgs: Array[NinePatchRect] = []
 
-var all_card_names: Array[String] = []
-var deck: Array[String] = []
-var discard: Array[String] = []
 
 var game_state: Dictionary = {
 	"encounters": [
