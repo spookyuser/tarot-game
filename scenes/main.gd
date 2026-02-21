@@ -22,6 +22,7 @@ extends Control
 @onready var card_hover_info_inner: ColorRect = $CardHoverInfoPanel/CardHoverInfoInner
 @onready var card_hover_info_title: Label = $CardHoverInfoPanel/CardHoverInfoTitle
 @onready var card_hover_info_body: RichTextLabel = $CardHoverInfoPanel/CardHoverInfoBody
+@onready var loading_panel: Control = $LoadingPanel
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
@@ -41,8 +42,9 @@ var game_state: Dictionary = {
 		{
 			"client": {
 				"name": "Maria the Widow",
-				"context": "I lost my husband, and i don't know what to do" 		},
-			"story": "{0}\n\n{1}\n\n{2}",
+				"context": "I lost my husband, and I don't know what to do."
+			},
+			"story": "",
 			"slots": [
 				{"card": "", "text": ""},
 				{"card": "", "text": ""},
@@ -314,17 +316,16 @@ func _next_client() -> void:
 	_setup_current_client_ui()
 
 func _show_client_loading() -> void:
-	story_title_label.text = "Waiting..."
-	client_context_text.text = "The cards are shuffling..."
-	story_rich_text.text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]A new presence approaches the table...[/wave][/i][/color]"
+	loading_panel.visible = true
+	resolution_panel.visible = false
+	card_hover_info_panel.visible = false
 	for i in range(3):
 		reading_labels[i].text = ""
 		slot_labels[i].text = ""
 		slot_piles[i].enable_drop_zone = false
-	resolution_panel.visible = false
-	card_hover_info_panel.visible = false
 
 func _on_client_request_completed(_request_id: String, client_data: Dictionary) -> void:
+	loading_panel.visible = false
 	var new_encounter := {
 		"client": {
 			"name": client_data.get("name", "Unknown"),
@@ -341,10 +342,12 @@ func _on_client_request_completed(_request_id: String, client_data: Dictionary) 
 	_next_client()
 
 func _on_client_request_failed(_request_id: String, error_message: String) -> void:
+	loading_panel.visible = false
 	story_rich_text.text = "[color=#a05a5a]No one came to the table. (%s)[/color]" % error_message
 
 func _setup_current_client_ui() -> void:
 	client_count += 1
+	loading_panel.visible = false
 
 	slot_filled = [false, false, false]
 	slot_prev_counts = [0, 0, 0]
@@ -728,20 +731,15 @@ func _update_slot_labels() -> void:
 
 
 func _render_story() -> void:
-	var text: String = current_encounter["story"]
-
+	var lines: Array[String] = []
 	for i in range(3):
-		var placeholder := "{%d}" % i
 		if slot_filled[i]:
-			var colored := "[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]]
-			text = text.replace(placeholder, colored)
+			lines.append("[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
 		elif i == _current_hover_slot and _hover_preview_text != "":
-			var preview := "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[i], _hover_preview_text]
-			text = text.replace(placeholder, preview)
-		else:
-			text = text.replace(placeholder, "[color=#4a3a60]__________________________________________[/color]")
-
-	story_rich_text.text = text
+			lines.append("[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[i], _hover_preview_text])
+		elif i <= _active_slot:
+			lines.append("[color=#4a3a60]...[/color]")
+	story_rich_text.text = "\n\n".join(lines)
 
 
 func _process(delta: float) -> void:
@@ -818,11 +816,11 @@ func _update_hover_previews() -> void:
 		return
 
 	var loading_text := "The cards are speaking..."
-	# Use a grayish purple for loading state, keeping the wave effect
 	reading_labels[new_hover_slot].text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % loading_text
 	_hover_preview_text = loading_text
 	_render_story()
 	_loading_slots[new_hover_slot] = true
+	slot_piles[_active_slot].enable_drop_zone = false
 
 	var held_card = _find_held_card()
 	if held_card == null:
@@ -862,6 +860,8 @@ func _on_claude_request_completed(request_id: String, text: String) -> void:
 		reading_labels[slot_index].text = "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[slot_index], text]
 		_hover_preview_text = text
 		_render_story()
+		if slot_index == _active_slot and not slot_filled[slot_index]:
+			slot_piles[_active_slot].enable_drop_zone = true
 
 
 func _on_claude_request_failed(request_id: String, _error_message: String) -> void:
@@ -870,6 +870,8 @@ func _on_claude_request_failed(request_id: String, _error_message: String) -> vo
 	var slot_index: int = _pending_requests[request_id]
 	_pending_requests.erase(request_id)
 	_loading_slots.erase(slot_index)
+	if slot_index == _active_slot and not slot_filled[slot_index]:
+		slot_piles[_active_slot].enable_drop_zone = true
 
 	var error_text := "The cards are silent..."
 	_reading_cache[request_id] = error_text
@@ -955,11 +957,10 @@ func _show_resolution() -> void:
 	resolution_panel.visible = true
 	resolution_title.text = "Reading for %s" % current_encounter["client"]["name"]
 
-	var text: String = current_encounter["story"]
+	var lines: Array[String] = []
 	for i in range(3):
-		text = text.replace("{%d}" % i, "[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
-
-	resolution_text.text = text
+		lines.append("[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
+	resolution_text.text = "\n\n".join(lines)
 
 
 func _on_next_button_pressed() -> void:
@@ -981,7 +982,6 @@ func _destroy_all_card_nodes() -> void:
 	card_hover_info_panel.visible = false
 	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
 
-	player_hand.clear_cards()
 	for pile in slot_piles:
 		pile.clear_cards()
 	card_manager.reset_history()
