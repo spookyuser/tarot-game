@@ -2,9 +2,6 @@
 ##
 ## Cards stack in a configurable direction (UP/DOWN/LEFT/RIGHT) with gap spacing.
 ## Supports full, top-only, or no-movement interaction modes.
-##
-## Positioning constraint: uses `position + offset` for card placement, so this
-## node's parent must have global_position (0,0) or card positions will be wrong.
 class_name Pile
 extends CardContainer
 
@@ -55,7 +52,7 @@ func _update_target_positions() -> void:
 	for i: int in range(_held_cards.size()):
 		var card: Card = _held_cards[i]
 		var offset: Vector2 = _calculate_offset(i)
-		var target_pos: Vector2 = position + offset
+		var target_pos: Vector2 = global_position + offset
 
 		card.show_front = card_face_up
 		card.move(target_pos, 0.0)

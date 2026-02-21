@@ -5,7 +5,7 @@ A client arrives with a story — a short narrative with three blanks where taro
 
 ## Current State
 
-Three-column UI redesign just implemented. Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings served by Next.js API (`api/`) — Godot sends full game state to `POST /api/reading` and receives contextual narrative text. Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
+Three-column UI redesign just implemented. Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings are generated directly from Godot via Anthropic's Messages API (`scenes/claude_api.gd`) with Beehave blackboard state. Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
 
 ## Project Overview
 
@@ -24,7 +24,7 @@ Main (scenes/main.gd, ~290 lines — session orchestrator)
   ├── VignetteEffect (script on ColorRect) — shader fade tweens
   ├── EndScreen (script on EndPanel Control) — end summary display
   ├── SoundManager (unchanged, scenes/sound_manager.gd)
-  └── ClaudeAPI (unchanged, scenes/claude_api.gd)
+  └── ClaudeAPI (direct Anthropic client, scenes/claude_api.gd)
 ```
 
 **Signal flow**: ReadingSlotManager emits `slot_locked`, `all_slots_filled`, `reading_received`, `story_changed`, `request_*_sound`, `waiting_for_reading_*` signals. Main mediates — connects sound signals to SoundManager, story changes to StoryRenderer, vignette signals to VignetteEffect. No sibling-to-sibling communication.
@@ -35,13 +35,21 @@ Open in Godot Engine 4.6. Main scene: `res://scenes/main.tscn`. Viewport: 1280x7
 
 ### Reading API
 
-AI-generated readings are served by the Next.js API in `api/`. Start it with `cd api && pnpm dev` (runs on `http://localhost:3000`). The API requires `ANTHROPIC_API_KEY` in `api/.env`. Godot's `scenes/claude_api.gd` calls `POST /api/reading` with the full game state (client + slots) and receives the generated reading text. Without the API running, readings will show "The cards are silent..."
+AI-generated readings are requested directly from Godot (`scenes/claude_api.gd`) using Anthropic's `POST /v1/messages` endpoint. No JS/Next proxy service is required.
 
-To override the API URL, create `config/api_url.cfg`:
+Configure credentials in `config/api_key.cfg`:
 ```ini
-[api]
-url=http://localhost:3000/api/reading
+[anthropic]
+api_key="YOUR_ANTHROPIC_KEY"
+# optional overrides:
+# endpoint="https://api.anthropic.com/v1/messages"
+# version="2023-06-01"
+# reading_model="claude-sonnet-4-5"
+# client_model="claude-sonnet-4-5"
+# summary_model="claude-sonnet-4-5"
 ```
+
+ClaudeAPI records request lifecycle data (`pending/completed/failed/canceled`) in the shared Beehave blackboard for runtime state visibility.
 
 ## Card Framework Architecture
 

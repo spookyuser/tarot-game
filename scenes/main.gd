@@ -72,6 +72,8 @@ func _ready() -> void:
 	end_screen.play_again_requested.connect(func() -> void: get_tree().reload_current_scene())
 
 	_initialize_game_blackboard()
+	if claude_api.has_method("initialize"):
+		claude_api.initialize(game_blackboard)
 
 	# Reading slot manager wiring
 	reading_slot_mgr.initialize(slot_piles, slot_labels, reading_labels, player_hand, claude_api, game_blackboard)
