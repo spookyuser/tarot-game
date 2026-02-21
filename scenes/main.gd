@@ -30,6 +30,7 @@ extends Control
 @onready var intro_context: RichTextLabel = $IntroPanel/IntroBox/IntroContext
 @onready var begin_button: Button = $IntroPanel/IntroBox/BeginButton
 @onready var restart_button: Button = $RestartButton
+@onready var sound_manager: Node = $SoundManager
 
 @onready var end_panel: Control = $EndPanel
 @onready var end_title: Label = $EndPanel/EndBox/EndTitle
@@ -54,7 +55,7 @@ var game_state: Dictionary = {
 		{
 			"client": {
 				"name": "Maria the Widow",
-				"context": "my husband is dead, i'm sad and i don't know what to do."},
+				"context": "I got married at 23. Everyone told me not to but i did and last week, my husband just, he's just dead, i'm sad and i don't know what to do. is he at peace?"},
 			"slots": [
 				{"card": "", "text": ""},
 				{"card": "", "text": ""},
@@ -249,6 +250,8 @@ func _ready() -> void:
 	_shuffle_deck()
 	_next_client()
 
+	sound_manager.play_ambient()
+
 
 func _load_portrait_textures() -> void:
 	var all_paths := {}
@@ -314,6 +317,7 @@ func _shuffle_deck() -> void:
 	pool.shuffle()
 	deck = pool.slice(0, 9) as Array[String]
 	discard.clear()
+	sound_manager.play_shuffle()
 
 
 func _draw_cards(count: int) -> Array[String]:
@@ -880,6 +884,7 @@ func _update_hover_previews() -> void:
 
 	# Hover exit
 	if _current_hover_slot != -1 and (_current_hover_slot != new_hover_slot or _current_hover_card_name != new_hover_card_name):
+		sound_manager.stop_reading()
 		if not slot_filled[_current_hover_slot]:
 			reading_labels[_current_hover_slot].text = ""
 			_hover_preview_text = ""
@@ -930,6 +935,8 @@ func _update_hover_previews() -> void:
 	slot_piles[_active_slot].enable_drop_zone = false
 
 	var held_card = held_card_for_key
+	if held_card != null:
+		sound_manager.play_reading(held_card.card_info.get("suit", "major"))
 	if held_card == null:
 		return
 
@@ -949,6 +956,7 @@ func _update_hover_previews() -> void:
 
 func _on_claude_request_completed(request_id: String, text: String) -> void:
 	_reading_cache[request_id] = text
+	sound_manager.stop_reading()
 
 	if not _pending_requests.has(request_id):
 		return
@@ -1021,6 +1029,8 @@ func _detect_drops() -> void:
 
 
 func _lock_slot(slot_index: int) -> void:
+	sound_manager.play_card_drop()
+	sound_manager.stop_reading()
 	slot_filled[slot_index] = true
 	slot_piles[slot_index].enable_drop_zone = false
 

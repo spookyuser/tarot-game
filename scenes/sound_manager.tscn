@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://ke6x51kah8hl"]
+
+[ext_resource type="Script" path="res://scenes/sound_manager.gd" id="1_sound"]
+
+[node name="SoundManager" type="Node"]
+script = ExtResource("1_sound")
+
+[node name="AmbientPlayer" type="AudioStreamPlayer" parent="."]
+volume_db = -6.0
+
+[node name="SFXPlayer" type="AudioStreamPlayer" parent="."]
+
+[node name="ReadingPlayer" type="AudioStreamPlayer" parent="."]
+volume_db = -3.0

@@ -120,4 +120,40 @@ Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2
 - `assets/cards/` — Card face PNGs, back face at `assets/card_back.png`. Card size: 110x159.
 - `art/fantasy_pixelart_ui/` — Pixel art UI kit: `panels/` (gold/wood/silver NinePatchRect sources), `buttons/`, `icons/` (stars, arrows), `scroll/`, `sliders/`.
 - `art/MinifolksVillagers/Outline/` — Character sprite sheets (32x32 frames). Used for client portraits via AtlasTexture.
+- `assets/audio/` — Audio files directory (currently empty). Place real `.wav`/`.ogg` files here and assign them to SoundManager's exported `AudioStream` properties in the inspector to replace generated tones.
+
+## Sound System
+
+`scenes/sound_manager.gd` (`SoundManager` node in Main) provides centralized audio with three `AudioStreamPlayer` children: `AmbientPlayer` (looping background), `SFXPlayer` (one-shot effects), `ReadingPlayer` (looping tone during reading generation).
+
+### Placeholder Tones
+
+Each sound uses a generated sine wave at a distinct frequency. Real audio files override these when assigned to the exported `AudioStream` properties in the inspector.
+
+| Sound | Frequency | Duration | Exported Property |
+|-------|-----------|----------|-------------------|
+| Ambient drone | 80 Hz | 4s loop | `ambient_stream` |
+| Shuffle | 300 Hz | 0.3s | `shuffle_stream` |
+| Card drop | 200 Hz | 0.2s | `card_drop_stream` |
+| Reading (cups) | 440 Hz (A4) | 2s loop | `reading_cups_stream` |
+| Reading (swords) | 520 Hz (C5) | 2s loop | `reading_swords_stream` |
+| Reading (wands) | 392 Hz (G4) | 2s loop | `reading_wands_stream` |
+| Reading (gold) | 349 Hz (F4) | 2s loop | `reading_gold_stream` |
+| Reading (major) | 587 Hz (D5) | 2s loop | `reading_major_stream` |
+
+### Integration Points in main.gd
+
+- `_ready()` → `play_ambient()` — background drone starts on game load
+- `_shuffle_deck()` → `play_shuffle()` — burst on deck shuffle
+- `_lock_slot()` → `play_card_drop()` + `stop_reading()` — thud when card locks
+- `_update_hover_previews()` hover enter → `play_reading(suit)` — looping tone while reading generates
+- `_update_hover_previews()` hover exit → `stop_reading()` — stops when card leaves slot
+- `_on_claude_request_completed()` → `stop_reading()` — stops when reading text arrives
+
+### Swapping in Real Audio
+
+1. Place audio files in `assets/audio/`
+2. Select `SoundManager` node in the Main scene
+3. In the Inspector, assign files to the corresponding exported `AudioStream` property
+4. The SoundManager uses the assigned stream instead of the generated tone
 

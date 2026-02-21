@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://ctgir8l4epqs" path="res://art/fantasy_pixelart_ui/panels/silver_panel.png" id="silver_panel_tex"]
 [ext_resource type="Shader" uid="uid://ryt70jxj8alt" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
 [ext_resource type="Texture2D" uid="uid://cihtmo2u0yujk" path="res://art/fantasy_pixelart_ui/panels/wood_panel.png" id="wood_panel_tex"]
+[ext_resource type="PackedScene" path="res://scenes/sound_manager.tscn" id="sound_mgr_scene"]
 
 [sub_resource type="Curve" id="hand_rotation"]
 _limits = [-12.0, 12.0, 0.0, 1.0]
@@ -535,6 +536,8 @@ bbcode_enabled = true
 
 [node name="ClaudeAPI" type="Node" parent="." unique_id=2024195088]
 script = ExtResource("claude_api_script")
+
+[node name="SoundManager" parent="." instance=ExtResource("sound_mgr_scene")]
 
 [node name="ResolutionPanel" type="Control" parent="." unique_id=2000854802]
 visible = false
