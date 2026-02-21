@@ -6,8 +6,12 @@ signal request_failed(request_id: String, error_message: String)
 signal client_request_completed(request_id: String, client_data: Dictionary)
 signal client_request_failed(request_id: String, error_message: String)
 
+signal end_summary_request_completed(request_id: String, text: String)
+signal end_summary_request_failed(request_id: String, error_message: String)
+
 var _api_url: String = "http://localhost:3000/api/reading"
 var _api_clients_url: String = "http://localhost:3000/api/clients"
+var _api_summary_url: String = "http://localhost:3000/api/summary"
 var _pending_requests: Dictionary = {}
 
 func _ready() -> void:
@@ -20,6 +24,9 @@ func _ready() -> void:
 		var clients_url: String = config.get_value("api", "clients_url", "")
 		if not clients_url.is_empty():
 			_api_clients_url = clients_url
+		var summary_url: String = config.get_value("api", "summary_url", "")
+		if not summary_url.is_empty():
+			_api_summary_url = summary_url
 
 
 func is_available() -> bool:
@@ -192,3 +199,66 @@ func _on_client_http_completed(
 		return
 
 	client_request_completed.emit(request_id, response)
+
+func generate_end_summary(request_id: String, game_state: Dictionary) -> void:
+	if _api_summary_url.is_empty():
+		end_summary_request_failed.emit(request_id, "Summary API URL not configured")
+		return
+
+	var body: Dictionary = {"game_state": game_state}
+	var json_body := JSON.stringify(body)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+
+	var http_request := HTTPRequest.new()
+	add_child(http_request)
+	http_request.request_completed.connect(
+		_on_end_summary_http_completed.bind(request_id, http_request)
+	)
+
+	_pending_requests[request_id] = http_request
+
+	_debug_log("POST %s request_id=%s" % [_api_summary_url, request_id], body)
+	var err := http_request.request(_api_summary_url, headers, HTTPClient.METHOD_POST, json_body)
+	if err != OK:
+		_debug_log("Failed to start summary request_id=%s error=%d" % [request_id, err], body)
+		_cleanup_request(request_id)
+		end_summary_request_failed.emit(request_id, "HTTP request failed to start: %d" % err)
+
+func _on_end_summary_http_completed(
+	result: int,
+	response_code: int,
+	_headers: PackedStringArray,
+	body: PackedByteArray,
+	request_id: String,
+	http_request: HTTPRequest
+) -> void:
+	_cleanup_request(request_id)
+	var response_text := body.get_string_from_utf8()
+	_debug_log(
+		"Summary response received request_id=%s result=%d code=%d" % [request_id, result, response_code],
+		{"headers": _headers, "body": response_text}
+	)
+
+	if result != HTTPRequest.RESULT_SUCCESS:
+		end_summary_request_failed.emit(request_id, "HTTP result error: %d" % result)
+		return
+
+	if response_code != 200:
+		var error_text := response_text
+		push_warning("ReadingAPI: HTTP %d — %s" % [response_code, error_text])
+		end_summary_request_failed.emit(request_id, "HTTP %d" % response_code)
+		return
+
+	var json := JSON.new()
+	var parse_err := json.parse(response_text)
+	if parse_err != OK:
+		_debug_log("JSON parse error request_id=%s parse_err=%d" % [request_id, parse_err], response_text)
+		end_summary_request_failed.emit(request_id, "JSON parse error")
+		return
+
+	var response: Dictionary = json.get_data()
+	if not response.has("summary"):
+		end_summary_request_failed.emit(request_id, "Invalid summary response shape")
+		return
+
+	end_summary_request_completed.emit(request_id, response.get("summary", ""))

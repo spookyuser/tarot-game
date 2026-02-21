@@ -30,6 +30,11 @@ extends Control
 @onready var intro_context: RichTextLabel = $IntroPanel/IntroBox/IntroContext
 @onready var begin_button: Button = $IntroPanel/IntroBox/BeginButton
 
+@onready var end_panel: Control = $EndPanel
+@onready var end_title: Label = $EndPanel/EndBox/EndTitle
+@onready var end_list: VBoxContainer = $EndPanel/EndBox/EndScroll/EndList
+@onready var play_again_button: Button = $EndPanel/EndBox/PlayAgainButton
+
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
 var reading_labels: Array[RichTextLabel] = []
@@ -229,7 +234,11 @@ func _ready() -> void:
 	claude_api.client_request_completed.connect(_on_client_request_completed)
 	claude_api.client_request_failed.connect(_on_client_request_failed)
 
-	player_hand.max_hand_size = 10
+	if end_panel:
+		end_panel.visible = false
+		play_again_button.pressed.connect(_on_play_again_pressed)
+
+	player_hand.max_hand_size = 9
 	player_hand.max_hand_spread = 700
 
 	_load_portrait_textures()
@@ -302,7 +311,7 @@ func _load_clients() -> void:
 func _shuffle_deck() -> void:
 	var pool := all_card_names.duplicate()
 	pool.shuffle()
-	deck = pool.slice(0, 10) as Array[String]
+	deck = pool.slice(0, 9) as Array[String]
 	discard.clear()
 
 
@@ -1081,7 +1090,85 @@ func _show_resolution() -> void:
 
 func _on_next_button_pressed() -> void:
 	_destroy_all_card_nodes()
-	_next_client()
+	# The player hand will have fewer than 3 cards if they can't fulfill the next client
+	if player_hand.get_card_count() < 3:
+		_show_end_screen()
+	else:
+		_next_client()
+
+func _show_end_screen() -> void:
+	# Clean up any previous rows just in case
+	for child in end_list.get_children():
+		child.queue_free()
+
+	end_title.text = "The Reading Concludes"
+
+	# Build a row for every encounter
+	var encounters: Array = game_state.get("encounters", [])
+	for encounter in encounters:
+		var client_name = encounter.get("client", {}).get("name", "Unknown")
+		var slots = encounter.get("slots", [])
+
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 24)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+
+		# 1) Portrait
+		var portrait_rect = TextureRect.new()
+		var p_tex = _get_portrait_for_client(client_name)
+		if p_tex:
+			portrait_rect.texture = p_tex
+		portrait_rect.custom_minimum_size = Vector2(48, 48)
+		portrait_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		row.add_child(portrait_rect)
+
+		# 2) Client Name
+		var name_label = Label.new()
+		name_label.text = client_name
+		name_label.add_theme_color_override("font_color", Color(0.85, 0.7, 0.4, 1.0))
+		name_label.add_theme_font_size_override("font_size", 14)
+		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		name_label.custom_minimum_size = Vector2(160, 0)
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.add_child(name_label)
+
+		# 3) Three Card Icons
+		var cards_box = HBoxContainer.new()
+		cards_box.add_theme_constant_override("separation", 8)
+		cards_box.alignment = BoxContainer.ALIGNMENT_CENTER
+		
+		for slot in slots:
+			var c_name = slot.get("card", "")
+			var orient = slot.get("orientation", "upright")
+			
+			var c_rect = TextureRect.new()
+			c_rect.custom_minimum_size = Vector2(36, 52)
+			c_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+			
+			if c_name.is_empty():
+				c_rect.texture = back_texture
+			else:
+				var tex_path = "res://assets/cards/%s.png" % c_name
+				if ResourceLoader.exists(tex_path):
+					c_rect.texture = load(tex_path)
+				else:
+					c_rect.texture = back_texture
+
+			if orient == "reversed":
+				c_rect.flip_v = true
+			
+			cards_box.add_child(c_rect)
+			
+		row.add_child(cards_box)
+		end_list.add_child(row)
+
+	loading_panel.visible = false
+	resolution_panel.visible = false
+	if end_panel:
+		end_panel.visible = true
+
+func _on_play_again_pressed() -> void:
+	get_tree().reload_current_scene()
 
 
 func _destroy_all_card_nodes() -> void:
