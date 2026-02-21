@@ -24,6 +24,7 @@ export interface Slot {
   index: number;
   card?: string | null;
   text?: string | null;
+  orientation?: "upright" | "reversed" | null;
 }
 
 export interface GameState {

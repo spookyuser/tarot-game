@@ -18,6 +18,7 @@ Exactly one slot will have a card but no text. Write one sentence for that slot.
 - These events WILL happen to this person. Write them as facts.
 - If other slots already have text, continue that sequence coherently — each event follows from the last
 - Never contradict or undo what earlier slots established
+- If a card is marked "reversed", its meaning is inverted or diminished — write the sentence reflecting this darker or blocked version of the card's energy
 
 Return ONLY the sentence. No JSON. No quotes. No commentary.`;
 
@@ -60,16 +61,25 @@ function normalizeCardName(cardName: string): string {
   return cardName.replace(/_/g, " ").trim();
 }
 
+function normalizeOrientation(value: unknown): "upright" | "reversed" | null {
+  const str = asNonEmptyString(value);
+  if (str === "reversed") return "reversed";
+  if (str === "upright") return "upright";
+  return null;
+}
+
 function normalizeSlot(input: unknown, index: number): Slot {
   const slotRecord = isRecord(input) ? input : {};
 
   const rawCard = asNonEmptyString(slotRecord.card);
   const rawText = asNonEmptyString(slotRecord.text);
+  const orientation = normalizeOrientation(slotRecord.orientation);
 
   return {
     index,
     card: rawCard ? normalizeCardName(rawCard) : null,
     text: rawText ?? null,
+    orientation,
   };
 }
 
@@ -132,6 +142,7 @@ function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | n
   const runtimeState = isRecord(raw.runtime_state) ? raw.runtime_state : {};
   const runtimeCards = asArray(runtimeState.slot_cards);
   const runtimeTexts = asArray(runtimeState.slot_texts);
+  const runtimeOrientations = asArray(runtimeState.slot_orientations);
   const encounterSlots = asArray(encounter.slots);
 
   const slots = Array.from({ length: SLOT_COUNT }, (_, index) => {
@@ -141,10 +152,12 @@ function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | n
     if (hasRuntimeCard || hasRuntimeText) {
       const runtimeCardName = asNonEmptyString(runtimeCards[index]);
       const runtimeText = asNonEmptyString(runtimeTexts[index]);
+      const orientation = normalizeOrientation(runtimeOrientations[index]);
       return {
         index,
         card: runtimeCardName ? normalizeCardName(runtimeCardName) : null,
         text: runtimeText ?? null,
+        orientation,
       };
     }
 
@@ -153,6 +166,7 @@ function normalizeFromGamePayload(raw: JsonRecord): NormalizedReadingRequest | n
       index,
       card: normalized.card ?? null,
       text: normalized.text ?? null,
+      orientation: normalized.orientation ?? null,
     };
   });
 

@@ -51,6 +51,7 @@ static var holding_card_count: int = 0
 # Card data and container reference
 var card_info: Dictionary
 var card_container: CardContainer
+var is_reversed: bool = false
 var _show_front: bool = true
 
 

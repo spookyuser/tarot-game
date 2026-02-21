@@ -105,7 +105,8 @@ func _update_target_positions() -> void:
 		
 		# Set card appearance and position
 		card.show_front = card_face_up
-		card.move(target_pos, 0)
+		var target_rotation: float = PI if card.get("is_reversed") else 0.0
+		card.move(target_pos, target_rotation)
 		
 		# Apply interaction restrictions
 		if not allow_card_movement: 

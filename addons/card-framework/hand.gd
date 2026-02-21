@@ -166,6 +166,8 @@ func _update_target_positions() -> void:
 			y_min = minf(y_min, current_y_min)
 			y_max = maxf(y_max, current_y_max)
 
+		if card.get("is_reversed"):
+			target_rotation += PI
 		card.move(target_pos, target_rotation)
 		card.show_front = card_face_up
 		card.can_be_interacted_with = true

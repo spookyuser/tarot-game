@@ -441,6 +441,8 @@ func _deal_hand() -> void:
 	var drawn = _draw_cards(available)
 	for card_name in drawn:
 		card_manager.card_factory.create_card(card_name, player_hand)
+		var card: Card = player_hand._held_cards.back()
+		card.is_reversed = randf() < 0.5
 	_update_deck_count()
 
 
@@ -462,9 +464,12 @@ func _update_card_hover_info_panel() -> void:
 	var hovered_card := _find_hovered_hand_card()
 
 	if hovered_card != null:
-		card_hover_info_title.text = _humanize_token(hovered_card.card_name)
+		var title_text := _humanize_token(hovered_card.card_name)
+		if hovered_card.is_reversed:
+			title_text += " (Reversed)"
+		card_hover_info_title.text = title_text
 		_apply_hover_panel_visuals(hovered_card.card_info)
-		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info)
+		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info, hovered_card.is_reversed)
 		_last_hovered_card_pos = hovered_card.global_position
 
 		if not _hover_info_showing:
@@ -547,7 +552,7 @@ func _slide_hover_info_out() -> void:
 	_hover_info_tween.tween_callback(func(): card_hover_info_panel.visible = false)
 
 
-func _build_hover_body_text(card_info: Dictionary) -> String:
+func _build_hover_body_text(card_info: Dictionary, reversed: bool = false) -> String:
 	var arcana: String = String(card_info.get("arcana", "")).to_lower()
 	var suit: String = String(card_info.get("suit", "")).to_lower()
 	var value: String = String(card_info.get("value", ""))
@@ -576,6 +581,9 @@ func _build_hover_body_text(card_info: Dictionary) -> String:
 	parts.append("[color=%s]------------[/color]" % HOVER_RULE_COLOR)
 	parts.append(_build_compact_row(arcana_visual, arcana_text, suit_visual, suit_text))
 	parts.append(_build_compact_row(rarity_visual, rarity_text, outcome_visual, outcome_text))
+
+	if reversed:
+		parts.append("[color=#dd8f8f][b]REVERSED[/b][/color]")
 
 	var tag_line := _compact_tag_line(tags)
 	if not tag_line.is_empty():
@@ -697,6 +705,19 @@ func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array[String]:
 	return cards
 
 
+func _build_slot_orientations(hover_slot: int, hover_card: Card) -> Array[String]:
+	var orientations: Array[String] = ["", "", ""]
+	for i in range(3):
+		if slot_filled[i]:
+			var pile_cards = slot_piles[i].get_top_cards(1)
+			if pile_cards.size() > 0:
+				var slot_card: Card = pile_cards[0]
+				orientations[i] = "reversed" if slot_card.is_reversed else "upright"
+		elif i == hover_slot and hover_card != null:
+			orientations[i] = "reversed" if hover_card.is_reversed else "upright"
+	return orientations
+
+
 func _build_slot_texts() -> Array[String]:
 	var texts: Array[String] = ["", "", ""]
 	for i in range(3):
@@ -704,7 +725,7 @@ func _build_slot_texts() -> Array[String]:
 	return texts
 
 
-func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[String]) -> Dictionary:
+func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[String], slot_orientations: Array[String] = []) -> Dictionary:
 	var full_game_state: Dictionary = game_state.duplicate(true)
 	var encounter_index := maxi(current_encounter_index - 1, 0)
 	var encounters: Array = full_game_state.get("encounters", [])
@@ -724,9 +745,14 @@ func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[S
 			if not runtime_card.is_empty():
 				card_value = runtime_card
 
+			var orientation_value := ""
+			if i < slot_orientations.size():
+				orientation_value = slot_orientations[i]
+
 			var slot_state := {
 				"card": card_value,
 				"text": runtime_text,
+				"orientation": orientation_value,
 			}
 			encounter_slots[i] = slot_state
 
@@ -740,6 +766,7 @@ func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[S
 		"runtime_state": {
 			"slot_cards": slot_cards.duplicate(true),
 			"slot_texts": slot_texts.duplicate(true),
+			"slot_orientations": slot_orientations.duplicate(true) if not slot_orientations.is_empty() else [],
 		},
 	}
 
@@ -747,7 +774,7 @@ func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[S
 func _update_slot_labels() -> void:
 	for i in range(3):
 		if slot_filled[i]:
-			slot_labels[i].text = ""
+			pass  # Preserve label set by _lock_slot (card name + orientation)
 		elif i == _active_slot:
 			slot_labels[i].text = "Place a card"
 			slot_labels[i].self_modulate = Color(0.85, 0.7, 0.4, 1.0)
@@ -831,7 +858,9 @@ func _update_hover_previews() -> void:
 	_current_hover_slot = new_hover_slot
 	_current_hover_card_name = new_hover_card_name
 
-	var cache_key := "%s:%d" % [new_hover_card_name, new_hover_slot]
+	var held_card_for_key = _find_held_card()
+	var orientation_key := "reversed" if (held_card_for_key != null and held_card_for_key.is_reversed) else "upright"
+	var cache_key := "%s:%s:%d" % [new_hover_card_name, orientation_key, new_hover_slot]
 
 	if _reading_cache.has(cache_key):
 		var cached: String = _reading_cache[cache_key]
@@ -847,7 +876,7 @@ func _update_hover_previews() -> void:
 	_loading_slots[new_hover_slot] = true
 	slot_piles[_active_slot].enable_drop_zone = false
 
-	var held_card = _find_held_card()
+	var held_card = held_card_for_key
 	if held_card == null:
 		return
 
@@ -856,7 +885,8 @@ func _update_hover_previews() -> void:
 
 	var slot_cards: Array[String] = _build_slot_cards(new_hover_slot, held_card)
 	var slot_texts: Array[String] = _build_slot_texts()
-	var request_state := _build_reading_request_state(slot_cards, slot_texts)
+	var slot_orientations: Array[String] = _build_slot_orientations(new_hover_slot, held_card)
+	var request_state := _build_reading_request_state(slot_cards, slot_texts, slot_orientations)
 
 	claude_api.generate_reading(
 		request_id,
@@ -933,7 +963,8 @@ func _lock_slot(slot_index: int) -> void:
 	var cards = slot_piles[slot_index].get_top_cards(1)
 	if cards.size() > 0:
 		var card: Card = cards[0]
-		var cache_key := "%s:%d" % [card.card_name, slot_index]
+		var orient_key := "reversed" if card.is_reversed else "upright"
+		var cache_key := "%s:%s:%d" % [card.card_name, orient_key, slot_index]
 
 		var reading: String
 		if _reading_cache.has(cache_key):
@@ -944,6 +975,12 @@ func _lock_slot(slot_index: int) -> void:
 		slot_readings[slot_index] = reading
 		reading_labels[slot_index].text = reading
 		discard.append(card.card_name)
+
+		var display_name := _humanize_token(card.card_name)
+		if card.is_reversed:
+			display_name += " (Reversed)"
+		slot_labels[slot_index].text = display_name
+		slot_labels[slot_index].self_modulate = Color(0.85, 0.7, 0.4, 1.0)
 
 	_invalidate_unfilled_caches()
 
@@ -970,8 +1007,9 @@ func _invalidate_unfilled_caches() -> void:
 	var keys_to_erase: Array[String] = []
 	for key in _reading_cache.keys():
 		var parts: PackedStringArray = key.split(":")
-		if parts.size() == 2:
-			var idx := parts[1].to_int()
+		# Cache key format: "card_name:orientation:slot_index"
+		if parts.size() == 3:
+			var idx := parts[2].to_int()
 			if not slot_filled[idx]:
 				keys_to_erase.append(key)
 	for key in keys_to_erase:
