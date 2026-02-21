@@ -9,7 +9,25 @@ Three-column UI redesign just implemented. Core gameplay loop works: shuffle →
 
 ## Project Overview
 
-Godot 4.6 tarot card reading game built on a reusable card framework addon. Players draw cards from a 78-card tarot deck and place them into story slots for procedurally-generated readings. The card framework addon (`addons/card-framework/`) is a general-purpose drag-and-drop card system; the game logic lives in `scenes/main.gd`.
+Godot 4.6 tarot card reading game built on a reusable card framework addon. Players draw cards from a 78-card tarot deck and place them into story slots for procedurally-generated readings. The card framework addon (`addons/card-framework/`) is a general-purpose drag-and-drop card system; the game logic is decomposed across several scripts under `scenes/`.
+
+### Game Architecture
+
+```
+Main (scenes/main.gd, ~290 lines — session orchestrator)
+  ├── Sidebar (Control child, scenes/sidebar.gd) — left column UI: portrait, client info, deck count, progress stars, restart
+  ├── DeckManager (RefCounted) — deck state, shuffle, draw
+  ├── PortraitLoader (RefCounted) — portrait texture loading + lookup
+  ├── ReadingSlotManager (Node child) — slots, hover previews, API callbacks, drop detection
+  ├── StoryRenderer (Node child) — renders story column with inline readings
+  ├── CardHoverInfoPanel (script on NinePatchRect) — tooltip positioning + tweens
+  ├── VignetteEffect (script on ColorRect) — shader fade tweens
+  ├── EndScreen (script on EndPanel Control) — end summary display
+  ├── SoundManager (unchanged, scenes/sound_manager.gd)
+  └── ClaudeAPI (unchanged, scenes/claude_api.gd)
+```
+
+**Signal flow**: ReadingSlotManager emits `slot_locked`, `all_slots_filled`, `reading_received`, `story_changed`, `request_*_sound`, `waiting_for_reading_*` signals. Main mediates — connects sound signals to SoundManager, story changes to StoryRenderer, vignette signals to VignetteEffect. No sibling-to-sibling communication.
 
 ## Running the Project
 
@@ -97,9 +115,9 @@ CardManager must appear **before** all CardContainer nodes in the scene tree. Co
 
 ### Portrait System
 
-`CLIENT_PORTRAITS` dict in `main.gd` maps client names → portrait sprite sheet paths. `_load_portrait_textures()` extracts the first 32x32 frame from each sheet via `AtlasTexture`. Unknown clients get a deterministic fallback from `PORTRAIT_FALLBACKS` using name hash.
+`PortraitLoader` (RefCounted in `scenes/portrait_loader.gd`) maps client names → portrait sprite sheet paths via `CLIENT_PORTRAITS` dict. `load_all()` extracts the first 32x32 frame from each sheet via `AtlasTexture`. `get_portrait(name)` returns the texture, falling back to a deterministic pick from `PORTRAIT_FALLBACKS` using name hash.
 
-To add a new client portrait: add entry to `CLIENT_PORTRAITS` dict with path to a sprite sheet in `assets/portraits/`.
+To add a new client portrait: add entry to `CLIENT_PORTRAITS` dict in `portrait_loader.gd` with path to a sprite sheet in `assets/portraits/`.
 
 ## Game Data
 
@@ -140,14 +158,13 @@ Array of objects with `name` (string) and `story` (string with `{0}`, `{1}`, `{2
 | Reading (gold) | `reading_mystery.mp3` | `reading_gold_stream` | Yes |
 | Reading (major) | `reading_mystery.mp3` | `reading_major_stream` | Yes |
 
-### Integration Points in main.gd
+### Integration Points
 
-- `_ready()` → `play_ambient()` — background drone starts on game load
-- `_shuffle_deck()` → `play_shuffle()` — burst on deck shuffle
-- `_lock_slot()` → `play_card_drop()` + `stop_reading()` — thud when card locks
-- `_update_hover_previews()` hover enter → `play_reading(suit)` — looping tone while reading generates
-- `_update_hover_previews()` hover exit → `stop_reading()` — stops when card leaves slot
-- `_on_claude_request_completed()` → `stop_reading()` — stops when reading text arrives
+Sound is triggered via signals from `ReadingSlotManager` → Main → `SoundManager`:
+- `_ready()` → `play_ambient()` / `play_shuffle()` — called directly by Main
+- `request_card_drop_sound` → `play_card_drop()` — emitted when card locks into slot
+- `request_reading_sound(suit)` → `play_reading(suit)` — emitted when hover preview starts loading
+- `request_stop_reading_sound` → `stop_reading()` — emitted on hover exit or reading arrival
 
 ### Swapping Audio Files
 

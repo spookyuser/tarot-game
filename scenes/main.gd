@@ -7,45 +7,33 @@ extends Control
 @onready var resolution_text: RichTextLabel = $ResolutionPanel/StoryBox/ResolutionText
 @onready var next_button: Button = $ResolutionPanel/StoryBox/NextButton
 @onready var claude_api: Node = $ClaudeAPI
+@onready var sound_manager: Node = $SoundManager
 
-@onready var client_name_left: Label = $ClientNameLeft
-@onready var client_counter_left: Label = $ClientCounterLeft
-@onready var portrait_frame: TextureRect = $PortraitFrame
-@onready var deck_count_label: Label = $DeckCountLabel
-@onready var deck_icon: TextureRect = $DeckIcon
+@onready var card_hover_panel: CardHoverInfoPanel = $CardHoverInfoPanel
+@onready var reading_vignette: VignetteEffect = $ReadingVignetteOverlay
+@onready var reading_slot_mgr: ReadingSlotManager = $ReadingSlotManager
+@onready var story_renderer: StoryRenderer = $StoryRenderer
+@onready var end_screen: EndScreen = $EndPanel
+
+@onready var sidebar: Sidebar = $Sidebar
 @onready var story_title_label: Label = $StoryTitleLabel
 @onready var story_rich_text: RichTextLabel = $StoryRichText
-@onready var progress_icons: Array[TextureRect] = [
-	$ProgressIcon0, $ProgressIcon1, $ProgressIcon2
-]
-@onready var card_hover_info_panel: NinePatchRect = $CardHoverInfoPanel
-@onready var card_hover_info_body: RichTextLabel = $CardHoverInfoPanel/CardHoverInfoBody
-@onready var card_hover_reversed_label: Label = $CardHoverInfoPanel/ReversedLabel
-@onready var reading_vignette: ColorRect = $ReadingVignetteOverlay
+@onready var client_context_text: RichTextLabel = $ClientContextText
+
 @onready var loading_panel: Control = $LoadingPanel
 @onready var intro_panel: Control = $IntroPanel
 @onready var intro_portrait: TextureRect = $IntroPanel/IntroBox/IntroPortrait
 @onready var intro_name: Label = $IntroPanel/IntroBox/IntroName
 @onready var intro_context: RichTextLabel = $IntroPanel/IntroBox/IntroContext
 @onready var begin_button: Button = $IntroPanel/IntroBox/BeginButton
-@onready var restart_button: Button = $RestartButton
-@onready var sound_manager: Node = $SoundManager
-
-@onready var end_panel: Control = $EndPanel
-@onready var end_title: Label = $EndPanel/EndBox/EndTitle
-@onready var end_list: VBoxContainer = $EndPanel/EndBox/EndScroll/EndList
-@onready var play_again_button: Button = $EndPanel/EndBox/PlayAgainButton
-
-@onready var client_context_text: RichTextLabel = $ClientContextText
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
 var reading_labels: Array[RichTextLabel] = []
 var slot_bgs: Array[NinePatchRect] = []
 
-var all_card_names: Array[String] = []
-var deck: Array[String] = []
-var discard: Array[String] = []
+var portraits := PortraitLoader.new()
+var deck := DeckManager.new()
 
 var game_state: Dictionary = {
 	"encounters": [
@@ -63,64 +51,10 @@ var game_state: Dictionary = {
 }
 var current_encounter_index: int = 0
 var current_encounter: Dictionary = {}
-
 var client_count: int = 0
 
-var slot_filled: Array[bool] = [false, false, false]
-var slot_prev_counts: Array[int] = [0, 0, 0]
-var slot_readings: Array[String] = ["", "", ""]
-var _reading_cache: Dictionary = {}
-
-var _active_slot: int = 0
-var _current_hover_slot: int = -1
-var _current_hover_card_name: String = ""
-var _hover_preview_text: String = ""
-var _pending_requests: Dictionary = {}
-var _loading_slots: Dictionary = {}
-var _time_passed: float = 0.0
-var _hover_info_showing: bool = false
-var _hover_info_tween: Tween = null
-var _last_hovered_card_pos: Vector2 = Vector2.ZERO
-var _vignette_tween: Tween = null
-var _waiting_for_reading_slot: int = -1
-
 var back_texture: Texture2D
-var portrait_textures: Dictionary = {}
-
-const CLIENT_PORTRAITS: Dictionary = {
-	"Maria the Widow": "res://assets/portraits/MiniVillagerWoman.png",
-	"The Stranger": "res://assets/portraits/MiniNobleMan.png",
-}
-
-const PORTRAIT_FALLBACKS: Array[String] = [
-	"res://assets/portraits/MiniPeasant.png",
-	"res://assets/portraits/MiniWorker.png",
-	"res://assets/portraits/MiniVillagerMan.png",
-	"res://assets/portraits/MiniOldMan.png",
-	"res://assets/portraits/MiniOldWoman.png",
-	"res://assets/portraits/MiniNobleWoman.png",
-	"res://assets/portraits/MiniPrincess.png",
-	"res://assets/portraits/MiniQueen.png",
-]
-
-const PORTRAIT_FRAME_SIZE := 32
-
-const SLOT_COLORS: Array[String] = [
-	"#e0b8c8",
-	"#b8e0c8",
-	"#b8c8e0",
-]
-
-const HOVER_COLORS: Array[String] = [
-	"#a07888",
-	"#78a088",
-	"#7888a0",
-]
-
-const HOVER_INFO_PANEL_MARGIN := 8.0
-const HOVER_INFO_PANEL_X_OFFSET := 10.0
-const HOVER_INFO_PANEL_Y_OFFSET := 0.0
-const HOVER_TEXT_COLOR := "#e8dcc4"
+var _time_passed: float = 0.0
 
 
 func _ready() -> void:
@@ -138,98 +72,64 @@ func _ready() -> void:
 
 	next_button.pressed.connect(_on_next_button_pressed)
 	begin_button.pressed.connect(_on_begin_button_pressed)
-	restart_button.pressed.connect(_on_restart_button_pressed)
+	sidebar.restart_requested.connect(func() -> void: get_tree().reload_current_scene())
 	resolution_panel.visible = false
 	intro_panel.visible = false
-	card_hover_info_panel.z_index = 4096
+	card_hover_panel.z_index = 4096
 
-	claude_api.request_completed.connect(_on_claude_request_completed)
-	claude_api.request_failed.connect(_on_claude_request_failed)
 	claude_api.client_request_completed.connect(_on_client_request_completed)
 	claude_api.client_request_failed.connect(_on_client_request_failed)
 
-	if end_panel:
-		end_panel.visible = false
-		play_again_button.pressed.connect(_on_play_again_pressed)
+	end_screen.play_again_requested.connect(func() -> void: get_tree().reload_current_scene())
+
+	# Reading slot manager wiring
+	reading_slot_mgr.initialize(slot_piles, slot_labels, reading_labels, player_hand, claude_api)
+	reading_slot_mgr.slot_locked.connect(_on_slot_locked)
+	reading_slot_mgr.all_slots_filled.connect(_on_all_slots_filled)
+	reading_slot_mgr.story_changed.connect(_render_story)
+	reading_slot_mgr.reading_received.connect(_on_reading_received)
+	reading_slot_mgr.request_reading_sound.connect(sound_manager.play_reading)
+	reading_slot_mgr.request_stop_reading_sound.connect(sound_manager.stop_reading)
+	reading_slot_mgr.request_card_drop_sound.connect(sound_manager.play_card_drop)
+	reading_slot_mgr.waiting_for_reading_started.connect(func(_i: int) -> void: reading_vignette.fade_in())
+	reading_slot_mgr.waiting_for_reading_ended.connect(func(_i: int) -> void: reading_vignette.fade_out())
+
+	# Story renderer wiring
+	story_renderer.story_text = story_rich_text
 
 	player_hand.max_hand_size = 9
 	player_hand.max_hand_spread = 700
 
-	_load_portrait_textures()
-	_build_card_name_list()
-	_shuffle_deck()
+	portraits.load_all()
+	deck.build_card_names()
+	deck.shuffle(9)
+	sound_manager.play_shuffle()
 	_next_client()
-
 	sound_manager.play_ambient()
 
 
-func _load_portrait_textures() -> void:
-	var all_paths: Dictionary = {}
-	for client_name: String in CLIENT_PORTRAITS:
-		all_paths[CLIENT_PORTRAITS[client_name]] = true
-	for path: String in PORTRAIT_FALLBACKS:
-		all_paths[path] = true
+func _process(delta: float) -> void:
+	if resolution_panel.visible:
+		card_hover_panel.hide_immediately()
+		return
 
-	for path: String in all_paths.keys():
-		var sheet: Texture2D = load(path) as Texture2D
-		if sheet == null:
-			continue
-		var atlas := AtlasTexture.new()
-		atlas.atlas = sheet
-		atlas.region = Rect2(0, 0, PORTRAIT_FRAME_SIZE, PORTRAIT_FRAME_SIZE)
-		portrait_textures[path] = atlas
+	_time_passed += delta * 3.0
+	var rsm_active: int = reading_slot_mgr.active_slot
+	var rsm_filled: Array[bool] = reading_slot_mgr.slot_filled
+	for i: int in range(3):
+		if i == rsm_active and not rsm_filled[i]:
+			var pulse: float = (sin(_time_passed) + 1.0) * 0.5
+			var active_color := Color(StoryRenderer.SLOT_COLORS[i])
+			slot_bgs[i].modulate = active_color.lerp(Color.WHITE, 0.2)
+			slot_bgs[i].modulate.a = lerp(0.5, 1.0, pulse)
+		else:
+			slot_bgs[i].modulate = Color(1.0, 1.0, 1.0, 0.4)
 
-
-func _get_portrait_for_client(client_name: String) -> Texture2D:
-	if CLIENT_PORTRAITS.has(client_name):
-		var path: String = CLIENT_PORTRAITS[client_name]
-		if portrait_textures.has(path):
-			return portrait_textures[path]
-
-	var fallback_index: int = client_name.hash() % PORTRAIT_FALLBACKS.size()
-	if fallback_index < 0:
-		fallback_index += PORTRAIT_FALLBACKS.size()
-	var fallback_path: String = PORTRAIT_FALLBACKS[fallback_index]
-	if portrait_textures.has(fallback_path):
-		return portrait_textures[fallback_path]
-
-	return null
+	card_hover_panel.update_display(player_hand)
+	reading_slot_mgr.process_frame()
 
 
-func _build_card_name_list() -> void:
-	var major: Array[String] = [
-		"the_fool", "the_magician", "the_high_priestess", "the_empress",
-		"the_emperor", "the_hierophant", "the_lovers", "the_chariot",
-		"the_strength", "the_hermit", "the_wheel_of_fortune", "the_justice",
-		"the_hanged_man", "the_death", "the_temperance", "the_devil",
-		"the_tower", "the_stars", "the_moon", "the_sun",
-		"the_judgement", "the_world"
-	]
-	all_card_names.append_array(major)
-
-	var suits: Array[String] = ["cups", "gold", "swords", "wands"]
-	var values: Array[String] = [
-		"ace", "two", "three", "four", "five", "six", "seven",
-		"eight", "nine", "ten", "page", "knight", "queen", "king"
-	]
-	for suit: String in suits:
-		for val: String in values:
-			all_card_names.append("%s_of_%s" % [val, suit])
-
-
-func _shuffle_deck() -> void:
-	var pool: Array[String] = all_card_names.duplicate()
-	pool.shuffle()
-	deck = pool.slice(0, 9) as Array[String]
-	discard.clear()
-	sound_manager.play_shuffle()
-
-
-func _draw_cards(count: int) -> Array[String]:
-	var drawn: Array[String] = []
-	for i: int in range(mini(count, deck.size())):
-		drawn.append(deck.pop_back())
-	return drawn
+# --- Client Flow ---
 
 
 func _next_client() -> void:
@@ -250,7 +150,7 @@ func _show_intro() -> void:
 	var client_name: String = current_encounter["client"]["name"]
 	intro_name.text = client_name
 	intro_context.text = "[center]%s[/center]" % current_encounter["client"]["context"]
-	intro_portrait.texture = _get_portrait_for_client(client_name)
+	intro_portrait.texture = portraits.get_portrait(client_name)
 	intro_panel.visible = true
 
 
@@ -259,14 +159,10 @@ func _on_begin_button_pressed() -> void:
 	_setup_current_client_ui()
 
 
-func _on_restart_button_pressed() -> void:
-	get_tree().reload_current_scene()
-
-
 func _show_client_loading() -> void:
 	loading_panel.visible = true
 	resolution_panel.visible = false
-	card_hover_info_panel.visible = false
+	card_hover_panel.visible = false
 	for i: int in range(3):
 		reading_labels[i].text = ""
 		slot_labels[i].text = ""
@@ -295,530 +191,71 @@ func _on_client_request_failed(_request_id: String, error_message: String) -> vo
 	story_rich_text.text = "[color=#a05a5a]No one came to the table. (%s)[/color]" % error_message
 
 
+# --- Session Setup ---
+
+
 func _setup_current_client_ui() -> void:
 	client_count += 1
 	loading_panel.visible = false
 
-	slot_filled = [false, false, false]
-	slot_prev_counts = [0, 0, 0]
-	slot_readings = ["", "", ""]
-	_reading_cache.clear()
-	_active_slot = 0
-	_current_hover_slot = -1
-	_current_hover_card_name = ""
-	_hover_preview_text = ""
-	_pending_requests.clear()
-	_loading_slots.clear()
-	_hover_info_showing = false
-	if _hover_info_tween != null and _hover_info_tween.is_running():
-		_hover_info_tween.kill()
-	card_hover_info_panel.visible = false
-	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
-	_reset_vignette()
+	card_hover_panel.hide_immediately()
+	reading_vignette.reset()
 
-	_update_sidebar()
-	story_title_label.text = current_encounter["client"]["name"]
+	reading_slot_mgr.reset_for_client(game_state, current_encounter_index - 1)
+
+	var client_name: String = current_encounter["client"]["name"]
+	sidebar.update_client(client_name, client_count, portraits.get_portrait(client_name))
+	sidebar.update_deck_count(player_hand.get_card_count())
+	sidebar.update_progress(reading_slot_mgr.slot_filled)
+	story_title_label.text = client_name
 	client_context_text.text = current_encounter["client"]["context"]
 
-	for i: int in range(3):
-		reading_labels[i].text = ""
-		slot_piles[i].enable_drop_zone = (i == 0)
-
-	_update_slot_labels()
 	_render_story()
-
 	resolution_panel.visible = false
 	_deal_hand()
 
 
-func _update_sidebar() -> void:
-	client_name_left.text = current_encounter["client"]["name"]
-	client_counter_left.text = "Client #%d" % client_count
-
-	var portrait: Texture2D = _get_portrait_for_client(current_encounter["client"]["name"])
-	portrait_frame.texture = portrait
-
-	_update_deck_count()
-	_update_progress_icons()
-
-
-func _update_deck_count() -> void:
-	deck_count_label.text = "%d remaining" % player_hand.get_card_count()
-
-
-func _update_progress_icons() -> void:
-	for i: int in range(3):
-		if slot_filled[i]:
-			progress_icons[i].modulate = Color(0.85, 0.7, 0.4, 1.0)
-		else:
-			progress_icons[i].modulate = Color(0.3, 0.25, 0.4, 0.5)
-
-
 func _deal_hand() -> void:
-	var available: int = deck.size()
+	var available: int = deck.deck.size()
 	if available <= 0:
 		return
-	var drawn: Array[String] = _draw_cards(available)
+	var drawn: Array[String] = deck.draw(available)
 	for card_name: String in drawn:
 		var card: Card = card_manager.card_factory.create_card(card_name, player_hand)
 		if card != null:
 			card.is_reversed = randf() < 0.5
-	_update_deck_count()
+	sidebar.update_deck_count(player_hand.get_card_count())
 
 
-func _find_held_card() -> Card:
-	for card: Card in player_hand._held_cards:
-		if card.current_state == DraggableObject.DraggableState.HOLDING:
-			return card
-	return null
+# --- Slot Event Handlers ---
 
 
-func _find_hovered_hand_card() -> Card:
-	for card: Card in player_hand._held_cards:
-		if card.current_state == DraggableObject.DraggableState.HOVERING:
-			return card
-	return null
+func _on_slot_locked(_slot_index: int, card_name: String, _display_name: String, _reading: String) -> void:
+	deck.discard.append(card_name)
+	sidebar.update_progress(reading_slot_mgr.slot_filled)
+	sidebar.update_deck_count(player_hand.get_card_count())
 
 
-func _update_card_hover_info_panel() -> void:
-	var hovered_card: Card = _find_hovered_hand_card()
-
-	if hovered_card != null:
-		card_hover_info_body.text = _build_hover_body_text(hovered_card.card_info)
-		card_hover_reversed_label.visible = hovered_card.is_reversed
-		_last_hovered_card_pos = hovered_card.global_position
-
-		if not _hover_info_showing:
-			_hover_info_showing = true
-			_slide_hover_info_in(hovered_card)
-		elif _hover_info_tween == null or not _hover_info_tween.is_running():
-			_position_hover_info_panel(hovered_card)
-	else:
-		if _hover_info_showing:
-			_hover_info_showing = false
-			_slide_hover_info_out()
-
-
-func _position_hover_info_panel(card: Card) -> void:
-	var card_rect: Rect2 = card.get_global_rect()
-	var panel_size: Vector2 = card_hover_info_panel.size
-	var viewport_size: Vector2 = get_viewport_rect().size
-
-	var target_x: float = card_rect.position.x - panel_size.x - HOVER_INFO_PANEL_X_OFFSET
-	if target_x < HOVER_INFO_PANEL_MARGIN:
-		target_x = card_rect.position.x + card_rect.size.x + HOVER_INFO_PANEL_X_OFFSET
-
-	var target_y: float = card_rect.position.y + HOVER_INFO_PANEL_Y_OFFSET
-
-	target_x = clampf(target_x, HOVER_INFO_PANEL_MARGIN, viewport_size.x - panel_size.x - HOVER_INFO_PANEL_MARGIN)
-	target_y = clampf(target_y, HOVER_INFO_PANEL_MARGIN, viewport_size.y - panel_size.y - HOVER_INFO_PANEL_MARGIN)
-
-	card_hover_info_panel.global_position = Vector2(target_x, target_y)
-
-
-func _slide_hover_info_in(card: Card) -> void:
-	if _hover_info_tween != null and _hover_info_tween.is_running():
-		_hover_info_tween.kill()
-
-	card_hover_info_panel.visible = true
-	_position_hover_info_panel(card)
-	var final_pos: Vector2 = card_hover_info_panel.global_position
-
-	var card_rect: Rect2 = card.get_global_rect()
-	card_hover_info_panel.global_position = Vector2(card_rect.position.x, final_pos.y)
-	card_hover_info_panel.modulate = Color(1, 1, 1, 0)
-
-	_hover_info_tween = create_tween()
-	_hover_info_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	_hover_info_tween.set_parallel(true)
-	_hover_info_tween.tween_property(card_hover_info_panel, "global_position", final_pos, 0.15)
-	_hover_info_tween.tween_property(card_hover_info_panel, "modulate", Color(1, 1, 1, 1), 0.15)
-
-
-func _slide_hover_info_out() -> void:
-	if _hover_info_tween != null and _hover_info_tween.is_running():
-		_hover_info_tween.kill()
-
-	var current_pos: Vector2 = card_hover_info_panel.global_position
-	var target_pos: Vector2 = Vector2(_last_hovered_card_pos.x, current_pos.y)
-
-	_hover_info_tween = create_tween()
-	_hover_info_tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	_hover_info_tween.set_parallel(true)
-	_hover_info_tween.tween_property(card_hover_info_panel, "global_position", target_pos, 0.1)
-	_hover_info_tween.tween_property(card_hover_info_panel, "modulate", Color(1, 1, 1, 0), 0.1)
-	_hover_info_tween.set_parallel(false)
-	_hover_info_tween.tween_callback(func() -> void: card_hover_info_panel.visible = false)
-
-
-func _build_hover_body_text(card_info: Dictionary) -> String:
-	var description: String = String(card_info.get("description", "")).strip_edges()
-	if description.is_empty():
-		description = "No omen appears."
-	return "[color=%s][i]%s[/i][/color]" % [HOVER_TEXT_COLOR, description]
-
-
-func _humanize_token(value: String) -> String:
-	if value.is_empty():
-		return value
-	var words: Array[String] = []
-	for part: String in value.split("_"):
-		if part.is_empty():
-			continue
-		words.append(part.capitalize())
-	return " ".join(words)
-
-
-func _fade_vignette_in() -> void:
-	if _vignette_tween != null and _vignette_tween.is_running():
-		_vignette_tween.kill()
-	_vignette_tween = create_tween()
-	_vignette_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	_vignette_tween.tween_property(reading_vignette.material, "shader_parameter/intensity", 0.7, 0.4)
-
-
-func _fade_vignette_out() -> void:
-	if _vignette_tween != null and _vignette_tween.is_running():
-		_vignette_tween.kill()
-	_vignette_tween = create_tween()
-	_vignette_tween.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	_vignette_tween.tween_property(reading_vignette.material, "shader_parameter/intensity", 0.0, 0.3)
-
-
-func _reset_vignette() -> void:
-	if _vignette_tween != null and _vignette_tween.is_running():
-		_vignette_tween.kill()
-	reading_vignette.material.set_shader_parameter("intensity", 0.0)
-	_waiting_for_reading_slot = -1
-
-
-func _build_slot_cards(hover_slot: int, hover_card: Card) -> Array[String]:
-	var cards: Array[String] = ["", "", ""]
-	for i: int in range(3):
-		if slot_filled[i]:
-			var pile_cards: Array[Card] = slot_piles[i].get_top_cards(1)
-			if pile_cards.size() > 0:
-				cards[i] = pile_cards[0].card_name
-		elif i == hover_slot and hover_card != null:
-			cards[i] = hover_card.card_name
-	return cards
-
-
-func _build_slot_orientations(hover_slot: int, hover_card: Card) -> Array[String]:
-	var orientations: Array[String] = ["", "", ""]
-	for i: int in range(3):
-		if slot_filled[i]:
-			var pile_cards: Array[Card] = slot_piles[i].get_top_cards(1)
-			if pile_cards.size() > 0:
-				orientations[i] = "reversed" if pile_cards[0].is_reversed else "upright"
-		elif i == hover_slot and hover_card != null:
-			orientations[i] = "reversed" if hover_card.is_reversed else "upright"
-	return orientations
-
-
-func _build_slot_texts() -> Array[String]:
-	return slot_readings.duplicate()
-
-
-func _build_reading_request_state(slot_cards: Array[String], slot_texts: Array[String], slot_orientations: Array[String] = []) -> Dictionary:
-	var full_game_state: Dictionary = game_state.duplicate(true)
-	var encounter_index: int = maxi(current_encounter_index - 1, 0)
-	var encounters: Array = full_game_state.get("encounters", [])
-
-	if encounter_index < encounters.size() and encounters[encounter_index] is Dictionary:
-		var encounter_state: Dictionary = encounters[encounter_index]
-		var encounter_slots: Array = encounter_state.get("slots", [])
-
-		for i: int in range(mini(3, encounter_slots.size())):
-			var runtime_card: String = slot_cards[i] if i < slot_cards.size() else ""
-			var runtime_text: String = slot_texts[i] if i < slot_texts.size() else ""
-			var orientation_value: String = slot_orientations[i] if i < slot_orientations.size() else ""
-
-			encounter_slots[i] = {
-				"card": runtime_card,
-				"text": runtime_text,
-				"orientation": orientation_value,
-			}
-
-		encounter_state["slots"] = encounter_slots
-		encounters[encounter_index] = encounter_state
-		full_game_state["encounters"] = encounters
-
-	return {
-		"game_state": full_game_state,
-		"active_encounter_index": encounter_index,
-		"runtime_state": {
-			"slot_cards": slot_cards.duplicate(true),
-			"slot_texts": slot_texts.duplicate(true),
-			"slot_orientations": slot_orientations.duplicate(true) if not slot_orientations.is_empty() else [],
-		},
-	}
-
-
-func _update_slot_labels() -> void:
-	for i: int in range(3):
-		if slot_filled[i]:
-			pass  # Label set by _lock_slot; preserve it
-		elif i == _active_slot:
-			slot_labels[i].text = "Place a card"
-			slot_labels[i].self_modulate = Color(0.85, 0.7, 0.4, 1.0)
-		else:
-			slot_labels[i].text = ""
+func _on_all_slots_filled() -> void:
+	get_tree().create_timer(1.2).timeout.connect(_show_resolution)
 
 
 func _render_story() -> void:
-	var lines: Array[String] = []
-	for i: int in range(3):
-		if slot_filled[i]:
-			lines.append("[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
-		elif i == _current_hover_slot and _hover_preview_text != "":
-			lines.append("[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[i], _hover_preview_text])
-		elif i <= _active_slot:
-			lines.append("[color=#4a3a60]...[/color]")
-	story_rich_text.text = "\n\n".join(lines)
+	story_renderer.render(
+		reading_slot_mgr.slot_filled,
+		reading_slot_mgr.slot_readings,
+		reading_slot_mgr.active_slot,
+		reading_slot_mgr.current_hover_slot,
+		reading_slot_mgr.hover_preview_text
+	)
 
 
-func _process(delta: float) -> void:
+func _on_reading_received(_slot_index: int, _text: String) -> void:
 	if resolution_panel.visible:
-		if _hover_info_showing:
-			_hover_info_showing = false
-			if _hover_info_tween != null and _hover_info_tween.is_running():
-				_hover_info_tween.kill()
-		card_hover_info_panel.visible = false
-		card_hover_info_panel.modulate = Color(1, 1, 1, 1)
-		return
-
-	_time_passed += delta * 3.0
-	for i: int in range(3):
-		if i == _active_slot and not slot_filled[i]:
-			var pulse: float = (sin(_time_passed) + 1.0) * 0.5
-			var active_color := Color(SLOT_COLORS[i])
-			slot_bgs[i].modulate = active_color.lerp(Color.WHITE, 0.2)
-			slot_bgs[i].modulate.a = lerp(0.5, 1.0, pulse)
-		else:
-			slot_bgs[i].modulate = Color(1.0, 1.0, 1.0, 0.4)
-
-	_update_card_hover_info_panel()
-	_update_hover_previews()
-	_detect_drops()
+		_show_resolution()
 
 
-func _update_hover_previews() -> void:
-	if _active_slot >= 3:
-		return
-
-	var new_hover_slot: int = -1
-	var new_hover_card_name: String = ""
-
-	if Card.holding_card_count > 0:
-		var held_card: Card = _find_held_card()
-		if held_card != null:
-			new_hover_card_name = held_card.card_name
-			if slot_piles[_active_slot].drop_zone != null and slot_piles[_active_slot].drop_zone.check_mouse_is_in_drop_zone():
-				new_hover_slot = _active_slot
-
-	# Hover exit
-	if _current_hover_slot != -1 and (_current_hover_slot != new_hover_slot or _current_hover_card_name != new_hover_card_name):
-		sound_manager.stop_reading()
-		if not slot_filled[_current_hover_slot]:
-			reading_labels[_current_hover_slot].text = ""
-			_hover_preview_text = ""
-			_render_story()
-		if _loading_slots.has(_current_hover_slot):
-			_loading_slots.erase(_current_hover_slot)
-			if _current_hover_slot == _active_slot:
-				slot_piles[_active_slot].enable_drop_zone = true
-
-	# No card hovering
-	if new_hover_slot == -1:
-		if _current_hover_slot != -1:
-			if not slot_filled[_active_slot]:
-				reading_labels[_active_slot].text = ""
-			_hover_preview_text = ""
-			_render_story()
-			if _loading_slots.has(_active_slot):
-				_loading_slots.erase(_active_slot)
-				slot_piles[_active_slot].enable_drop_zone = true
-		_current_hover_slot = -1
-		_current_hover_card_name = ""
-		return
-
-	# Same hover as last frame — no change
-	if new_hover_slot == _current_hover_slot and new_hover_card_name == _current_hover_card_name:
-		return
-
-	# Hover enter
-	_current_hover_slot = new_hover_slot
-	_current_hover_card_name = new_hover_card_name
-
-	var held_card: Card = _find_held_card()
-	var orientation_key: String = "reversed" if (held_card != null and held_card.is_reversed) else "upright"
-	var cache_key: String = "%s:%s:%d" % [new_hover_card_name, orientation_key, new_hover_slot]
-
-	if _reading_cache.has(cache_key):
-		var cached: String = _reading_cache[cache_key]
-		reading_labels[new_hover_slot].text = "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[new_hover_slot], cached]
-		_hover_preview_text = cached
-		_render_story()
-		return
-
-	var loading_text := "The cards are speaking..."
-	reading_labels[new_hover_slot].text = "[color=#6a5a80][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % loading_text
-	_hover_preview_text = loading_text
-	_render_story()
-	_loading_slots[new_hover_slot] = true
-	slot_piles[_active_slot].enable_drop_zone = false
-
-	if held_card == null:
-		return
-
-	sound_manager.play_reading(held_card.card_info.get("suit", "major"))
-
-	var request_id: String = cache_key
-	_pending_requests[request_id] = new_hover_slot
-
-	var slot_cards: Array[String] = _build_slot_cards(new_hover_slot, held_card)
-	var slot_texts: Array[String] = _build_slot_texts()
-	var slot_orientations: Array[String] = _build_slot_orientations(new_hover_slot, held_card)
-	var request_state: Dictionary = _build_reading_request_state(slot_cards, slot_texts, slot_orientations)
-
-	claude_api.generate_reading(request_id, request_state)
-
-
-func _on_claude_request_completed(request_id: String, text: String) -> void:
-	_reading_cache[request_id] = text
-	sound_manager.stop_reading()
-
-	if not _pending_requests.has(request_id):
-		return
-	var slot_index: int = _pending_requests[request_id]
-	_pending_requests.erase(request_id)
-	_loading_slots.erase(slot_index)
-
-	var card_name: String = request_id.get_slice(":", 0)
-
-	if slot_filled[slot_index]:
-		slot_readings[slot_index] = text
-		reading_labels[slot_index].text = text
-		_render_story()
-		if _waiting_for_reading_slot == slot_index:
-			_waiting_for_reading_slot = -1
-			_fade_vignette_out()
-		if resolution_panel.visible:
-			_show_resolution()
-	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
-		reading_labels[slot_index].text = "[color=%s][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % [HOVER_COLORS[slot_index], text]
-		_hover_preview_text = text
-		_render_story()
-		if slot_index == _active_slot and not slot_filled[slot_index]:
-			slot_piles[_active_slot].enable_drop_zone = true
-	else:
-		# Card moved away while request was in-flight
-		if slot_index == _active_slot and not slot_filled[slot_index]:
-			reading_labels[slot_index].text = ""
-			slot_piles[_active_slot].enable_drop_zone = true
-
-
-func _on_claude_request_failed(request_id: String, _error_message: String) -> void:
-	if not _pending_requests.has(request_id):
-		return
-	var slot_index: int = _pending_requests[request_id]
-	_pending_requests.erase(request_id)
-	_loading_slots.erase(slot_index)
-	if slot_index == _active_slot and not slot_filled[slot_index]:
-		slot_piles[_active_slot].enable_drop_zone = true
-
-	var error_text := "The cards are silent..."
-	_reading_cache[request_id] = error_text
-
-	var card_name: String = request_id.get_slice(":", 0)
-
-	if slot_filled[slot_index]:
-		slot_readings[slot_index] = error_text
-		reading_labels[slot_index].text = error_text
-		_render_story()
-		if _waiting_for_reading_slot == slot_index:
-			_waiting_for_reading_slot = -1
-			_fade_vignette_out()
-		if resolution_panel.visible:
-			_show_resolution()
-	elif _current_hover_slot == slot_index and _current_hover_card_name == card_name:
-		reading_labels[slot_index].text = "[color=#a05a5a][i][wave amp=20.0 freq=5.0]%s[/wave][/i][/color]" % error_text
-		_hover_preview_text = error_text
-		_render_story()
-
-
-func _detect_drops() -> void:
-	if _active_slot >= 3:
-		return
-
-	var i: int = _active_slot
-	var current_count: int = slot_piles[i].get_card_count()
-	if current_count > 0 and slot_prev_counts[i] == 0:
-		_lock_slot(i)
-	slot_prev_counts[i] = current_count
-
-
-func _lock_slot(slot_index: int) -> void:
-	sound_manager.play_card_drop()
-	sound_manager.stop_reading()
-	slot_filled[slot_index] = true
-	slot_piles[slot_index].enable_drop_zone = false
-
-	var cards: Array[Card] = slot_piles[slot_index].get_top_cards(1)
-	if cards.size() > 0:
-		var card: Card = cards[0]
-		var orient_key: String = "reversed" if card.is_reversed else "upright"
-		var cache_key: String = "%s:%s:%d" % [card.card_name, orient_key, slot_index]
-
-		var reading: String
-		if _reading_cache.has(cache_key):
-			reading = _reading_cache[cache_key]
-		else:
-			reading = "The cards are speaking..."
-			_waiting_for_reading_slot = slot_index
-			_fade_vignette_in()
-
-		slot_readings[slot_index] = reading
-		reading_labels[slot_index].text = reading
-		discard.append(card.card_name)
-
-		var display_name: String = _humanize_token(card.card_name)
-		if card.is_reversed:
-			display_name += " (Reversed)"
-		slot_labels[slot_index].text = display_name
-		slot_labels[slot_index].self_modulate = Color(0.85, 0.7, 0.4, 1.0)
-
-	_invalidate_unfilled_caches()
-
-	_current_hover_slot = -1
-	_current_hover_card_name = ""
-	_hover_preview_text = ""
-	_loading_slots.erase(slot_index)
-
-	_active_slot = slot_index + 1
-	if _active_slot < 3:
-		slot_piles[_active_slot].enable_drop_zone = true
-
-	_update_slot_labels()
-	_render_story()
-	_update_progress_icons()
-	_update_deck_count()
-
-	if slot_filled[0] and slot_filled[1] and slot_filled[2]:
-		get_tree().create_timer(1.2).timeout.connect(_show_resolution)
-
-
-func _invalidate_unfilled_caches() -> void:
-	var keys_to_erase: Array[String] = []
-	for key: String in _reading_cache.keys():
-		var parts: PackedStringArray = key.split(":")
-		if parts.size() == 3:
-			var idx: int = parts[2].to_int()
-			if not slot_filled[idx]:
-				keys_to_erase.append(key)
-	for key: String in keys_to_erase:
-		_reading_cache.erase(key)
+# --- Resolution / End ---
 
 
 func _show_resolution() -> void:
@@ -827,98 +264,28 @@ func _show_resolution() -> void:
 
 	var lines: Array[String] = []
 	for i: int in range(3):
-		lines.append("[color=%s]%s[/color]" % [SLOT_COLORS[i], slot_readings[i]])
+		lines.append("[color=%s]%s[/color]" % [StoryRenderer.SLOT_COLORS[i], reading_slot_mgr.slot_readings[i]])
 	resolution_text.text = "\n\n".join(lines)
 
 
 func _on_next_button_pressed() -> void:
 	_destroy_all_card_nodes()
 	if player_hand.get_card_count() < 3:
-		_show_end_screen()
+		end_screen.show_summary(
+			game_state.get("encounters", []),
+			portraits.get_portrait,
+			back_texture
+		)
+		loading_panel.visible = false
+		resolution_panel.visible = false
 	else:
 		_next_client()
 
 
-func _show_end_screen() -> void:
-	for child: Node in end_list.get_children():
-		child.queue_free()
-
-	end_title.text = "The Reading Concludes"
-
-	var encounters: Array = game_state.get("encounters", [])
-	for encounter: Dictionary in encounters:
-		var client_name: String = encounter.get("client", {}).get("name", "Unknown")
-		var slots: Array = encounter.get("slots", [])
-
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 24)
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-
-		var portrait_rect := TextureRect.new()
-		var p_tex: Texture2D = _get_portrait_for_client(client_name)
-		if p_tex:
-			portrait_rect.texture = p_tex
-		portrait_rect.custom_minimum_size = Vector2(48, 48)
-		portrait_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		row.add_child(portrait_rect)
-
-		var name_label := Label.new()
-		name_label.text = client_name
-		name_label.add_theme_color_override("font_color", Color(0.85, 0.7, 0.4, 1.0))
-		name_label.add_theme_font_size_override("font_size", 14)
-		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		name_label.custom_minimum_size = Vector2(160, 0)
-		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		row.add_child(name_label)
-
-		var cards_box := HBoxContainer.new()
-		cards_box.add_theme_constant_override("separation", 8)
-		cards_box.alignment = BoxContainer.ALIGNMENT_CENTER
-
-		for slot: Dictionary in slots:
-			var c_name: String = slot.get("card", "")
-			var orient: String = slot.get("orientation", "upright")
-
-			var c_rect := TextureRect.new()
-			c_rect.custom_minimum_size = Vector2(36, 52)
-			c_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-
-			if c_name.is_empty():
-				c_rect.texture = back_texture
-			else:
-				var tex_path: String = "res://assets/cards/%s.png" % c_name
-				c_rect.texture = load(tex_path) if ResourceLoader.exists(tex_path) else back_texture
-
-			c_rect.flip_v = (orient == "reversed")
-			cards_box.add_child(c_rect)
-
-		row.add_child(cards_box)
-		end_list.add_child(row)
-
-	loading_panel.visible = false
-	resolution_panel.visible = false
-	if end_panel:
-		end_panel.visible = true
-
-
-func _on_play_again_pressed() -> void:
-	get_tree().reload_current_scene()
-
-
 func _destroy_all_card_nodes() -> void:
-	for request_id: String in _pending_requests.keys():
-		claude_api.cancel_request(request_id)
-	_pending_requests.clear()
-	_loading_slots.clear()
-	_current_hover_slot = -1
-	_current_hover_card_name = ""
-	_hover_preview_text = ""
-	_hover_info_showing = false
-	if _hover_info_tween != null and _hover_info_tween.is_running():
-		_hover_info_tween.kill()
-	card_hover_info_panel.visible = false
-	card_hover_info_panel.modulate = Color(1, 1, 1, 1)
-	_reset_vignette()
+	reading_slot_mgr.cleanup()
+	card_hover_panel.hide_immediately()
+	reading_vignette.reset()
 
 	for pile: Pile in slot_piles:
 		pile.clear_cards()

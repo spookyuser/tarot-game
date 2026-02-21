@@ -15,6 +15,12 @@
 [ext_resource type="Shader" uid="uid://ryt70jxj8alt" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
 [ext_resource type="Texture2D" uid="uid://cihtmo2u0yujk" path="res://assets/ui/panels/wood_panel.png" id="wood_panel_tex"]
 [ext_resource type="PackedScene" path="res://scenes/sound_manager.tscn" id="sound_mgr_scene"]
+[ext_resource type="Script" path="res://scenes/vignette_effect.gd" id="vignette_effect_script"]
+[ext_resource type="Script" path="res://scenes/card_hover_info_panel.gd" id="hover_panel_script"]
+[ext_resource type="Script" path="res://scenes/story_renderer.gd" id="story_renderer_script"]
+[ext_resource type="Script" path="res://scenes/reading_slot_manager.gd" id="slot_mgr_script"]
+[ext_resource type="Script" path="res://scenes/end_screen.gd" id="end_screen_script"]
+[ext_resource type="Script" path="res://scenes/sidebar.gd" id="sidebar_script"]
 
 [sub_resource type="Curve" id="hand_rotation"]
 _limits = [-12.0, 12.0, 0.0, 1.0]
@@ -84,7 +90,14 @@ script = ExtResource("card_manager_script")
 card_size = Vector2(110, 159)
 card_factory_scene = ExtResource("factory_scene")
 
-[node name="LeftPanel" type="NinePatchRect" parent="." unique_id=659719436]
+[node name="Sidebar" type="Control" parent="."]
+layout_mode = 1
+offset_right = 280.0
+offset_bottom = 720.0
+mouse_filter = 2
+script = ExtResource("sidebar_script")
+
+[node name="LeftPanel" type="NinePatchRect" parent="Sidebar" unique_id=659719436]
 layout_mode = 1
 offset_right = 280.0
 offset_bottom = 720.0
@@ -96,7 +109,7 @@ patch_margin_bottom = 8
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="LeftPanelOverlay" type="ColorRect" parent="." unique_id=375122736]
+[node name="LeftPanelOverlay" type="ColorRect" parent="Sidebar" unique_id=375122736]
 layout_mode = 1
 offset_left = 6.0
 offset_top = 6.0
@@ -105,7 +118,7 @@ offset_bottom = 714.0
 mouse_filter = 2
 color = Color(0.06, 0.03, 0.12, 0.88)
 
-[node name="PortraitFrame" type="TextureRect" parent="." unique_id=582070813]
+[node name="PortraitFrame" type="TextureRect" parent="Sidebar" unique_id=582070813]
 layout_mode = 1
 offset_left = 100.0
 offset_top = 30.0
@@ -114,7 +127,7 @@ offset_bottom = 110.0
 mouse_filter = 2
 expand_mode = 1
 
-[node name="ClientNameLeft" type="Label" parent="." unique_id=1438243809]
+[node name="ClientNameLeft" type="Label" parent="Sidebar" unique_id=1438243809]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 120.0
@@ -125,7 +138,7 @@ theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="ClientCounterLeft" type="Label" parent="." unique_id=2121015749]
+[node name="ClientCounterLeft" type="Label" parent="Sidebar" unique_id=2121015749]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 150.0
@@ -135,7 +148,7 @@ theme_override_colors/font_color = Color(0.55, 0.48, 0.65, 1)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 
-[node name="SidebarDivider1" type="ColorRect" parent="." unique_id=885361402]
+[node name="SidebarDivider1" type="ColorRect" parent="Sidebar" unique_id=885361402]
 layout_mode = 1
 offset_left = 24.0
 offset_top = 186.0
@@ -144,7 +157,7 @@ offset_bottom = 187.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.4)
 
-[node name="DeckIcon" type="TextureRect" parent="." unique_id=287519906]
+[node name="DeckIcon" type="TextureRect" parent="Sidebar" unique_id=287519906]
 layout_mode = 1
 offset_left = 80.0
 offset_top = 205.0
@@ -154,7 +167,7 @@ mouse_filter = 2
 texture = ExtResource("card_back_tex")
 expand_mode = 1
 
-[node name="DeckCountLabel" type="Label" parent="." unique_id=1252210121]
+[node name="DeckCountLabel" type="Label" parent="Sidebar" unique_id=1252210121]
 layout_mode = 1
 offset_left = 132.0
 offset_top = 225.0
@@ -163,7 +176,7 @@ offset_bottom = 255.0
 theme_override_colors/font_color = Color(0.7, 0.65, 0.8, 1)
 theme_override_font_sizes/font_size = 14
 
-[node name="SidebarDivider2" type="ColorRect" parent="." unique_id=1938769211]
+[node name="SidebarDivider2" type="ColorRect" parent="Sidebar" unique_id=1938769211]
 layout_mode = 1
 offset_left = 24.0
 offset_top = 290.0
@@ -172,7 +185,7 @@ offset_bottom = 291.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.4)
 
-[node name="ProgressLabel" type="Label" parent="." unique_id=834644278]
+[node name="ProgressLabel" type="Label" parent="Sidebar" unique_id=834644278]
 layout_mode = 1
 offset_left = 16.0
 offset_top = 308.0
@@ -183,7 +196,7 @@ theme_override_font_sizes/font_size = 13
 text = "Readings"
 horizontal_alignment = 1
 
-[node name="ProgressIcon0" type="TextureRect" parent="." unique_id=2021814441]
+[node name="ProgressIcon0" type="TextureRect" parent="Sidebar" unique_id=2021814441]
 modulate = Color(0.3, 0.25, 0.4, 0.5)
 layout_mode = 1
 offset_left = 91.0
@@ -194,7 +207,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="ProgressIcon1" type="TextureRect" parent="." unique_id=1005463128]
+[node name="ProgressIcon1" type="TextureRect" parent="Sidebar" unique_id=1005463128]
 modulate = Color(0.3, 0.25, 0.4, 0.5)
 layout_mode = 1
 offset_left = 126.0
@@ -205,7 +218,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="ProgressIcon2" type="TextureRect" parent="." unique_id=1104981438]
+[node name="ProgressIcon2" type="TextureRect" parent="Sidebar" unique_id=1104981438]
 modulate = Color(0.3, 0.25, 0.4, 0.5)
 layout_mode = 1
 offset_left = 161.0
@@ -216,7 +229,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="RestartButton" type="Button" parent="."]
+[node name="RestartButton" type="Button" parent="Sidebar"]
 layout_mode = 0
 offset_left = 60.0
 offset_top = 650.0
@@ -400,6 +413,7 @@ hand_vertical_curve = SubResource("hand_vertical")
 [node name="ReadingVignetteOverlay" type="ColorRect" parent="." unique_id=1397845669]
 z_index = 200
 material = SubResource("vignette_material")
+script = ExtResource("vignette_effect_script")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -411,6 +425,7 @@ mouse_filter = 2
 [node name="CardHoverInfoPanel" type="NinePatchRect" parent="." unique_id=927259214]
 visible = false
 z_index = 4096
+script = ExtResource("hover_panel_script")
 layout_mode = 1
 offset_left = 1020.0
 offset_top = 520.0
@@ -532,6 +547,12 @@ script = ExtResource("claude_api_script")
 
 [node name="SoundManager" parent="." instance=ExtResource("sound_mgr_scene")]
 
+[node name="StoryRenderer" type="Node" parent="."]
+script = ExtResource("story_renderer_script")
+
+[node name="ReadingSlotManager" type="Node" parent="."]
+script = ExtResource("slot_mgr_script")
+
 [node name="ResolutionPanel" type="Control" parent="." unique_id=2000854802]
 visible = false
 layout_mode = 1
@@ -626,6 +647,7 @@ text = "Next Client"
 
 [node name="EndPanel" type="Control" parent="." unique_id=132627432]
 visible = false
+script = ExtResource("end_screen_script")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
