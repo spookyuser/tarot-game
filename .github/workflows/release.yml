@@ -51,4 +51,4 @@ jobs:
           ./butler push "/home/runner/.local/share/godot/archives/macOS.zip" cal3b123/the-reading-room:macos --userversion ${{ github.ref_name }}
           ./butler push "/home/runner/.local/share/godot/archives/Windows Desktop.zip" cal3b123/the-reading-room:windows --userversion ${{ github.ref_name }}
           ./butler push "/home/runner/.local/share/godot/archives/Linux.zip" cal3b123/the-reading-room:linux --userversion ${{ github.ref_name }}
-          ./butler push "/home/runner/.local/share/godot/archives/Web.zip" cal3b123/the-reading-room:web --userversion ${{ github.ref_name }}
+          ./butler push "/home/runner/.local/share/godot/archives/Web.zip" cal3b123/the-reading-room:html5 --userversion ${{ github.ref_name }}
