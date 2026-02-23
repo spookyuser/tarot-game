@@ -8,6 +8,7 @@ signal client_request_failed(request_id: String, error_message: String)
 
 const SLOT_COUNT: int = 3
 const DEFAULT_ENDPOINT_URL: String = "https://gateway.ai.cloudflare.com/v1/00b4144a8738939d6f258250f7c5f063/tarot/compat/chat/completions"
+const CORS_PROXY_URL: String = "https://dibalik.wenhop.workers.dev/?url="
 const DEFAULT_MODEL: String = "anthropic/claude-sonnet-4-6"
 
 const BB_KEY_LLM_REQUEST_STATE: StringName = &"llm_request_state"
@@ -184,7 +185,10 @@ func _queue_messages_request(
 	_set_request_status(request_id, kind, "pending")
 
 	var json_body: String = JSON.stringify(body)
-	var err: int = http_request.request(_endpoint_url, headers, HTTPClient.METHOD_POST, json_body)
+	var target_url: String = _endpoint_url
+	if OS.has_feature("web"):
+		target_url = CORS_PROXY_URL + _endpoint_url.uri_encode()
+	var err: int = http_request.request(target_url, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
 		_cleanup_request(request_id)
 		var message := "HTTP request failed to start: %d" % err
