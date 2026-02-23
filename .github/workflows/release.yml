@@ -36,3 +36,19 @@ jobs:
             /home/runner/.local/share/godot/archives/Windows Desktop.zip
             /home/runner/.local/share/godot/archives/Linux.zip
             /home/runner/.local/share/godot/archives/Web.zip
+
+      - name: Install butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
+
+      - name: Push to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
+        run: |
+          ./butler push "/home/runner/.local/share/godot/archives/macOS.zip" cal3b123/the-reading-room:macos --userversion ${{ github.ref_name }}
+          ./butler push "/home/runner/.local/share/godot/archives/Windows Desktop.zip" cal3b123/the-reading-room:windows --userversion ${{ github.ref_name }}
+          ./butler push "/home/runner/.local/share/godot/archives/Linux.zip" cal3b123/the-reading-room:linux --userversion ${{ github.ref_name }}
+          ./butler push "/home/runner/.local/share/godot/archives/Web.zip" cal3b123/the-reading-room:web --userversion ${{ github.ref_name }}
