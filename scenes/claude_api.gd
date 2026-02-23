@@ -7,8 +7,7 @@ signal client_request_completed(request_id: String, client_data: Dictionary)
 signal client_request_failed(request_id: String, error_message: String)
 
 const SLOT_COUNT: int = 3
-const DEFAULT_ENDPOINT_URL: String = "https://gateway.ai.cloudflare.com/v1/00b4144a8738939d6f258250f7c5f063/tarot/compat/chat/completions"
-const CORS_PROXY_URL: String = "https://dibalik.wenhop.workers.dev/?url="
+const DEFAULT_ENDPOINT_URL: String = "https://tarot-api-proxy.wenhop.workers.dev"
 const DEFAULT_MODEL: String = "anthropic/claude-sonnet-4-6"
 
 const BB_KEY_LLM_REQUEST_STATE: StringName = &"llm_request_state"
@@ -54,7 +53,6 @@ Guidelines:
 Return ONLY valid JSON. No markdown. No commentary."""
 
 var _endpoint_url: String = DEFAULT_ENDPOINT_URL
-var _api_key: String = "67eQd-UKCheP0BYLHV_-rsXoCe8dovdkD2-Gm4Tq"
 
 var _reading_model: String = DEFAULT_MODEL
 var _client_model: String = "anthropic/claude-opus-4-6" 
@@ -79,7 +77,7 @@ func initialize(game_blackboard: Blackboard) -> void:
 
 
 func is_available() -> bool:
-	return not _api_key.is_empty()
+	return not _endpoint_url.is_empty()
 
 
 func generate_reading(request_id: String, reading_state: Dictionary) -> void:
@@ -167,10 +165,7 @@ func _queue_messages_request(
 	if temperature >= 0.0:
 		body["temperature"] = temperature
 
-	var headers := PackedStringArray([
-		"content-type: application/json",
-		"Authorization: Bearer %s" % _api_key,
-	])
+	var headers := PackedStringArray(["content-type: application/json"])
 
 	var http_request := HTTPRequest.new()
 	add_child(http_request)
@@ -185,10 +180,7 @@ func _queue_messages_request(
 	_set_request_status(request_id, kind, "pending")
 
 	var json_body: String = JSON.stringify(body)
-	var target_url: String = _endpoint_url
-	if OS.has_feature("web"):
-		target_url = CORS_PROXY_URL + _endpoint_url.uri_encode()
-	var err: int = http_request.request(target_url, headers, HTTPClient.METHOD_POST, json_body)
+	var err: int = http_request.request(_endpoint_url, headers, HTTPClient.METHOD_POST, json_body)
 	if err != OK:
 		_cleanup_request(request_id)
 		var message := "HTTP request failed to start: %d" % err

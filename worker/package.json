@@ -1,0 +1,11 @@
+{
+  "name": "tarot-api-proxy",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3"
+  }
+}
