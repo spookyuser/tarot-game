@@ -1,27 +1,27 @@
 [gd_scene format=3 uid="uid://bb7el65bga3go"]
 
+[ext_resource type="Script" uid="uid://dme5f24l0edsf" path="res://addons/beehave/blackboard.gd" id="beehave_blackboard_script"]
 [ext_resource type="Texture2D" uid="uid://7te3ltlhgeu8" path="res://assets/card_back.png" id="card_back_tex"]
 [ext_resource type="Script" uid="uid://clqgq1n7v0ar" path="res://addons/card-framework/card_manager.gd" id="card_manager_script"]
 [ext_resource type="Script" uid="uid://dga4rlu6khb4o" path="res://scenes/claude_api.gd" id="claude_api_script"]
+[ext_resource type="Script" uid="uid://sc28eostk44j" path="res://scenes/end_screen.gd" id="end_screen_script"]
 [ext_resource type="PackedScene" path="res://scenes/card_factory.tscn" id="factory_scene"]
-[ext_resource type="Texture2D" uid="uid://xtut2kuvuig3" path="res://assets/ui/buttons/gold_button_normal.png" id="gold_btn_normal_tex"]
-[ext_resource type="Texture2D" uid="uid://b0m7ypa4waw4p" path="res://assets/ui/buttons/gold_button_pressed.png" id="gold_btn_pressed_tex"]
-[ext_resource type="Texture2D" uid="uid://bgctxhrwbleo" path="res://assets/ui/panels/gold_panel.png" id="gold_panel_tex"]
-[ext_resource type="Texture2D" uid="uid://bpxk6k6py47l4" path="res://assets/ui/icons/gold_star.png" id="gold_star_tex"]
+[ext_resource type="Texture2D" uid="uid://b76snqhsxkake" path="res://assets/ui/buttons/gold_button_normal.png" id="gold_btn_normal_tex"]
+[ext_resource type="Texture2D" uid="uid://cbh2u1rk8mh02" path="res://assets/ui/buttons/gold_button_pressed.png" id="gold_btn_pressed_tex"]
+[ext_resource type="Texture2D" uid="uid://wl1u5367hbm" path="res://assets/ui/panels/gold_panel.png" id="gold_panel_tex"]
+[ext_resource type="Texture2D" uid="uid://cnmr4tr2fxmto" path="res://assets/ui/icons/gold_star.png" id="gold_star_tex"]
 [ext_resource type="Script" uid="uid://dj46jo3lfbclo" path="res://addons/card-framework/hand.gd" id="hand_script"]
+[ext_resource type="Script" uid="uid://dojjegrt0d062" path="res://scenes/card_hover_info_panel.gd" id="hover_panel_script"]
 [ext_resource type="Script" uid="uid://bgyofpuimgnun" path="res://scenes/main.gd" id="main_script"]
 [ext_resource type="PackedScene" path="res://scenes/reading_slot.tscn" id="reading_slot_scene"]
-[ext_resource type="Texture2D" uid="uid://ctgir8l4epqs" path="res://assets/ui/panels/silver_panel.png" id="silver_panel_tex"]
+[ext_resource type="Script" uid="uid://bos06n3cbkr1p" path="res://scenes/sidebar.gd" id="sidebar_script"]
+[ext_resource type="Texture2D" uid="uid://w026wmrlxd43" path="res://assets/ui/panels/silver_panel.png" id="silver_panel_tex"]
+[ext_resource type="Script" uid="uid://b6t0l4bf7kx2u" path="res://scenes/reading_slot_manager.gd" id="slot_mgr_script"]
+[ext_resource type="PackedScene" uid="uid://ke6x51kah8hl" path="res://scenes/sound_manager.tscn" id="sound_mgr_scene"]
+[ext_resource type="Script" uid="uid://cvx7brci371xt" path="res://scenes/story_renderer.gd" id="story_renderer_script"]
+[ext_resource type="Script" uid="uid://du2ext46a0d41" path="res://scenes/vignette_effect.gd" id="vignette_effect_script"]
 [ext_resource type="Shader" uid="uid://ryt70jxj8alt" path="res://shaders/reading_vignette.gdshader" id="vignette_shader"]
-[ext_resource type="Texture2D" uid="uid://cihtmo2u0yujk" path="res://assets/ui/panels/wood_panel.png" id="wood_panel_tex"]
-[ext_resource type="PackedScene" path="res://scenes/sound_manager.tscn" id="sound_mgr_scene"]
-[ext_resource type="Script" path="res://scenes/vignette_effect.gd" id="vignette_effect_script"]
-[ext_resource type="Script" path="res://scenes/card_hover_info_panel.gd" id="hover_panel_script"]
-[ext_resource type="Script" path="res://scenes/story_renderer.gd" id="story_renderer_script"]
-[ext_resource type="Script" path="res://scenes/reading_slot_manager.gd" id="slot_mgr_script"]
-[ext_resource type="Script" path="res://scenes/end_screen.gd" id="end_screen_script"]
-[ext_resource type="Script" path="res://scenes/sidebar.gd" id="sidebar_script"]
-[ext_resource type="Script" path="res://addons/beehave/blackboard.gd" id="beehave_blackboard_script"]
+[ext_resource type="Texture2D" uid="uid://b8sog7hw7hfhf" path="res://assets/ui/panels/wood_panel.png" id="wood_panel_tex"]
 
 [sub_resource type="Curve" id="hand_rotation"]
 _limits = [-12.0, 12.0, 0.0, 1.0]
@@ -32,12 +32,6 @@ point_count = 2
 _limits = [0.0, 50.0, 0.0, 1.0]
 _data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.5, 35), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 3
-
-[sub_resource type="ShaderMaterial" id="vignette_material"]
-shader = ExtResource("vignette_shader")
-shader_parameter/intensity = 0.0
-shader_parameter/softness = 0.5
-shader_parameter/color = Color(0.04, 0.02, 0.08, 1)
 
 [sub_resource type="StyleBoxTexture" id="btn_normal_style"]
 content_margin_left = 20.0
@@ -61,6 +55,12 @@ texture_margin_top = 4.0
 texture_margin_right = 4.0
 texture_margin_bottom = 4.0
 
+[sub_resource type="ShaderMaterial" id="vignette_material"]
+shader = ExtResource("vignette_shader")
+shader_parameter/intensity = 0.0
+shader_parameter/softness = 0.5
+shader_parameter/color = Color(0.04, 0.02, 0.08, 1)
+
 [node name="Main" type="Control" unique_id=540549234]
 layout_mode = 3
 anchors_preset = 15
@@ -70,7 +70,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("main_script")
 
-[node name="SceneRoot" type="Control" parent="."]
+[node name="SceneRoot" type="Control" parent="." unique_id=1301813518]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -88,7 +88,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.08, 0.04, 0.14, 1)
 
-[node name="Gameplay" type="Control" parent="SceneRoot"]
+[node name="Gameplay" type="Control" parent="SceneRoot" unique_id=722576844]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -109,7 +109,7 @@ script = ExtResource("card_manager_script")
 card_size = Vector2(110, 159)
 card_factory_scene = ExtResource("factory_scene")
 
-[node name="ReadingArea" type="Control" parent="SceneRoot/Gameplay"]
+[node name="ReadingArea" type="Control" parent="SceneRoot/Gameplay" unique_id=1364211440]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -118,7 +118,85 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="StoryArea" type="Control" parent="SceneRoot/Gameplay"]
+[node name="ReadingSlots" type="Control" parent="SceneRoot/Gameplay/ReadingArea" unique_id=1300877558]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 292.0
+offset_top = 100.0
+offset_right = 808.0
+offset_bottom = 400.0
+mouse_filter = 2
+
+[node name="Slot0" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" unique_id=81954528 instance=ExtResource("reading_slot_scene")]
+
+[node name="Slot1" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" unique_id=493457967 instance=ExtResource("reading_slot_scene")]
+offset_left = 183.0
+offset_right = 333.0
+
+[node name="Slot2" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" unique_id=975807041 instance=ExtResource("reading_slot_scene")]
+offset_left = 366.0
+offset_right = 516.0
+
+[node name="PlayerHand" type="Control" parent="SceneRoot/Gameplay/ReadingArea" unique_id=420696337]
+z_index = 100
+layout_mode = 1
+anchors_preset = 0
+offset_left = 555.0
+offset_top = 570.0
+offset_right = 555.0
+offset_bottom = 570.0
+script = ExtResource("hand_script")
+max_hand_size = 3
+hand_rotation_curve = SubResource("hand_rotation")
+hand_vertical_curve = SubResource("hand_vertical")
+
+[node name="CardHoverInfoPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/ReadingArea" unique_id=927259214]
+visible = false
+z_index = 4096
+layout_mode = 1
+offset_left = 1020.0
+offset_top = 520.0
+offset_right = 1170.0
+offset_bottom = 690.0
+texture = ExtResource("silver_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+script = ExtResource("hover_panel_script")
+
+[node name="CardHoverInfoBody" type="RichTextLabel" parent="SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel" unique_id=631767293]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.91, 0.86, 0.77, 1)
+theme_override_font_sizes/normal_font_size = 4
+bbcode_enabled = true
+scroll_active = false
+autowrap_mode = 2
+
+[node name="ReversedLabel" type="Label" parent="SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel" unique_id=1182286300]
+visible = false
+layout_mode = 1
+offset_top = -14.0
+offset_right = 150.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(0.87, 0.56, 0.56, 1)
+theme_override_font_sizes/font_size = 7
+text = "REVERSED"
+horizontal_alignment = 1
+
+[node name="StoryArea" type="Control" parent="SceneRoot/Gameplay" unique_id=251496445]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -127,19 +205,72 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="OverlayLayer" type="Control" parent="SceneRoot"]
+[node name="StoryPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=1543021944]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 830.0
+offset_right = 1280.0
+offset_bottom = 720.0
+texture = ExtResource("wood_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[node name="StoryPanelOverlay" type="ColorRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=942051855]
+layout_mode = 1
+offset_left = 836.0
+offset_top = 6.0
+offset_right = 1274.0
+offset_bottom = 714.0
 mouse_filter = 2
+color = Color(0.06, 0.03, 0.12, 0.85)
 
-[node name="Systems" type="Node" parent="."]
-
-[node name="Sidebar" type="Control" parent="SceneRoot/Gameplay"]
+[node name="StoryTitleLabel" type="Label" parent="SceneRoot/Gameplay/StoryArea" unique_id=433875344]
 layout_mode = 1
+offset_left = 850.0
+offset_top = 24.0
+offset_right = 1260.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
+[node name="StoryDivider" type="ColorRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=1112296309]
+layout_mode = 1
+offset_left = 870.0
+offset_top = 62.0
+offset_right = 1240.0
+offset_bottom = 63.0
+mouse_filter = 2
+color = Color(0.85, 0.7, 0.4, 0.3)
+
+[node name="ClientContextText" type="RichTextLabel" parent="SceneRoot/Gameplay/StoryArea" unique_id=1326070971]
+layout_mode = 1
+offset_left = 854.0
+offset_top = 74.0
+offset_right = 1260.0
+offset_bottom = 260.0
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 14
+bbcode_enabled = true
+
+[node name="StoryRichText" type="RichTextLabel" parent="SceneRoot/Gameplay/StoryArea" unique_id=820856239]
+layout_mode = 1
+offset_left = 854.0
+offset_top = 280.0
+offset_right = 1260.0
+offset_bottom = 700.0
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.7, 0.65, 0.8, 1)
+theme_override_font_sizes/normal_font_size = 14
+bbcode_enabled = true
+
+[node name="Sidebar" type="Control" parent="SceneRoot/Gameplay" unique_id=125913293]
+layout_mode = 1
+anchors_preset = 0
 offset_right = 280.0
 offset_bottom = 720.0
 mouse_filter = 2
@@ -277,7 +408,7 @@ mouse_filter = 2
 texture = ExtResource("gold_star_tex")
 expand_mode = 1
 
-[node name="RestartButton" type="Button" parent="SceneRoot/Gameplay/Sidebar"]
+[node name="RestartButton" type="Button" parent="SceneRoot/Gameplay/Sidebar" unique_id=868953984]
 layout_mode = 0
 offset_left = 60.0
 offset_top = 650.0
@@ -285,9 +416,9 @@ offset_right = 220.0
 offset_bottom = 690.0
 theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
 theme_override_font_sizes/font_size = 16
-theme_override_styles/hover = SubResource("btn_normal_style")
-theme_override_styles/pressed = SubResource("btn_pressed_style")
 theme_override_styles/normal = SubResource("btn_normal_style")
+theme_override_styles/pressed = SubResource("btn_pressed_style")
+theme_override_styles/hover = SubResource("btn_normal_style")
 text = "Restart"
 
 [node name="ColumnDividerLeft" type="ColorRect" parent="SceneRoot/Gameplay" unique_id=686245416]
@@ -298,108 +429,6 @@ offset_bottom = 720.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.25)
 
-[node name="ReadingSlots" type="Control" parent="SceneRoot/Gameplay/ReadingArea"]
-layout_mode = 1
-offset_left = 292.0
-offset_top = 100.0
-offset_right = 808.0
-offset_bottom = 400.0
-mouse_filter = 2
-
-[node name="Slot0" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" instance=ExtResource("reading_slot_scene")]
-layout_mode = 1
-anchors_preset = 0
-offset_right = 150.0
-offset_bottom = 300.0
-
-[node name="Slot1" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" instance=ExtResource("reading_slot_scene")]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 183.0
-offset_right = 333.0
-offset_bottom = 300.0
-
-[node name="Slot2" parent="SceneRoot/Gameplay/ReadingArea/ReadingSlots" instance=ExtResource("reading_slot_scene")]
-layout_mode = 1
-anchors_preset = 0
-offset_left = 366.0
-offset_right = 516.0
-offset_bottom = 300.0
-
-[node name="PlayerHand" type="Control" parent="SceneRoot/Gameplay/ReadingArea" unique_id=420696337]
-z_index = 100
-layout_mode = 1
-anchors_preset = 0
-offset_left = 555.0
-offset_top = 570.0
-offset_right = 555.0
-offset_bottom = 570.0
-script = ExtResource("hand_script")
-max_hand_size = 3
-hand_rotation_curve = SubResource("hand_rotation")
-hand_vertical_curve = SubResource("hand_vertical")
-
-[node name="ReadingVignetteOverlay" type="ColorRect" parent="SceneRoot/OverlayLayer" unique_id=1397845669]
-z_index = 200
-material = SubResource("vignette_material")
-script = ExtResource("vignette_effect_script")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="CardHoverInfoPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/ReadingArea" unique_id=927259214]
-visible = false
-z_index = 4096
-script = ExtResource("hover_panel_script")
-layout_mode = 1
-offset_left = 1020.0
-offset_top = 520.0
-offset_right = 1170.0
-offset_bottom = 690.0
-mouse_filter = 2
-texture = ExtResource("silver_panel_tex")
-patch_margin_left = 8
-patch_margin_top = 8
-patch_margin_right = 8
-patch_margin_bottom = 8
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
-
-[node name="CardHoverInfoBody" type="RichTextLabel" parent="SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel" unique_id=631767293]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = -8.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_colors/default_color = Color(0.91, 0.86, 0.77, 1)
-theme_override_font_sizes/normal_font_size = 4
-bbcode_enabled = true
-scroll_active = false
-autowrap_mode = 2
-
-[node name="ReversedLabel" type="Label" parent="SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel"]
-layout_mode = 1
-offset_left = 0.0
-offset_top = -14.0
-offset_right = 150.0
-offset_bottom = -2.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.87, 0.56, 0.56, 1)
-theme_override_font_sizes/font_size = 7
-text = "REVERSED"
-horizontal_alignment = 1
-visible = false
-
 [node name="ColumnDividerRight" type="ColorRect" parent="SceneRoot/Gameplay" unique_id=1654313414]
 layout_mode = 1
 offset_left = 830.0
@@ -408,82 +437,26 @@ offset_bottom = 720.0
 mouse_filter = 2
 color = Color(0.85, 0.7, 0.4, 0.25)
 
-[node name="StoryPanel" type="NinePatchRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=1543021944]
+[node name="OverlayLayer" type="Control" parent="SceneRoot" unique_id=426222077]
 layout_mode = 1
-offset_left = 830.0
-offset_right = 1280.0
-offset_bottom = 720.0
-texture = ExtResource("wood_panel_tex")
-patch_margin_left = 8
-patch_margin_top = 8
-patch_margin_right = 8
-patch_margin_bottom = 8
-axis_stretch_horizontal = 1
-axis_stretch_vertical = 1
-
-[node name="StoryPanelOverlay" type="ColorRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=942051855]
-layout_mode = 1
-offset_left = 836.0
-offset_top = 6.0
-offset_right = 1274.0
-offset_bottom = 714.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-color = Color(0.06, 0.03, 0.12, 0.85)
 
-[node name="StoryTitleLabel" type="Label" parent="SceneRoot/Gameplay/StoryArea" unique_id=433875344]
+[node name="ReadingVignetteOverlay" type="ColorRect" parent="SceneRoot/OverlayLayer" unique_id=1397845669]
+z_index = 200
+material = SubResource("vignette_material")
 layout_mode = 1
-offset_left = 850.0
-offset_top = 24.0
-offset_right = 1260.0
-offset_bottom = 56.0
-theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
-theme_override_font_sizes/font_size = 20
-horizontal_alignment = 1
-
-[node name="StoryDivider" type="ColorRect" parent="SceneRoot/Gameplay/StoryArea" unique_id=1112296309]
-layout_mode = 1
-offset_left = 870.0
-offset_top = 62.0
-offset_right = 1240.0
-offset_bottom = 63.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-color = Color(0.85, 0.7, 0.4, 0.3)
-
-[node name="ClientContextText" type="RichTextLabel" parent="SceneRoot/Gameplay/StoryArea" unique_id=1326070971]
-layout_mode = 1
-offset_left = 854.0
-offset_top = 74.0
-offset_right = 1260.0
-offset_bottom = 260.0
-mouse_filter = 2
-theme_override_colors/default_color = Color(0.8, 0.75, 0.9, 1)
-theme_override_font_sizes/normal_font_size = 14
-bbcode_enabled = true
-
-[node name="StoryRichText" type="RichTextLabel" parent="SceneRoot/Gameplay/StoryArea" unique_id=820856239]
-layout_mode = 1
-offset_left = 854.0
-offset_top = 280.0
-offset_right = 1260.0
-offset_bottom = 700.0
-mouse_filter = 2
-theme_override_colors/default_color = Color(0.7, 0.65, 0.8, 1)
-theme_override_font_sizes/normal_font_size = 14
-bbcode_enabled = true
-
-[node name="ClaudeAPI" type="Node" parent="Systems" unique_id=2024195088]
-script = ExtResource("claude_api_script")
-
-[node name="SoundManager" parent="Systems" instance=ExtResource("sound_mgr_scene")]
-
-[node name="StoryRenderer" type="Node" parent="Systems"]
-script = ExtResource("story_renderer_script")
-
-[node name="ReadingSlotManager" type="Node" parent="Systems"]
-script = ExtResource("slot_mgr_script")
-
-[node name="GameBlackboard" type="Node" parent="Systems"]
-script = ExtResource("beehave_blackboard_script")
+script = ExtResource("vignette_effect_script")
 
 [node name="ResolutionPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=2000854802]
 visible = false
@@ -579,13 +552,13 @@ text = "Next Client"
 
 [node name="EndPanel" type="Control" parent="SceneRoot/OverlayLayer" unique_id=132627432]
 visible = false
-script = ExtResource("end_screen_script")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("end_screen_script")
 
 [node name="Overlay" type="ColorRect" parent="SceneRoot/OverlayLayer/EndPanel" unique_id=645602222]
 layout_mode = 1
@@ -811,3 +784,19 @@ theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true
 text = "[center][wave amp=20.0 freq=5.0]A new presence approaches...[/wave][/center]"
 scroll_active = false
+
+[node name="Systems" type="Node" parent="." unique_id=620898443]
+
+[node name="ClaudeAPI" type="Node" parent="Systems" unique_id=2024195088]
+script = ExtResource("claude_api_script")
+
+[node name="SoundManager" parent="Systems" unique_id=970487892 instance=ExtResource("sound_mgr_scene")]
+
+[node name="StoryRenderer" type="Node" parent="Systems" unique_id=1462860906]
+script = ExtResource("story_renderer_script")
+
+[node name="ReadingSlotManager" type="Node" parent="Systems" unique_id=37852538]
+script = ExtResource("slot_mgr_script")
+
+[node name="GameBlackboard" type="Node" parent="Systems" unique_id=189135644]
+script = ExtResource("beehave_blackboard_script")

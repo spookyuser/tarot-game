@@ -5,7 +5,7 @@ A client arrives with a story — a short narrative with three blanks where taro
 
 ## Current State
 
-Three-column UI redesign just implemented. Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings are generated directly from Godot via Anthropic's Messages API (`scenes/claude_api.gd`) with Beehave blackboard state. Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
+Three-column UI redesign just implemented. Core gameplay loop works: shuffle → draw → drag to slots → readings → next client. Single client ("Maria the Widow") in `data/clients.json`. AI readings are generated from Godot via the Cloudflare AI Gateway (`scenes/claude_api.gd`) using the OpenAI-compatible chat completions format, with Beehave blackboard state. Portrait system loads MinifolksVillagers sprites but only has one explicit mapping. No save/load, no scoring, no multiple rounds beyond cycling the deck.
 
 ## Project Overview
 
@@ -24,7 +24,7 @@ Main (scenes/main.gd, ~290 lines — session orchestrator)
   ├── VignetteEffect (script on ColorRect) — shader fade tweens
   ├── EndScreen (script on EndPanel Control) — end summary display
   ├── SoundManager (unchanged, scenes/sound_manager.gd)
-  └── ClaudeAPI (direct Anthropic client, scenes/claude_api.gd)
+  └── ClaudeAPI (Cloudflare AI Gateway client, scenes/claude_api.gd)
 ```
 
 **Signal flow**: ReadingSlotManager emits `slot_locked`, `all_slots_filled`, `reading_received`, `story_changed`, `request_*_sound`, `waiting_for_reading_*` signals. Main mediates — connects sound signals to SoundManager, story changes to StoryRenderer, vignette signals to VignetteEffect. No sibling-to-sibling communication.
@@ -35,18 +35,17 @@ Open in Godot Engine 4.6. Main scene: `res://scenes/main.tscn`. Viewport: 1280x7
 
 ### Reading API
 
-AI-generated readings are requested directly from Godot (`scenes/claude_api.gd`) using Anthropic's `POST /v1/messages` endpoint. No JS/Next proxy service is required.
+AI-generated readings are requested from Godot (`scenes/claude_api.gd`) via the Cloudflare AI Gateway using the OpenAI-compatible chat completions endpoint. The gateway proxies to Anthropic models. No JS/Next proxy service is required.
 
 Configure credentials in `config/api_key.cfg`:
 ```ini
 [anthropic]
 api_key="YOUR_ANTHROPIC_KEY"
 # optional overrides:
-# endpoint="https://api.anthropic.com/v1/messages"
-# version="2023-06-01"
-# reading_model="claude-sonnet-4-5"
-# client_model="claude-sonnet-4-5"
-# summary_model="claude-sonnet-4-5"
+# endpoint="https://gateway.ai.cloudflare.com/v1/00b4144a8738939d6f258250f7c5f063/tarot/compat/chat/completions"
+# reading_model="anthropic/claude-sonnet-4-5"
+# client_model="anthropic/claude-sonnet-4-5"
+# summary_model="anthropic/claude-sonnet-4-5"
 ```
 
 ClaudeAPI records request lifecycle data (`pending/completed/failed/canceled`) in the shared Beehave blackboard for runtime state visibility.

@@ -6,13 +6,9 @@ signal request_failed(request_id: String, error_message: String)
 signal client_request_completed(request_id: String, client_data: Dictionary)
 signal client_request_failed(request_id: String, error_message: String)
 
-signal end_summary_request_completed(request_id: String, text: String)
-signal end_summary_request_failed(request_id: String, error_message: String)
-
 const SLOT_COUNT: int = 3
-const DEFAULT_ENDPOINT_URL: String = "https://api.anthropic.com/v1/messages"
-const DEFAULT_ANTHROPIC_VERSION: String = "2023-06-01"
-const DEFAULT_MODEL: String = "claude-sonnet-4-5"
+const DEFAULT_ENDPOINT_URL: String = "https://gateway.ai.cloudflare.com/v1/00b4144a8738939d6f258250f7c5f063/tarot/compat/chat/completions"
+const DEFAULT_MODEL: String = "anthropic/claude-sonnet-4-6"
 
 const BB_KEY_LLM_REQUEST_STATE: StringName = &"llm_request_state"
 const BB_KEY_LLM_LAST_ERROR: StringName = &"llm_last_error"
@@ -20,8 +16,6 @@ const BB_KEY_LLM_LAST_RESPONSE: StringName = &"llm_last_response"
 
 const REQUEST_KIND_READING: String = "reading"
 const REQUEST_KIND_CLIENT: String = "client"
-const REQUEST_KIND_SUMMARY: String = "summary"
-
 const SYSTEM_PROMPT_READING: String = """You are an oracle in a port town. The cards show what will happen - not metaphors, not advice, but events that are already in motion.
 
 You'll receive a client (who they are, what brought them here) and three reading slots. Exactly one slot has a card placed but no text yet. Write one sentence for that slot.
@@ -58,20 +52,11 @@ Guidelines:
 
 Return ONLY valid JSON. No markdown. No commentary."""
 
-const SYSTEM_PROMPT_SUMMARY: String = """You are the narrator of a tarot reading session. The reader has just finished their shift.
-Review the clients they saw today and the readings they gave.
-Write a 2-3 paragraph reflective summary of the day's events.
-Write in the third person, focusing on the reader's experience, the atmosphere, and the recurring themes or distinct differences in the clients' fates.
-Do NOT just list what happened. Make it a cohesive, atmospheric story about the burden and insight of reading the cards."""
-
 var _endpoint_url: String = DEFAULT_ENDPOINT_URL
-var _anthropic_version: String = DEFAULT_ANTHROPIC_VERSION
-var _anthropic_api_key: String = ""
+var _api_key: String = "67eQd-UKCheP0BYLHV_-rsXoCe8dovdkD2-Gm4Tq"
 
 var _reading_model: String = DEFAULT_MODEL
-var _client_model: String = DEFAULT_MODEL
-var _summary_model: String = DEFAULT_MODEL
-
+var _client_model: String = "anthropic/claude-opus-4-6" 
 var _pending_requests: Dictionary = {}
 var _request_metadata: Dictionary = {}
 var _cards_by_name: Dictionary = {}
@@ -93,12 +78,12 @@ func initialize(game_blackboard: Blackboard) -> void:
 
 
 func is_available() -> bool:
-	return not _anthropic_api_key.is_empty()
+	return not _api_key.is_empty()
 
 
 func generate_reading(request_id: String, reading_state: Dictionary) -> void:
 	if not is_available():
-		request_failed.emit(request_id, "Anthropic API key not configured")
+		request_failed.emit(request_id, "API key not configured")
 		return
 
 	var normalized := _normalize_reading_request(reading_state)
@@ -126,7 +111,7 @@ func generate_reading(request_id: String, reading_state: Dictionary) -> void:
 
 func generate_client(request_id: String, game_state: Dictionary) -> void:
 	if not is_available():
-		client_request_failed.emit(request_id, "Anthropic API key not configured")
+		client_request_failed.emit(request_id, "API key not configured")
 		return
 
 	var prompt: String = _build_client_prompt(game_state)
@@ -138,28 +123,6 @@ func generate_client(request_id: String, game_state: Dictionary) -> void:
 		prompt,
 		150,
 		0.2
-	)
-
-
-func generate_end_summary(request_id: String, game_state: Dictionary) -> void:
-	if not is_available():
-		end_summary_request_failed.emit(request_id, "Anthropic API key not configured")
-		return
-
-	var encounters: Variant = game_state.get("encounters", [])
-	if not (encounters is Array) or (encounters as Array).is_empty():
-		end_summary_request_failed.emit(request_id, "Missing or invalid game_state.encounters")
-		return
-
-	var prompt: String = _build_summary_prompt(game_state)
-	_queue_messages_request(
-		request_id,
-		REQUEST_KIND_SUMMARY,
-		_summary_model,
-		SYSTEM_PROMPT_SUMMARY,
-		prompt,
-		600,
-		0.6
 	)
 
 
@@ -189,8 +152,11 @@ func _queue_messages_request(
 	var body: Dictionary = {
 		"model": model,
 		"max_tokens": max_tokens,
-		"system": system_prompt,
 		"messages": [
+			{
+				"role": "system",
+				"content": system_prompt,
+			},
 			{
 				"role": "user",
 				"content": user_prompt,
@@ -202,8 +168,7 @@ func _queue_messages_request(
 
 	var headers := PackedStringArray([
 		"content-type: application/json",
-		"x-api-key: %s" % _anthropic_api_key,
-		"anthropic-version: %s" % _anthropic_version,
+		"Authorization: Bearer %s" % _api_key,
 	])
 
 	var http_request := HTTPRequest.new()
@@ -294,30 +259,29 @@ func _on_http_completed(
 					"context": context,
 				}
 			)
-		REQUEST_KIND_SUMMARY:
-			end_summary_request_completed.emit(request_id, message_text)
 		_:
 			_emit_failure(kind, request_id, "Unsupported request kind")
 
 
 func _extract_assistant_text(response: Dictionary) -> String:
-	var content_value: Variant = response.get("content", [])
-	if not (content_value is Array):
+	var choices_value: Variant = response.get("choices", [])
+	if not (choices_value is Array):
 		return ""
 
-	var blocks: Array = content_value
-	var parts: Array[String] = []
-	for block_value: Variant in blocks:
-		if not (block_value is Dictionary):
-			continue
-		var block: Dictionary = block_value
-		if str(block.get("type", "")) != "text":
-			continue
-		var text_value: String = str(block.get("text", "")).strip_edges()
-		if not text_value.is_empty():
-			parts.append(text_value)
+	var choices: Array = choices_value
+	if choices.is_empty():
+		return ""
 
-	return "\n".join(parts).strip_edges()
+	var first_choice: Variant = choices[0]
+	if not (first_choice is Dictionary):
+		return ""
+
+	var message_value: Variant = (first_choice as Dictionary).get("message", {})
+	if not (message_value is Dictionary):
+		return ""
+
+	var content: String = str((message_value as Dictionary).get("content", "")).strip_edges()
+	return content
 
 
 func _extract_api_error_message(response_text: String) -> String:
@@ -634,68 +598,8 @@ func _build_client_prompt(game_state: Dictionary) -> String:
 	return prompt
 
 
-func _build_summary_prompt(game_state: Dictionary) -> String:
-	var encounters: Array = _as_array(game_state.get("encounters", []))
-	var sections: Array[String] = []
-
-	for i: int in range(encounters.size()):
-		if not (encounters[i] is Dictionary):
-			continue
-		var encounter: Dictionary = encounters[i]
-		var client: Dictionary = _as_dict(encounter.get("client", {}))
-		var client_name: String = _as_string(client.get("name", "Unknown Client"))
-		var client_context: String = _as_string(client.get("context", "No context provided."))
-
-		var reading_lines: Array[String] = []
-		var slots: Array = _as_array(encounter.get("slots", []))
-		for slot_index: int in range(slots.size()):
-			if not (slots[slot_index] is Dictionary):
-				continue
-			var slot: Dictionary = slots[slot_index]
-			var text: String = _as_string(slot.get("text", ""))
-			if text.is_empty():
-				continue
-			var card_name: String = _as_string(slot.get("card", "Unknown"))
-			var orientation: String = _as_string(slot.get("orientation", "upright"))
-			var orientation_suffix: String = " Reversed" if orientation == "reversed" else ""
-			reading_lines.append("Card %d (%s%s): %s" % [slot_index + 1, card_name, orientation_suffix, text])
-
-		sections.append(
-			"Client %d: %s\nTrouble: %s\nReading:\n%s" % [
-				i + 1,
-				client_name,
-				client_context,
-				"\n".join(reading_lines),
-			]
-		)
-
-	var session_data: String = "\n\n".join(sections)
-	return "Here are the clients the reader saw today:\n\n%s\n\nPlease write the final reflective summary of the day." % session_data
-
-
 func _load_configuration() -> void:
-	var config := ConfigFile.new()
-	if config.load("res://config/api_key.cfg") != OK:
-		return
-
-	_anthropic_api_key = str(config.get_value("anthropic", "api_key", "")).strip_edges()
-	_endpoint_url = str(config.get_value("anthropic", "endpoint", DEFAULT_ENDPOINT_URL)).strip_edges()
-	_anthropic_version = str(config.get_value("anthropic", "version", DEFAULT_ANTHROPIC_VERSION)).strip_edges()
-
-	_reading_model = str(config.get_value("anthropic", "reading_model", DEFAULT_MODEL)).strip_edges()
-	_client_model = str(config.get_value("anthropic", "client_model", _reading_model)).strip_edges()
-	_summary_model = str(config.get_value("anthropic", "summary_model", _reading_model)).strip_edges()
-
-	if _endpoint_url.is_empty():
-		_endpoint_url = DEFAULT_ENDPOINT_URL
-	if _anthropic_version.is_empty():
-		_anthropic_version = DEFAULT_ANTHROPIC_VERSION
-	if _reading_model.is_empty():
-		_reading_model = DEFAULT_MODEL
-	if _client_model.is_empty():
-		_client_model = _reading_model
-	if _summary_model.is_empty():
-		_summary_model = _reading_model
+	pass
 
 
 func _load_card_data() -> void:
@@ -810,8 +714,6 @@ func _emit_failure(kind: String, request_id: String, message: String) -> void:
 			request_failed.emit(request_id, message)
 		REQUEST_KIND_CLIENT:
 			client_request_failed.emit(request_id, message)
-		REQUEST_KIND_SUMMARY:
-			end_summary_request_failed.emit(request_id, message)
 		_:
 			request_failed.emit(request_id, message)
 
