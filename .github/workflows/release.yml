@@ -44,6 +44,13 @@ jobs:
           chmod +x butler
           ./butler -V
 
+      - name: Unzip web build
+        run: |
+          mkdir -p /tmp/web-build
+          unzip "/home/runner/.local/share/godot/archives/Web.zip" -d /tmp/web-build
+          find /tmp/web-build -name "index.html" -printf '%h\n' | head -1 > /tmp/web-root
+          echo "Web root: $(cat /tmp/web-root)"
+
       - name: Push to itch.io
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
@@ -51,4 +58,4 @@ jobs:
           ./butler push "/home/runner/.local/share/godot/archives/macOS.zip" cal3b123/the-reading-room:macos --userversion ${{ github.ref_name }}
           ./butler push "/home/runner/.local/share/godot/archives/Windows Desktop.zip" cal3b123/the-reading-room:windows --userversion ${{ github.ref_name }}
           ./butler push "/home/runner/.local/share/godot/archives/Linux.zip" cal3b123/the-reading-room:linux --userversion ${{ github.ref_name }}
-          ./butler push "/home/runner/.local/share/godot/archives/Web.zip" cal3b123/the-reading-room:html5 --userversion ${{ github.ref_name }}
+          ./butler push "$(cat /tmp/web-root)" cal3b123/the-reading-room:html5 --userversion ${{ github.ref_name }}
