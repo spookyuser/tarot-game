@@ -27,6 +27,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Rename macOS archive
+        run: mv "/home/runner/.local/share/godot/archives/The Reading Room.zip" "/home/runner/.local/share/godot/archives/macOS.zip"
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
