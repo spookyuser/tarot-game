@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    name: Export and Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export game
+        id: export
+        uses: firebelley/godot-export@v7.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_export_templates.tpz
+          relative_project_path: ./
+          archive_output: true
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            /home/runner/.local/share/godot/archives/macOS.zip
+            /home/runner/.local/share/godot/archives/Windows Desktop.zip
+            /home/runner/.local/share/godot/archives/Linux.zip
+            /home/runner/.local/share/godot/archives/Web.zip
