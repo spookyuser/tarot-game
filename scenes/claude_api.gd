@@ -58,15 +58,12 @@ var _reading_model: String = DEFAULT_MODEL
 var _client_model: String = "anthropic/claude-opus-4-6" 
 var _pending_requests: Dictionary = {}
 var _request_metadata: Dictionary = {}
-var _cards_by_name: Dictionary = {}
-
 var _game_blackboard: Blackboard
 var _request_state: Dictionary = {}
 
 
 func _ready() -> void:
 	_load_configuration()
-	_load_card_data()
 	_bind_blackboard_if_available()
 	_sync_request_state_to_blackboard()
 
@@ -104,7 +101,7 @@ func generate_reading(request_id: String, reading_state: Dictionary) -> void:
 		SYSTEM_PROMPT_READING,
 		user_prompt,
 		150,
-		-1.0
+		1.7
 	)
 
 
@@ -121,7 +118,7 @@ func generate_client(request_id: String, game_state: Dictionary) -> void:
 		SYSTEM_PROMPT_CLIENT,
 		prompt,
 		150,
-		0.2
+		1.7
 	)
 
 
@@ -475,31 +472,9 @@ func _build_enriched_slots(slots_value: Variant) -> Array:
 		if not (slot_value is Dictionary):
 			continue
 		var slot: Dictionary = (slot_value as Dictionary).duplicate(true)
-		var card_name: String = _as_string(slot.get("card", ""))
-		if card_name.is_empty():
-			enriched_slots.append(slot)
-			continue
-
-		var lookup_name: String = card_name
-		if not _cards_by_name.has(lookup_name):
-			lookup_name = card_name.replace(" ", "_")
-
-		if _cards_by_name.has(lookup_name):
-			var card_data: Dictionary = _cards_by_name[lookup_name]
-			var description: String = _as_string(card_data.get("description", ""))
-			if not description.is_empty():
-				slot["card_meaning"] = description
-
-			var keywords: Array = _as_array(card_data.get("keywords", []))
-			if keywords.is_empty():
-				keywords = _as_array(card_data.get("tags", []))
-			if not keywords.is_empty():
-				slot["card_tags"] = keywords.duplicate(true)
-
-			var outcome: String = _as_string(card_data.get("sentiment", card_data.get("outcome", "")))
-			if not outcome.is_empty():
-				slot["card_outcome"] = outcome
-
+		slot.erase("card_meaning")
+		slot.erase("card_tags")
+		slot.erase("card_outcome")
 		enriched_slots.append(slot)
 
 	return enriched_slots
@@ -567,58 +542,21 @@ func _build_client_prompt(game_state: Dictionary) -> String:
 		var name: String = _as_string(client.get("name", "Unknown"))
 		var context: String = _as_string(client.get("context", ""))
 
-		var readings: Array[String] = []
-		var slots: Array = _as_array(encounter.get("slots", []))
-		for slot_value: Variant in slots:
-			if not (slot_value is Dictionary):
-				continue
-			var slot: Dictionary = slot_value
-			var text: String = _as_string(slot.get("text", ""))
-			if not text.is_empty():
-				readings.append(text)
-
 		var line := "- %s: %s" % [name, context]
-		if not readings.is_empty():
-			var quoted_readings: Array[String] = []
-			for reading: String in readings:
-				quoted_readings.append("\"%s\"" % reading)
-			line += "\n  Readings: %s" % " / ".join(quoted_readings)
 		history_lines.append(line)
 
 	if history_lines.is_empty():
 		return prompt
 
-	prompt += "\n\nOther visitors today (for variety - do NOT reference them or their stories):\n"
+	prompt += "\n\nOther visitors today (avoid repeating their problems):\n"
 	prompt += "\n".join(history_lines)
-	prompt += "\n\nThis new person has their own life and their own problem. They are not here because of anyone else. Make them distinct from the people above in age, occupation, temperament, and concern."
+	prompt += "\n\nMake this person distinct from the people above in age, occupation, temperament, and concern."
 	return prompt
 
 
 func _load_configuration() -> void:
 	pass
 
-
-func _load_card_data() -> void:
-	_cards_by_name.clear()
-	var cards_dir := DirAccess.open("res://data/cards")
-	if cards_dir == null:
-		return
-
-	cards_dir.list_dir_begin()
-	var file_name: String = cards_dir.get_next()
-	while not file_name.is_empty():
-		if not cards_dir.current_is_dir() and file_name.ends_with(".json"):
-			var full_path: String = "res://data/cards/%s" % file_name
-			var raw: String = FileAccess.get_file_as_string(full_path)
-			var parsed: Variant = JSON.parse_string(raw)
-			if parsed is Dictionary:
-				var card_data: Dictionary = parsed
-				var canonical_name: String = _as_string(card_data.get("name", ""))
-				if not canonical_name.is_empty():
-					_cards_by_name[canonical_name] = card_data
-					_cards_by_name[canonical_name.replace("_", " ")] = card_data
-		file_name = cards_dir.get_next()
-	cards_dir.list_dir_end()
 
 
 func _bind_blackboard_if_available() -> void:
