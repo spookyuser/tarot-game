@@ -1,0 +1,157 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" uid="uid://wl1u5367hbm" path="res://assets/ui/panels/gold_panel.png" id="gold_panel_tex"]
+[ext_resource type="Texture2D" uid="uid://7te3ltlhgeu8" path="res://assets/card_back.png" id="card_back_tex"]
+[ext_resource type="Texture2D" uid="uid://cnmr4tr2fxmto" path="res://assets/ui/icons/gold_star.png" id="gold_star_tex"]
+[ext_resource type="Theme" uid="uid://b7oqjbb8a4okx" path="res://assets/ui/button_theme.tres" id="button_theme"]
+[ext_resource type="Script" uid="uid://bos06n3cbkr1p" path="res://scenes/sidebar.gd" id="sidebar_script"]
+
+[node name="Sidebar" type="Control"]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 280.0
+offset_bottom = 720.0
+mouse_filter = 2
+theme = ExtResource("button_theme")
+script = ExtResource("sidebar_script")
+
+[node name="LeftPanel" type="NinePatchRect" parent="."]
+layout_mode = 1
+offset_right = 280.0
+offset_bottom = 720.0
+texture = ExtResource("gold_panel_tex")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[node name="LeftPanelOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 274.0
+offset_bottom = 714.0
+mouse_filter = 2
+color = Color(0.06, 0.03, 0.12, 0.88)
+
+[node name="PortraitFrame" type="TextureRect" parent="."]
+layout_mode = 1
+offset_left = 100.0
+offset_top = 30.0
+offset_right = 180.0
+offset_bottom = 110.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="ClientNameLeft" type="Label" parent="."]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 120.0
+offset_right = 264.0
+offset_bottom = 158.0
+theme_override_colors/font_color = Color(0.85, 0.7, 0.4, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ClientCounterLeft" type="Label" parent="."]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 150.0
+offset_right = 264.0
+offset_bottom = 172.0
+theme_override_colors/font_color = Color(0.55, 0.48, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="SidebarDivider1" type="ColorRect" parent="."]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 186.0
+offset_right = 256.0
+offset_bottom = 187.0
+mouse_filter = 2
+color = Color(0.85, 0.7, 0.4, 0.4)
+
+[node name="DeckIcon" type="TextureRect" parent="."]
+layout_mode = 1
+offset_left = 80.0
+offset_top = 205.0
+offset_right = 125.0
+offset_bottom = 270.0
+mouse_filter = 2
+texture = ExtResource("card_back_tex")
+expand_mode = 1
+
+[node name="DeckCountLabel" type="Label" parent="."]
+layout_mode = 1
+offset_left = 132.0
+offset_top = 225.0
+offset_right = 256.0
+offset_bottom = 255.0
+theme_override_colors/font_color = Color(0.7, 0.65, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+
+[node name="SidebarDivider2" type="ColorRect" parent="."]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 290.0
+offset_right = 256.0
+offset_bottom = 291.0
+mouse_filter = 2
+color = Color(0.85, 0.7, 0.4, 0.4)
+
+[node name="ProgressLabel" type="Label" parent="."]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 308.0
+offset_right = 264.0
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(0.55, 0.48, 0.65, 1)
+theme_override_font_sizes/font_size = 13
+text = "Readings"
+horizontal_alignment = 1
+
+[node name="ProgressIcon0" type="TextureRect" parent="."]
+modulate = Color(0.3, 0.25, 0.4, 0.5)
+layout_mode = 1
+offset_left = 91.0
+offset_top = 340.0
+offset_right = 119.0
+offset_bottom = 368.0
+mouse_filter = 2
+texture = ExtResource("gold_star_tex")
+expand_mode = 1
+
+[node name="ProgressIcon1" type="TextureRect" parent="."]
+modulate = Color(0.3, 0.25, 0.4, 0.5)
+layout_mode = 1
+offset_left = 126.0
+offset_top = 340.0
+offset_right = 154.0
+offset_bottom = 368.0
+mouse_filter = 2
+texture = ExtResource("gold_star_tex")
+expand_mode = 1
+
+[node name="ProgressIcon2" type="TextureRect" parent="."]
+modulate = Color(0.3, 0.25, 0.4, 0.5)
+layout_mode = 1
+offset_left = 161.0
+offset_top = 340.0
+offset_right = 189.0
+offset_bottom = 368.0
+mouse_filter = 2
+texture = ExtResource("gold_star_tex")
+expand_mode = 1
+
+[node name="RestartButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 650.0
+offset_right = 220.0
+offset_bottom = 690.0
+mouse_default_cursor_shape = 2
+text = "Restart"

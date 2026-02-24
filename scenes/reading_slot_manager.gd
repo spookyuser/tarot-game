@@ -1,7 +1,6 @@
 class_name ReadingSlotManager
 extends Node
 
-const BB_KEY_GAME_STATE: StringName = &"game_state"
 const READING_LOADING_TEXT: String = "The cards are speaking..."
 const READING_ERROR_TEXT: String = "The cards are silent..."
 
@@ -311,10 +310,7 @@ func _on_claude_request_failed(request_id: String, _error_message: String) -> vo
 
 
 func _find_held_card() -> Card:
-	for card: Card in _player_hand._held_cards:
-		if card.current_state == DraggableObject.DraggableState.HOLDING:
-			return card
-	return null
+	return CardUtils.find_held_card(_player_hand)
 
 
 func _update_slot_labels() -> void:
@@ -459,15 +455,8 @@ func _get_persisted_slot(slot_index: int) -> Dictionary:
 
 
 func _get_game_state() -> Dictionary:
-	if _game_blackboard == null:
-		return {"encounters": []}
-	var game_state: Variant = _game_blackboard.get_value(BB_KEY_GAME_STATE, {"encounters": []})
-	if game_state is Dictionary:
-		return (game_state as Dictionary).duplicate(true)
-	return {"encounters": []}
+	return GameStateHelpers.get_game_state(_game_blackboard)
 
 
 func _set_game_state(game_state: Dictionary) -> void:
-	if _game_blackboard == null:
-		return
-	_game_blackboard.set_value(BB_KEY_GAME_STATE, game_state.duplicate(true))
+	GameStateHelpers.set_game_state(_game_blackboard, game_state)

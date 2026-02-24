@@ -1,19 +1,11 @@
 extends Control
 
-const BB_KEY_GAME_STATE: StringName = &"game_state"
-const BB_KEY_CURRENT_ENCOUNTER_INDEX: StringName = &"current_encounter_index"
-const BB_KEY_CURRENT_ENCOUNTER: StringName = &"current_encounter"
-const BB_KEY_CLIENT_COUNT: StringName = &"client_count"
-
 @onready var card_manager: CardManager = $SceneRoot/Gameplay/CardManager
 @onready var player_hand: Hand = $SceneRoot/Gameplay/ReadingArea/PlayerHand
 @onready var resolution_panel: Control = $SceneRoot/OverlayLayer/ResolutionPanel
-@onready var resolution_title: Label = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/ResolutionTitle
-@onready var resolution_text: RichTextLabel = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/ResolutionText
-@onready var next_button: Button = $SceneRoot/OverlayLayer/ResolutionPanel/StoryBox/NextButton
 @onready var claude_api: Node = $Systems/ClaudeAPI
 @onready var sound_manager: Node = $Systems/SoundManager
-@onready var game_blackboard: Node = $Systems/GameBlackboard
+@onready var game_blackboard: Blackboard = $Systems/GameBlackboard
 
 @onready var card_hover_panel: CardHoverInfoPanel = $SceneRoot/Gameplay/ReadingArea/CardHoverInfoPanel
 @onready var reading_vignette: VignetteEffect = $SceneRoot/OverlayLayer/ReadingVignetteOverlay
@@ -29,10 +21,8 @@ const BB_KEY_CLIENT_COUNT: StringName = &"client_count"
 
 @onready var loading_panel: Control = $SceneRoot/OverlayLayer/LoadingPanel
 @onready var intro_panel: Control = $SceneRoot/OverlayLayer/IntroPanel
-@onready var intro_portrait: TextureRect = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/IntroPortrait
-@onready var intro_name: Label = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/IntroName
-@onready var intro_context: RichTextLabel = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/IntroContext
-@onready var begin_button: Button = $SceneRoot/OverlayLayer/IntroPanel/IntroBox/BeginButton
+@onready var hover_spotlight_mgr: HoverSpotlightManager = $Systems/HoverSpotlightManager
+@onready var behavior_tree: Node = $Systems/BehaviorTree
 
 var slot_piles: Array[Pile] = []
 var slot_labels: Array[Label] = []
@@ -41,11 +31,7 @@ var slot_bgs: Array[NinePatchRect] = []
 
 var portraits := PortraitLoader.new()
 var deck := DeckManager.new()
-
 var back_texture: Texture2D
-var _time_passed: float = 0.0
-var _hover_spotlight_target: Control = null
-var _hover_spotlight_padding: float = 0.0
 
 
 func _ready() -> void:
@@ -62,238 +48,90 @@ func _ready() -> void:
 		reading_labels.append(slot_root.get_node("ReadingLabel") as RichTextLabel)
 		slot_bgs.append(slot_root.get_node("SlotBg") as NinePatchRect)
 
-	next_button.pressed.connect(_on_next_button_pressed)
-	begin_button.pressed.connect(_on_begin_button_pressed)
 	sidebar.restart_requested.connect(func() -> void: get_tree().reload_current_scene())
 	resolution_panel.visible = false
 	intro_panel.visible = false
 	card_hover_panel.z_index = 4096
 	_set_cards_visible(false)
 
-	claude_api.client_request_completed.connect(_on_client_request_completed)
-	claude_api.client_request_failed.connect(_on_client_request_failed)
-
 	end_screen.play_again_requested.connect(func() -> void: get_tree().reload_current_scene())
 
-	_initialize_game_blackboard()
 	if claude_api.has_method("initialize"):
 		claude_api.initialize(game_blackboard)
+
+	intro_panel.initialize(game_blackboard)
+	resolution_panel.initialize(game_blackboard)
 
 	# Reading slot manager wiring
 	reading_slot_mgr.initialize(slot_piles, slot_labels, reading_labels, player_hand, claude_api, game_blackboard)
 	reading_slot_mgr.slot_locked.connect(_on_slot_locked)
-	reading_slot_mgr.all_slots_filled.connect(_on_all_slots_filled)
 	reading_slot_mgr.story_changed.connect(_render_story)
-	reading_slot_mgr.reading_received.connect(_on_reading_received)
 	reading_slot_mgr.request_reading_sound.connect(sound_manager.play_reading)
 	reading_slot_mgr.request_stop_reading_sound.connect(sound_manager.stop_reading)
 	reading_slot_mgr.request_card_drop_sound.connect(sound_manager.play_card_drop)
 	reading_slot_mgr.waiting_for_reading_started.connect(func(_i: int) -> void: reading_vignette.fade_in())
 	reading_slot_mgr.waiting_for_reading_ended.connect(func(_i: int) -> void: reading_vignette.fade_out())
 
-	# Story renderer wiring
 	story_renderer.story_text = story_rich_text
 
 	player_hand.max_hand_size = 9
 	player_hand.max_hand_spread = 700
 
-	portraits.load_all()
-	deck.build_card_names()
-	deck.shuffle(9)
-	sound_manager.play_shuffle()
-	_next_client()
-	sound_manager.play_ambient()
+	# Wire event signals to blackboard for behavior tree
+	reading_slot_mgr.all_slots_filled.connect(func() -> void: game_blackboard.set_value("all_slots_filled", true))
+	claude_api.client_request_completed.connect(_on_client_request_completed)
+	claude_api.client_request_failed.connect(_on_client_request_failed)
+	reading_slot_mgr.reading_received.connect(_on_reading_received)
+
+	# Start behavior tree
+	behavior_tree.actor = self
+	behavior_tree.blackboard = game_blackboard
+	game_blackboard.set_value("phase", "init")
+	behavior_tree.enabled = true
 
 
-func _process(delta: float) -> void:
-	if resolution_panel.visible:
-		card_hover_panel.hide_immediately()
-		_set_hover_spotlight_target(null, 0.0)
-		return
-
-	_time_passed += delta * 3.0
-	var rsm_active: int = reading_slot_mgr.active_slot
-	var rsm_filled: Array[bool] = reading_slot_mgr.slot_filled
-	for i: int in range(3):
-		if i == rsm_active and not rsm_filled[i]:
-			var pulse: float = (sin(_time_passed) + 1.0) * 0.5
-			var active_color := Color(StoryRenderer.SLOT_COLORS[i])
-			slot_bgs[i].modulate = active_color.lerp(Color.WHITE, 0.2)
-			slot_bgs[i].modulate.a = lerp(0.5, 1.0, pulse)
-		else:
-			slot_bgs[i].modulate = Color(1.0, 1.0, 1.0, 0.4)
-
-	_update_hover_spotlight()
-	card_hover_panel.update_display(player_hand)
-	reading_slot_mgr.process_frame()
-
-
-func _initialize_game_blackboard() -> void:
-	_set_game_state(_build_initial_game_state())
-	_set_current_encounter_index(0)
-	_set_current_encounter({})
-	_set_client_count(0)
-
-
-func _build_initial_game_state() -> Dictionary:
-	return {
-		"encounters": [
-			{
-				"client": {
-					"name": "Maria the Widow",
-					"context": "I got married at 23. Everyone told me not to but i did and last week, my husband just, he's just dead, i'm sad and i don't know what to do. is he at peace?"
-				},
-				"slots": [
-					{"card": "", "text": "", "orientation": ""},
-					{"card": "", "text": "", "orientation": ""},
-					{"card": "", "text": "", "orientation": ""}
-				]
-			}
-		]
-	}
-
-
-func _get_game_state() -> Dictionary:
-	var game_state: Variant = game_blackboard.get_value(BB_KEY_GAME_STATE, _build_initial_game_state())
-	if game_state is Dictionary:
-		return (game_state as Dictionary).duplicate(true)
-	return _build_initial_game_state()
-
-
-func _set_game_state(game_state: Dictionary) -> void:
-	game_blackboard.set_value(BB_KEY_GAME_STATE, game_state.duplicate(true))
-
-
-func _get_current_encounter_index() -> int:
-	var encounter_index: Variant = game_blackboard.get_value(BB_KEY_CURRENT_ENCOUNTER_INDEX, 0)
-	return int(encounter_index)
-
-
-func _set_current_encounter_index(value: int) -> void:
-	game_blackboard.set_value(BB_KEY_CURRENT_ENCOUNTER_INDEX, value)
-
-
-func _get_current_encounter() -> Dictionary:
-	var encounter: Variant = game_blackboard.get_value(BB_KEY_CURRENT_ENCOUNTER, {})
-	if encounter is Dictionary:
-		return (encounter as Dictionary).duplicate(true)
-	return {}
-
-
-func _set_current_encounter(encounter: Dictionary) -> void:
-	game_blackboard.set_value(BB_KEY_CURRENT_ENCOUNTER, encounter.duplicate(true))
-
-
-func _get_client_count() -> int:
-	var client_count: Variant = game_blackboard.get_value(BB_KEY_CLIENT_COUNT, 0)
-	return int(client_count)
-
-
-func _set_client_count(value: int) -> void:
-	game_blackboard.set_value(BB_KEY_CLIENT_COUNT, value)
-
-
-# --- Client Flow ---
-
-
-func _next_client() -> void:
-	var game_state: Dictionary = _get_game_state()
-	var encounters: Array = game_state.get("encounters", [])
-	var encounter_index: int = _get_current_encounter_index()
-
-	if encounter_index >= encounters.size():
-		_show_client_loading()
-		claude_api.generate_client("client_req", game_state)
-		return
-
-	var encounter: Dictionary = encounters[encounter_index]
-	_set_current_encounter(encounter)
-	_set_current_encounter_index(encounter_index + 1)
-	_show_intro()
-
-
-func _show_intro() -> void:
-	_set_cards_visible(false)
-	loading_panel.visible = false
-	resolution_panel.visible = false
-
-	var current_encounter: Dictionary = _get_current_encounter()
-	var client_name: String = current_encounter.get("client", {}).get("name", "Unknown")
-	intro_name.text = client_name
-	intro_context.text = "[center]%s[/center]" % current_encounter.get("client", {}).get("context", "")
-	intro_portrait.texture = portraits.get_portrait(client_name)
-	intro_panel.visible = true
-
-
-func _on_begin_button_pressed() -> void:
-	intro_panel.visible = false
-	_setup_current_client_ui()
-
-
-func _show_client_loading() -> void:
-	_set_cards_visible(false)
-	loading_panel.visible = true
-	resolution_panel.visible = false
-	card_hover_panel.visible = false
-	for i: int in range(3):
-		reading_labels[i].text = ""
-		slot_labels[i].text = ""
-		slot_piles[i].enable_drop_zone = false
+# --- Signal Handlers ---
 
 
 func _on_client_request_completed(_request_id: String, client_data: Dictionary) -> void:
-	loading_panel.visible = false
-	var new_encounter: Dictionary = {
-		"client": {
-			"name": client_data.get("name", "Unknown"),
-			"context": client_data.get("context", "")
-		},
-		"slots": [
-			{"card": "", "text": "", "orientation": ""},
-			{"card": "", "text": "", "orientation": ""},
-			{"card": "", "text": "", "orientation": ""}
-		]
-	}
-
-	var game_state: Dictionary = _get_game_state()
-	var encounters: Array = game_state.get("encounters", [])
-	encounters.append(new_encounter)
-	game_state["encounters"] = encounters
-	_set_game_state(game_state)
-
-	_next_client()
+	game_blackboard.set_value("client_data", client_data)
+	game_blackboard.set_value("client_data_ready", true)
 
 
 func _on_client_request_failed(_request_id: String, error_message: String) -> void:
-	_set_cards_visible(false)
-	loading_panel.visible = false
-	story_rich_text.text = "[color=#a05a5a]No one came to the table. (%s)[/color]" % error_message
+	game_blackboard.set_value("client_error_message", error_message)
+	game_blackboard.set_value("client_request_failed", true)
 
 
-# --- Session Setup ---
+func _on_reading_received(_slot_index: int, _text: String) -> void:
+	if resolution_panel.visible:
+		var encounter: Variant = game_blackboard.get_value("current_encounter", {})
+		if encounter is Dictionary:
+			encounter = (encounter as Dictionary).duplicate(true)
+		var title: String = "Reading for %s" % (encounter as Dictionary).get("client", {}).get("name", "Unknown")
+		var readings: Array[String] = []
+		for i: int in range(3):
+			readings.append(reading_slot_mgr.slot_readings[i])
+		resolution_panel.populate(title, readings)
 
 
-func _setup_current_client_ui() -> void:
-	_set_cards_visible(true)
-	_set_client_count(_get_client_count() + 1)
-	loading_panel.visible = false
-
-	card_hover_panel.hide_immediately()
-	reading_vignette.reset()
-
-	reading_slot_mgr.reset_for_client(maxi(_get_current_encounter_index() - 1, 0))
-
-	var current_encounter: Dictionary = _get_current_encounter()
-	var client_name: String = current_encounter.get("client", {}).get("name", "Unknown")
-	sidebar.update_client(client_name, _get_client_count(), portraits.get_portrait(client_name))
-	sidebar.update_deck_count(player_hand.get_card_count())
+func _on_slot_locked(_slot_index: int, card_name: String, _display_name: String, _reading: String) -> void:
+	deck.discard.append(card_name)
 	sidebar.update_progress(reading_slot_mgr.slot_filled)
-	story_title_label.text = client_name
-	client_context_text.text = current_encounter.get("client", {}).get("context", "")
+	sidebar.update_deck_count(player_hand.get_card_count())
 
-	_render_story()
-	resolution_panel.visible = false
-	_deal_hand()
+
+# --- Helpers called by BT action leaves ---
+
+
+func _render_story() -> void:
+	story_renderer.render(
+		reading_slot_mgr.slot_filled,
+		reading_slot_mgr.slot_readings,
+		reading_slot_mgr.active_slot,
+		reading_slot_mgr.current_hover_slot,
+		reading_slot_mgr.hover_preview_text
+	)
 
 
 func _deal_hand() -> void:
@@ -308,134 +146,10 @@ func _deal_hand() -> void:
 	sidebar.update_deck_count(player_hand.get_card_count())
 
 
-# --- Hover Spotlight ---
-
-
-func _update_hover_spotlight() -> void:
-	if intro_panel.visible:
-		_set_hover_spotlight_target(null, 0.0)
-		return
-
-	if loading_panel.visible or resolution_panel.visible or end_screen.visible:
-		_set_hover_spotlight_target(null, 0.0)
-		return
-
-	var active_slot := reading_slot_mgr.active_slot
-	var mouse_pos := get_global_mouse_position()
-
-	if active_slot < 0 or active_slot >= slot_piles.size():
-		_set_hover_spotlight_target(null, 0.0)
-		return
-
-	if not slot_piles[active_slot].get_global_rect().has_point(mouse_pos):
-		_set_hover_spotlight_target(null, 0.0)
-		return
-
-	var held_card := _find_held_card()
-	if held_card != null:
-		_set_hover_spotlight_target(held_card, 78.0)
-		return
-
-	var slot_cards := slot_piles[active_slot].get_top_cards(1)
-	if slot_cards.size() > 0:
-		_set_hover_spotlight_target(slot_cards[0], 82.0)
-	else:
-		_set_hover_spotlight_target(slot_piles[active_slot], 74.0)
-
-
-func _set_hover_spotlight_target(target: Control, padding: float) -> void:
-	var is_moving_card_target: bool = target is Card and (target as Card).current_state == DraggableObject.DraggableState.HOLDING
-	var target_changed: bool = _hover_spotlight_target != target or not is_equal_approx(_hover_spotlight_padding, padding)
-
-	if not target_changed:
-		if is_moving_card_target:
-			print(target)
-			# Keep spotlight glued to the dragged card while maintaining smooth fade in/out on transitions.
-			reading_vignette.focus_control(target, padding)
-		return
-
-	_hover_spotlight_target = target
-	_hover_spotlight_padding = padding
-
-	if target == null:
-		reading_vignette.fade_out_spotlight()
-	else:
-		if is_moving_card_target:
-			reading_vignette.fade_spotlight_to_control(target, padding, 0.2)
-		else:
-			reading_vignette.fade_spotlight_to_control(target, padding)
-
-
-func _find_held_card() -> Card:
-	for card: Card in player_hand._held_cards:
-		if card.current_state == DraggableObject.DraggableState.HOLDING:
-			return card
-	return null
-
-
-# --- Slot Event Handlers ---
-
-
-func _on_slot_locked(_slot_index: int, card_name: String, _display_name: String, _reading: String) -> void:
-	deck.discard.append(card_name)
-	sidebar.update_progress(reading_slot_mgr.slot_filled)
-	sidebar.update_deck_count(player_hand.get_card_count())
-
-
-func _on_all_slots_filled() -> void:
-	get_tree().create_timer(1.2).timeout.connect(_show_resolution)
-
-
-func _render_story() -> void:
-	story_renderer.render(
-		reading_slot_mgr.slot_filled,
-		reading_slot_mgr.slot_readings,
-		reading_slot_mgr.active_slot,
-		reading_slot_mgr.current_hover_slot,
-		reading_slot_mgr.hover_preview_text
-	)
-
-
-func _on_reading_received(_slot_index: int, _text: String) -> void:
-	if resolution_panel.visible:
-		_show_resolution()
-
-
-# --- Resolution / End ---
-
-
-func _show_resolution() -> void:
-	_set_cards_visible(false)
-	var current_encounter: Dictionary = _get_current_encounter()
-	resolution_panel.visible = true
-	resolution_title.text = "Reading for %s" % current_encounter.get("client", {}).get("name", "Unknown")
-
-	var lines: Array[String] = []
-	for i: int in range(3):
-		lines.append("[color=%s]%s[/color]" % [StoryRenderer.SLOT_COLORS[i], reading_slot_mgr.slot_readings[i]])
-	resolution_text.text = "\n\n".join(lines)
-
-
-func _on_next_button_pressed() -> void:
-	_set_cards_visible(false)
-	_destroy_all_card_nodes()
-	if player_hand.get_card_count() < 3:
-		var game_state: Dictionary = _get_game_state()
-		end_screen.show_summary(
-			game_state.get("encounters", []),
-			portraits.get_portrait,
-			back_texture
-		)
-		loading_panel.visible = false
-		resolution_panel.visible = false
-	else:
-		_next_client()
-
-
 func _destroy_all_card_nodes() -> void:
 	reading_slot_mgr.cleanup()
 	card_hover_panel.hide_immediately()
-	_set_hover_spotlight_target(null, 0.0)
+	hover_spotlight_mgr.clear(reading_vignette)
 	reading_vignette.reset()
 
 	for pile: Pile in slot_piles:
@@ -449,4 +163,4 @@ func _set_cards_visible(is_visible: bool) -> void:
 	reading_area.visible = is_visible
 	if not is_visible:
 		card_hover_panel.hide_immediately()
-		_set_hover_spotlight_target(null, 0.0)
+		hover_spotlight_mgr.clear(reading_vignette)

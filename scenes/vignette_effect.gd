@@ -98,7 +98,7 @@ func fade_out_spotlight(duration: float = 0.18) -> void:
 		return
 
 	_spotlight_tween = create_tween()
-	_spotlight_tween.set_eadse(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+	_spotlight_tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
 	_spotlight_tween.tween_property(shader_mat, "shader_parameter/spotlight_strength", 0.0, duration)
 	_spotlight_tween.tween_callback(clear_spotlight)
 
