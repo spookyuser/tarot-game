@@ -20,6 +20,7 @@ const BB_KEY_CLIENT_COUNT: StringName = &"client_count"
 @onready var reading_slot_mgr: ReadingSlotManager = $Systems/ReadingSlotManager
 @onready var story_renderer: StoryRenderer = $Systems/StoryRenderer
 @onready var end_screen: EndScreen = $SceneRoot/OverlayLayer/EndPanel
+@onready var reading_area: Control = $SceneRoot/Gameplay/ReadingArea
 
 @onready var sidebar: Sidebar = $SceneRoot/Gameplay/Sidebar
 @onready var story_title_label: Label = $SceneRoot/Gameplay/StoryArea/StoryTitleLabel
@@ -43,6 +44,8 @@ var deck := DeckManager.new()
 
 var back_texture: Texture2D
 var _time_passed: float = 0.0
+var _hover_spotlight_target: Control = null
+var _hover_spotlight_padding: float = 0.0
 
 
 func _ready() -> void:
@@ -65,6 +68,7 @@ func _ready() -> void:
 	resolution_panel.visible = false
 	intro_panel.visible = false
 	card_hover_panel.z_index = 4096
+	_set_cards_visible(false)
 
 	claude_api.client_request_completed.connect(_on_client_request_completed)
 	claude_api.client_request_failed.connect(_on_client_request_failed)
@@ -104,6 +108,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if resolution_panel.visible:
 		card_hover_panel.hide_immediately()
+		_set_hover_spotlight_target(null, 0.0)
 		return
 
 	_time_passed += delta * 3.0
@@ -118,6 +123,7 @@ func _process(delta: float) -> void:
 		else:
 			slot_bgs[i].modulate = Color(1.0, 1.0, 1.0, 0.4)
 
+	_update_hover_spotlight()
 	card_hover_panel.update_display(player_hand)
 	reading_slot_mgr.process_frame()
 
@@ -207,6 +213,7 @@ func _next_client() -> void:
 
 
 func _show_intro() -> void:
+	_set_cards_visible(false)
 	loading_panel.visible = false
 	resolution_panel.visible = false
 
@@ -224,6 +231,7 @@ func _on_begin_button_pressed() -> void:
 
 
 func _show_client_loading() -> void:
+	_set_cards_visible(false)
 	loading_panel.visible = true
 	resolution_panel.visible = false
 	card_hover_panel.visible = false
@@ -257,6 +265,7 @@ func _on_client_request_completed(_request_id: String, client_data: Dictionary) 
 
 
 func _on_client_request_failed(_request_id: String, error_message: String) -> void:
+	_set_cards_visible(false)
 	loading_panel.visible = false
 	story_rich_text.text = "[color=#a05a5a]No one came to the table. (%s)[/color]" % error_message
 
@@ -265,6 +274,7 @@ func _on_client_request_failed(_request_id: String, error_message: String) -> vo
 
 
 func _setup_current_client_ui() -> void:
+	_set_cards_visible(true)
 	_set_client_count(_get_client_count() + 1)
 	loading_panel.visible = false
 
@@ -296,6 +306,71 @@ func _deal_hand() -> void:
 		if card != null:
 			card.is_reversed = randf() < 0.5
 	sidebar.update_deck_count(player_hand.get_card_count())
+
+
+# --- Hover Spotlight ---
+
+
+func _update_hover_spotlight() -> void:
+	if intro_panel.visible:
+		_set_hover_spotlight_target(null, 0.0)
+		return
+
+	if loading_panel.visible or resolution_panel.visible or end_screen.visible:
+		_set_hover_spotlight_target(null, 0.0)
+		return
+
+	var active_slot := reading_slot_mgr.active_slot
+	var mouse_pos := get_global_mouse_position()
+
+	if active_slot < 0 or active_slot >= slot_piles.size():
+		_set_hover_spotlight_target(null, 0.0)
+		return
+
+	if not slot_piles[active_slot].get_global_rect().has_point(mouse_pos):
+		_set_hover_spotlight_target(null, 0.0)
+		return
+
+	var held_card := _find_held_card()
+	if held_card != null:
+		_set_hover_spotlight_target(held_card, 78.0)
+		return
+
+	var slot_cards := slot_piles[active_slot].get_top_cards(1)
+	if slot_cards.size() > 0:
+		_set_hover_spotlight_target(slot_cards[0], 82.0)
+	else:
+		_set_hover_spotlight_target(slot_piles[active_slot], 74.0)
+
+
+func _set_hover_spotlight_target(target: Control, padding: float) -> void:
+	var is_moving_card_target: bool = target is Card and (target as Card).current_state == DraggableObject.DraggableState.HOLDING
+	var target_changed: bool = _hover_spotlight_target != target or not is_equal_approx(_hover_spotlight_padding, padding)
+
+	if not target_changed:
+		if is_moving_card_target:
+			print(target)
+			# Keep spotlight glued to the dragged card while maintaining smooth fade in/out on transitions.
+			reading_vignette.focus_control(target, padding)
+		return
+
+	_hover_spotlight_target = target
+	_hover_spotlight_padding = padding
+
+	if target == null:
+		reading_vignette.fade_out_spotlight()
+	else:
+		if is_moving_card_target:
+			reading_vignette.fade_spotlight_to_control(target, padding, 0.2)
+		else:
+			reading_vignette.fade_spotlight_to_control(target, padding)
+
+
+func _find_held_card() -> Card:
+	for card: Card in player_hand._held_cards:
+		if card.current_state == DraggableObject.DraggableState.HOLDING:
+			return card
+	return null
 
 
 # --- Slot Event Handlers ---
@@ -330,6 +405,7 @@ func _on_reading_received(_slot_index: int, _text: String) -> void:
 
 
 func _show_resolution() -> void:
+	_set_cards_visible(false)
 	var current_encounter: Dictionary = _get_current_encounter()
 	resolution_panel.visible = true
 	resolution_title.text = "Reading for %s" % current_encounter.get("client", {}).get("name", "Unknown")
@@ -341,6 +417,7 @@ func _show_resolution() -> void:
 
 
 func _on_next_button_pressed() -> void:
+	_set_cards_visible(false)
 	_destroy_all_card_nodes()
 	if player_hand.get_card_count() < 3:
 		var game_state: Dictionary = _get_game_state()
@@ -358,6 +435,7 @@ func _on_next_button_pressed() -> void:
 func _destroy_all_card_nodes() -> void:
 	reading_slot_mgr.cleanup()
 	card_hover_panel.hide_immediately()
+	_set_hover_spotlight_target(null, 0.0)
 	reading_vignette.reset()
 
 	for pile: Pile in slot_piles:
@@ -365,3 +443,10 @@ func _destroy_all_card_nodes() -> void:
 	card_manager.reset_history()
 	Card.holding_card_count = 0
 	Card.hovering_card_count = 0
+
+
+func _set_cards_visible(is_visible: bool) -> void:
+	reading_area.visible = is_visible
+	if not is_visible:
+		card_hover_panel.hide_immediately()
+		_set_hover_spotlight_target(null, 0.0)
